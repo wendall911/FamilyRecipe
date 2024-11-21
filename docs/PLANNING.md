@@ -59,14 +59,15 @@ Kraft Dinner
 
 ## The Plan
   1. Utilize Recipe Grid 2 MD format and recipe_grid Python parser to generate html recipes
-    1. Needs custom renderer to output html layout and data for recipe as Svelte Components
+     1. Needs custom renderer to output html layout and data for recipe as Svelte Components
   1. Use Svelte to generate static website for publishing.
-    1. Create Svelte Recipe component
-      1. Read in staticly generated components automatically.
-        1. One compoenent file per recipe. html layout and data (svelte component)
-        1. recipe_grid parser generates a separate directory for all conversions. In our case, this will be dynamic.
-      1. Utilize Redux in Svelte for state management. Yes, overkill, but whatever.
-    1. Generate index based on all recipes rendered. Iterate over imported components, and use `getContext` to extract needed data from the Recipe Component.
+     1. Create Svelte Recipe component
+        1. Read in staticly generated components automatically.
+           1. One compoenent file per recipe. html layout and data (svelte component)
+           1. recipe_grid parser generates a separate directory for all conversions. In our case, this will be dynamic.
+        1. Utilize Redux in Svelte for state management. Yes, overkill, but whatever.
+           1. See https://svelte.dev/docs/svelte/svelte-options about enabling and utilizing Runes
+     1. Generate index based on all recipes rendered. Iterate over imported components, and use `getContext` to extract needed data from the Recipe Component.
   1. Use github actions to generate site. Both Python and Node.
 
 ### Include HTML generated recipe chunks in page.
