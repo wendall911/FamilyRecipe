@@ -153,3 +153,7 @@ jobs:
       - name: Run tests
         run: npm test
 ```
+
+## Card Layout
+- https://flexboxfroggy.com/
+- https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/
