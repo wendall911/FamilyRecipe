@@ -119,41 +119,6 @@ Send data to component (for conversions):
     setContext('ingredients', ingredients);
 </script>
 ```
-
-## Run job both Node and Python
-```
-name: Build and Test
-
-jobs:
-  python:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run tests
-        run: python -m unittest discover tests/
-
-  node:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Install dependencies
-        run: npm install
-      - name: Run tests
-        run: npm test
-```
-
 ## Card Layout
 - https://flexboxfroggy.com/
 - https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/
