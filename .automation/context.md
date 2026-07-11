@@ -24,14 +24,10 @@ See `docs/PLANNING.md` for full design notes, parser references, and component s
 - One Svelte component per rendered recipe, auto-discovered via `import.meta.glob`
 - State management uses Svelte Runes (see `docs/PLANNING.md` for context notes)
 
-## Branch Convention
-- `main` is the only active branch
-- Release tagging is possible but not required — `main`/HEAD may serve as the release
-
 ## Deployment Model
 - Not finalized. Candidates: personal server (same model as wendall911-personal-website) or GitHub Pages
 - If GitHub Pages: may require moving roughness.technology to a different host to free the one free Pages slot
 - Do not assume a deployment target is confirmed; check README or ask before any release-related work
 
 ## Status
-Future project — not yet started. `docs/PLANNING.md` is the current source of design intent.
+Future project - not yet started. `docs/PLANNING.md` is the current source of design intent.
