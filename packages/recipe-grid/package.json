@@ -1,0 +1,25 @@
+{
+  "name": "@wendall911/recipe-grid",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "node scripts/generate-parser.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "fraction.js": "^5.3.4",
+    "marked": "^18.0.6",
+    "peggy": "^5.1.0",
+    "yaml": "^2.9.0"
+  }
+}
