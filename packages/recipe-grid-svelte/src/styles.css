@@ -1,0 +1,4 @@
+.recipe-grid {
+    display: flex;
+    flex-direction: column;
+}
