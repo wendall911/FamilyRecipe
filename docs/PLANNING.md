@@ -424,8 +424,6 @@ architectural charter; where they conflict with this section, this section wins.
 
 ## Known gaps / deferred (do not treat as done)
 
-- **Bread-maker `(...)` multi-column tables** (e.g. `({1 1/2} lb, {2} lb, Loaf size)`): a real
-  Grid 2 feature used heavily across `recipe_grid/`'s corpus (`breadMaker/*`). NOT modeled.
 - **Unit conversions:** deferred; seams marked `[DEFERRED: units]`.
 - **`offset: null`** on substrings coalesced inside `{...}` (cosmetic; interior offsets lost).
 - **Scaling runtime function** (`scale(node, factor)`): the model preserves scalable values;
