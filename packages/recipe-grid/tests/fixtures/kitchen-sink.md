@@ -17,17 +17,35 @@ down how each is handled. Do not cook this.
     0.5 tsp salt
     3 cloves garlic
     150ml milk
+    100ml cream
+    2 tbsp sugar
 
-    dough := knead(200g "plain flour (12% protein)", 1/2 cup butter, milk)
+    Dough := knead(
+      200g "plain flour (12% protein)",
+      1/2 cup butter,
+      milk
+    )
 
     crumbs, zest = separate(3 cloves garlic)
 
     bake(
-        mix(
-            dough,
-            crumbs,
-            {1 handful} fresh parsley,
-            Remaining milk
-        ),
-        0.5 tsp of the salt
+      mix(
+        dough,
+        crumbs,
+        {1 handful} fresh parsley,
+        Remaining milk
+      ),
+      0.5 tsp of the salt
+    )
+
+    Filling := fold(
+      whip(
+        cream,
+        2 tbsp sugar
+      ),
+      mix(
+        crumbs,
+        zest,
+        Remaining butter
+      )
     )
