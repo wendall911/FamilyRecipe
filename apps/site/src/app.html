@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script>
+            (function () {
+                var stored = localStorage.getItem('mode');
+                var mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';
+                var light =
+                    mode === 'light' ||
+                    (mode === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('light', light);
+                document.documentElement.style.colorScheme = light ? 'light' : 'dark';
+            })();
+        </script>
+        %sveltekit.head%
+    </head>
+    <body data-sveltekit-preload-data="hover">
+        <div style="display: contents">%sveltekit.body%</div>
+    </body>
+</html>
