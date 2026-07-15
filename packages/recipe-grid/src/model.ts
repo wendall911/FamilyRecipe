@@ -118,6 +118,13 @@ export type Ingredient = {
   description: ScaledValueString;
   /** [G2] Quantity, or null if quantity-less. */
   quantity: Quantity | null;
+  /**
+   * [G2] The author's recipe-local mapping label from an `ingredient = X`
+   * binding — the handle later lines reference. Never surfaces as display
+   * (the description is what shows); distinct from a canonical schema key
+   * (see identity.canonicalName), since a shorthand label may not be canonical.
+   */
+  label?: string;
   /** [EXT] Optional structured/canonical identity for schema mapping. */
   identity?: IngredientIdentity;
 };
@@ -129,6 +136,13 @@ export type Step = {
   description: ScaledValueString;
   /** [G2] Inputs to this step: ingredients, other steps, or references. */
   inputs: RecipeTreeNode[];
+  /**
+   * [G2] The author's recipe-local mapping label from an `ingredient = X`
+   * binding, when the labeled node is a step (`X, some action`). The handle
+   * later lines reference. Never surfaces as display; distinct from a canonical
+   * schema key. See {@link Ingredient.label}.
+   */
+  label?: string;
 };
 
 /**
@@ -142,8 +156,8 @@ export type SubRecipe = {
   subTree: RecipeTreeNode;
   /** [G2] One or more output names (scale-aware). >1 ⇒ must be a tree root. */
   outputNames: ScaledValueString[];
-  /** [G2] Whether to render the output name(s). */
-  showOutputNames: boolean;
+  /** [G2] True when this named block is a sub-recipe heading (authored `:=`). */
+  hasHeading: boolean;
 };
 
 /**
@@ -157,8 +171,8 @@ export type Reference = {
   subRecipe: SubRecipe;
   /** [G2] Which named output of that sub-recipe (default 0). */
   outputIndex: number;
-  /** [G2] How much of the output to use (default: all — Proportion(1)). */
-  amount: Amount;
+  /** [G2] How much of the output to use; absent means all of it. */
+  amount?: Amount;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -219,6 +233,13 @@ export type RecipeReference = {
   outputName?: ScaledValueString;
   /** [EXT] How much of the target to use, if specified. */
   amount?: Amount;
+  /**
+   * [G2] The author's recipe-local mapping label from an `ingredient = X`
+   * binding, when the labeled node is a cross-recipe link. The handle later
+   * lines reference. Never surfaces as display; distinct from a canonical
+   * schema key. See {@link Ingredient.label}.
+   */
+  label?: string;
 };
 
 /**

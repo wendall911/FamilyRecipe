@@ -26,7 +26,7 @@ export const options = {
 		app: ({ head, body, assets, nonce, env }) => "<!doctype html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\" />\n        <link rel=\"icon\" href=\"" + assets + "/favicon.svg\" />\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n        <script>\n            (function () {\n                var stored = localStorage.getItem('mode');\n                var mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'dark';\n                var light =\n                    mode === 'light' ||\n                    (mode === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches);\n                document.documentElement.classList.toggle('light', light);\n                document.documentElement.style.colorScheme = light ? 'light' : 'dark';\n            })();\n        </script>\n        " + head + "\n    </head>\n    <body data-sveltekit-preload-data=\"hover\">\n        <div style=\"display: contents\">" + body + "</div>\n    </body>\n</html>\n",
 		error
 	},
-	version_hash: "nhv395"
+	version_hash: "qgj3i4"
 };
 
 export async function get_hooks() {

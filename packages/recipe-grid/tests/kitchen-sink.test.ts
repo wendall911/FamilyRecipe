@@ -188,13 +188,11 @@ test('kitchen-sink: `Remaining` on a deeply nested reference is a remainder amou
     const filling = outputStmt('Filling', 'kitchen-sink.md');
     const fold = filling.expr as StepNode;
     const mix = fold.inputs[1] as StepNode;
-    assert.equal(mix.inputs.length, 3);
+    assert.equal(mix.inputs.length, 2);
 
-    const [crumbs, zest, butter] = mix.inputs as ReferenceNode[];
-    assert.equal(nameText(crumbs), 'crumbs');
-    assert.equal(crumbs.amount, null);
-    assert.equal(nameText(zest), 'zest');
-    assert.equal(zest.amount, null);
+    const [redPeppers, butter] = mix.inputs as ReferenceNode[];
+    assert.equal(nameText(redPeppers), 'red peppers');
+    assert.equal(redPeppers.amount, null);
 
     // `Remaining butter` — the amount is a remainder, wording preserved as authored.
     assert.equal(nameText(butter), 'butter');

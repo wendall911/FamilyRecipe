@@ -23,19 +23,36 @@ Recipe
       return { kind: 'recipe', offset: stmts[0].offset, stmts };
     }
 
+/*
+ * `:=` and `=` are distinct constructs, caught separately:
+ *   `:=`  sub_recipe_heading — names a sub-recipe (one or more outputs).
+ *   `=`   ingredient_label   — a single label on the statement's node.
+ * A statement is a `:=` heading, OR carries a `=` label, OR neither; the two
+ * optionals are independent (never an alternation), so they cannot conflate.
+ */
 stmt
-  = target:(outputs:output_list hsp? op:(":=" / "=") hsp? { return { outputs, op }; })?
+  = heading:sub_recipe_heading?
+    label:ingredient_label?
     expr:ltr_shorthand eol {
-      const outputs = target !== null ? target.outputs : null;
-      const named = target !== null && target.op === ':=';
+      const labelledExpr = label !== null ? { ...expr, label } : expr;
       return {
         kind: 'stmt',
-        offset: outputs !== null ? outputs[0].offset : expr.offset,
-        expr,
-        outputs,
-        named,
+        offset: heading !== null ? heading[0].offset
+              : label !== null ? label.offset
+              : expr.offset,
+        expr: labelledExpr,
+        outputs: heading,
+        named: heading !== null,
       };
     }
+
+// `:=` — a sub-recipe heading. One or more comma-separated output names.
+sub_recipe_heading
+  = outputs:output_list hsp? ":=" hsp? { return outputs; }
+
+// `=` — an ingredient label. A single name bound to the statement's node.
+ingredient_label
+  = name:output hsp? "=" hsp? { return name; }
 
 output_list
   = first:output rest:(hsp? "," hsp? o:output { return o; })* {

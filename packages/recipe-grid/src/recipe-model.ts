@@ -212,7 +212,7 @@ export function nodesEqual(a: RecipeTreeNode, b: RecipeTreeNode): boolean {
     case 'subRecipe': {
       const y = b as SubRecipe;
       return (
-        a.showOutputNames === y.showOutputNames &&
+        a.hasHeading === y.hasHeading &&
         a.outputNames.length === y.outputNames.length &&
         a.outputNames.every((n, i) => svsEqual(n, y.outputNames[i])) &&
         nodesEqual(a.subTree, y.subTree)
@@ -222,7 +222,8 @@ export function nodesEqual(a: RecipeTreeNode, b: RecipeTreeNode): boolean {
       const y = b as import('./model.ts').Reference;
       return (
         a.outputIndex === y.outputIndex &&
-        amountsEqual(a.amount, y.amount) &&
+        (a.amount === undefined) === (y.amount === undefined) &&
+        (a.amount === undefined || amountsEqual(a.amount, y.amount as Amount)) &&
         nodesEqual(a.subRecipe, y.subRecipe)
       );
     }
@@ -295,23 +296,6 @@ export function substitute(
         subTree: substitute(node.subTree, oldNode, newNode),
       };
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Inference (single-ingredient chains)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * [G2] compiler.py `infer_output_name`: if the tree is a single ingredient,
- * possibly wrapped by single-input steps but never combined with another
- * ingredient, return that ingredient's description. Otherwise null.
- */
-export function inferOutputName(node: RecipeTreeNode): ScaledValueString | null {
-  if (node.kind === 'ingredient') return node.description;
-  if (node.kind === 'step' && node.inputs.length === 1) {
-    return inferOutputName(node.inputs[0]);
-  }
-  return null;
 }
 
 /**

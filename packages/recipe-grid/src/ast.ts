@@ -78,6 +78,8 @@ export interface Step {
     name: String;
     /** The inputs to this step ('tomatoes' and 'herbs'). */
     inputs: Expr[];
+    /** The `ingredient = X` label naming this node, when authored; else null. */
+    label?: String;
 }
 
 /** A reference to an ingredient or a sub-recipe. */
@@ -89,6 +91,8 @@ export interface Reference {
     name: String;
     /** The amount of the referenced item — an absolute quantity or the rest, or null. */
     amount: Quantity | Remainder | null;
+    /** The `ingredient = X` label naming this node, when authored; else null. */
+    label?: String;
 }
 
 /** An expression: a step or a reference. */

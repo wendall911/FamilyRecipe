@@ -1,5 +1,6 @@
 import { parse as parseGrammar } from '../generated/grammar.generated.js';
 import { extractRecipe } from './markdown.ts';
+import { compile } from './compiler.ts';
 
 export interface RecipeModel {
     title: string;
@@ -8,10 +9,12 @@ export interface RecipeModel {
 
 export function parse(md: string): RecipeModel {
     const { title, blocks } = extractRecipe(md);
-    const trees = blocks.map((block) => parseToTree(block));
+    // Placeholder surface: the compiled DAG has no layout yet, so it is
+    // stringified for visibility. The real model/render seam comes later.
+    const recipe = compile(parseGrammar(blocks[0]));
     return {
         title: title ?? '',
-        source: JSON.stringify(trees, null, 2),
+        source: JSON.stringify(recipe, null, 2),
     };
 }
 

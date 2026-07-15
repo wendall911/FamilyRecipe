@@ -9,10 +9,13 @@ interface StringNode {
 }
 interface StmtNode {
     kind: 'stmt';
-    expr: { kind: string };
+    expr: { kind: string; label?: StringNode };
     outputs: StringNode[] | null;
     named: boolean;
 }
+
+const stringText = (s: StringNode | undefined): string | null =>
+    s === undefined ? null : s.substrings.map((x) => x.string).join('');
 
 function stmt(src: string): StmtNode {
     const stmts = findAll(parse(src), (o) => o.kind === 'stmt');
@@ -33,23 +36,19 @@ test('no-output stmt: outputs null, not named', () => {
     assert.equal(s.named, false);
 });
 
-// synthetic — no current recipe fixture uses the assignment/output form.
-test('single output with "=": not named', () => {
+// `=` is an ingredient label, not a sub-recipe output: it rides on the
+// statement's node as `expr.label`, leaves `outputs` null, and is not named.
+test('single output with "=": label on the node, not a named output', () => {
     const s = stmt('sauce = boil(tomatoes)\n');
-    assert.deepEqual(outputNames(s), ['sauce']);
+    assert.equal(s.outputs, null);
     assert.equal(s.named, false);
+    assert.equal(stringText(s.expr.label), 'sauce');
 });
 
-// synthetic — no current recipe fixture uses the ":=" named form.
+// `:=` is a sub-recipe heading: it produces a named output and marks the
+// statement named. The label field is not used for `:=`.
 test('single output with ":=": named', () => {
     const s = stmt('sauce := boil(tomatoes)\n');
     assert.deepEqual(outputNames(s), ['sauce']);
     assert.equal(s.named, true);
-});
-
-// synthetic — no current recipe fixture uses the multi-output form.
-test('multiple outputs fold into an ordered list', () => {
-    const s = stmt('white sauce, roux = mix(a, b)\n');
-    assert.deepEqual(outputNames(s), ['white sauce', 'roux']);
-    assert.equal(s.named, false);
 });

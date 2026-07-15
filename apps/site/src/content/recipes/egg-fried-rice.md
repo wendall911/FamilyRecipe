@@ -38,7 +38,7 @@ Egg Fried Rice
                                                 add(
                                                     add(
                                                         warm over med heat(
-                                                            25cm pan
+                                                            "25cm pan"
                                                         ),
                                                         basmati rice
                                                     ),
