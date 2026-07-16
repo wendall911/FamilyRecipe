@@ -156,21 +156,32 @@ export type SubRecipe = {
   subTree: RecipeTreeNode;
   /** [G2] One or more output names (scale-aware). >1 ⇒ must be a tree root. */
   outputNames: ScaledValueString[];
-  /** [G2] True when this named block is a sub-recipe heading (authored `:=`). */
-  hasHeading: boolean;
 };
 
 /**
- * [G2] An **intra-document** reference to a named output of a {@link SubRecipe}
- * that is the root of a prior recipe tree in the same {@link Recipe} (or its
- * `follows` chain). This is Grid 2's own reuse mechanism.
+ * [G2] An **intra-document** reference: a back-pointer to a labelled node earlier
+ * in the same {@link Recipe} (or its `follows` chain). Grid 2's own reuse
+ * mechanism only referenced a {@link SubRecipe} output.
+ *
+ * [EXT] FamilyRecipe generalises the target to *any* {@link RecipeTreeNode}, so a
+ * reference can also resolve to an `=`-labelled {@link Ingredient} or {@link Step}
+ * — not just a `:=` {@link SubRecipe}. `resolvedNode` is a real object pointer
+ * (the DAG is cyclic when nodes are shared); it is distinct from
+ * {@link RecipeReference}, which is the *cross-file* link.
  */
 export type Reference = {
   kind: "reference";
-  /** [G2] The sub-recipe whose output is referenced. */
-  subRecipe: SubRecipe;
-  /** [G2] Which named output of that sub-recipe (default 0). */
-  outputIndex: number;
+  /**
+   * [EXT] The in-document node this reference resolves to (Ingredient, Step, or
+   * SubRecipe). A pointer, not a copy.
+   */
+  resolvedNode: RecipeTreeNode;
+  /**
+   * [G2] Which named output of a multi-output {@link SubRecipe} target (default
+   * 0). Absent when the target is not a SubRecipe (an Ingredient/Step has a
+   * single result).
+   */
+  outputIndex?: number;
   /** [G2] How much of the output to use; absent means all of it. */
   amount?: Amount;
 };

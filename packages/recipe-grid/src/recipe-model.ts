@@ -212,7 +212,6 @@ export function nodesEqual(a: RecipeTreeNode, b: RecipeTreeNode): boolean {
     case 'subRecipe': {
       const y = b as SubRecipe;
       return (
-        a.hasHeading === y.hasHeading &&
         a.outputNames.length === y.outputNames.length &&
         a.outputNames.every((n, i) => svsEqual(n, y.outputNames[i])) &&
         nodesEqual(a.subTree, y.subTree)
@@ -220,11 +219,15 @@ export function nodesEqual(a: RecipeTreeNode, b: RecipeTreeNode): boolean {
     }
     case 'reference': {
       const y = b as import('./model.ts').Reference;
+      // A reference is a back-pointer; the DAG is cyclic when nodes are shared.
+      // Compare by target *identity* (not structural recursion, which would loop
+      // on a cycle): two references are equal iff they point at the same node
+      // with the same output index and amount.
       return (
+        a.resolvedNode === y.resolvedNode &&
         a.outputIndex === y.outputIndex &&
         (a.amount === undefined) === (y.amount === undefined) &&
-        (a.amount === undefined || amountsEqual(a.amount, y.amount as Amount)) &&
-        nodesEqual(a.subRecipe, y.subRecipe)
+        (a.amount === undefined || amountsEqual(a.amount, y.amount as Amount))
       );
     }
     case 'recipeReference': {
@@ -278,17 +281,15 @@ export function substitute(
   switch (node.kind) {
     case 'ingredient':
     case 'recipeReference':
-      // Leaf w.r.t. substitution: no child recipe tree to recurse into.
+    case 'reference':
+      // Leaf w.r.t. substitution. A reference is a back-pointer to a node that
+      // lives elsewhere in the tree; that node is substituted at its definition
+      // site, and descending through the pointer here would loop on the cycle.
       return node;
     case 'step':
       return {
         ...node,
         inputs: node.inputs.map((child) => substitute(child, oldNode, newNode)),
-      };
-    case 'reference':
-      return {
-        ...node,
-        subRecipe: substitute(node.subRecipe, oldNode, newNode) as SubRecipe,
       };
     case 'subRecipe':
       return {

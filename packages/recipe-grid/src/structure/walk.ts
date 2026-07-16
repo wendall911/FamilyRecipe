@@ -70,25 +70,22 @@ export interface StructureNode {
   children: StructureNode[];
 }
 
-/** True when a node is a terminal — an ingredient or a reference. */
-function isTerminal(node: RecipeTreeNode): boolean {
-  return node.kind === 'ingredient' || node.kind === 'reference';
-}
-
 /**
  * The rows a node's subtree occupies: one per terminal, following a reference
- * into its target, plus one for a headed sub-recipe.
+ * into its target, plus one for a sub-recipe's heading.
  */
 export function extentRows(node: RecipeTreeNode): number {
   switch (node.kind) {
     case 'ingredient':
       return 1;
     case 'reference':
-      return extentRows(node.subRecipe);
+      return extentRows(node.resolvedNode);
     case 'step':
       return node.inputs.reduce((n, input) => n + extentRows(input), 0);
     case 'subRecipe':
-      return extentRows(node.subTree) + (node.hasHeading ? 1 : 0);
+      // A sub-recipe always has a heading (a `:=` names one or more outputs);
+      // that heading occupies one row above its subtree.
+      return extentRows(node.subTree) + 1;
     case 'recipeReference':
       return 1;
   }
@@ -103,7 +100,7 @@ export function extentColumns(node: RecipeTreeNode): number {
     case 'ingredient':
       return 1;
     case 'reference':
-      return extentColumns(node.subRecipe);
+      return extentColumns(node.resolvedNode);
     case 'step':
       return 1 + Math.max(...node.inputs.map(extentColumns));
     case 'subRecipe':
@@ -126,11 +123,6 @@ function serializeValue(value: RecipeNumber): string {
 /** The `data-*` attributes carried by a quantity's value. */
 function quantityDataAttrs(quantity: Quantity): Record<string, string> {
   return { [DATA_KEYS.value]: serializeValue(quantity.value) };
-}
-
-/** The scalable numbers embedded in a scale-aware string, in order. */
-function scaledValuesOf(svs: ScaledValueString): RecipeNumber[] {
-  return svs.filter((p): p is RecipeNumber => typeof p !== 'string');
 }
 
 function walkIngredient(node: Ingredient): StructureNode {
@@ -166,26 +158,33 @@ function walkReference(node: Reference): StructureNode {
     Object.assign(dataAttrs, quantityDataAttrs(node.amount));
     content.quantity = node.amount;
   }
+  // A reference transcludes its target: the resolved node's full structure
+  // (an ingredient, or a step with its own inputs) renders inline where the
+  // reference sits — the referenced body appears in place, not a bare pointer.
+  // The reference keeps its own part marker and any amount; the target's body
+  // is its child.
   return {
     part: part('reference'),
     dataAttrs,
     content,
     extent: extentOf(node),
-    children: [],
+    children: [walk(node.resolvedNode)],
   };
 }
 
 function walkSubRecipe(node: SubRecipe): StructureNode {
-  const children = [walk(node.subTree)];
-  if (node.hasHeading) {
-    children.unshift({
+  // A sub-recipe always has a heading (its `:=` output name); emit it above the
+  // sub-recipe's tree.
+  const children: StructureNode[] = [
+    {
       part: part('sub-recipe-header'),
       dataAttrs: {},
       content: { text: node.outputNames[0] },
       extent: { rows: 1, columns: extentColumns(node.subTree) },
       children: [],
-    });
-  }
+    },
+    walk(node.subTree),
+  ];
   return {
     part: part('sub-recipe'),
     dataAttrs: {},
@@ -220,11 +219,11 @@ export function walk(node: RecipeTreeNode): StructureNode {
  * sub-recipe is laid out inline where it is referenced, so its rows are already
  * counted inside the referencing tree and must not be counted again at the root.
  */
-function collectReferenced(node: RecipeTreeNode, into: Set<SubRecipe>): void {
+function collectReferenced(node: RecipeTreeNode, into: Set<RecipeTreeNode>): void {
   switch (node.kind) {
     case 'reference':
-      into.add(node.subRecipe);
-      collectReferenced(node.subRecipe, into);
+      into.add(node.resolvedNode);
+      collectReferenced(node.resolvedNode, into);
       return;
     case 'step':
       node.inputs.forEach((input) => collectReferenced(input, into));
@@ -244,12 +243,12 @@ function collectReferenced(node: RecipeTreeNode, into: Set<SubRecipe>): void {
  */
 export function walkRecipe(recipe: Recipe): StructureNode {
   // Trees referenced by another tree are transcluded where referenced; only the
-  // trees no other tree references are independent roots of the layout.
-  const referenced = new Set<SubRecipe>();
+  // trees no other tree references are independent roots of the layout. A
+  // referenced target may be a SubRecipe (`:=`) or an `=`-labelled Ingredient/
+  // Step, so any referenced root is excluded, not just SubRecipe ones.
+  const referenced = new Set<RecipeTreeNode>();
   recipe.recipeTrees.forEach((t) => collectReferenced(t, referenced));
-  const roots = recipe.recipeTrees.filter(
-    (t) => !(t.kind === 'subRecipe' && referenced.has(t)),
-  );
+  const roots = recipe.recipeTrees.filter((t) => !referenced.has(t));
 
   const grid: StructureNode = {
     part: part('grid'),
@@ -258,7 +257,10 @@ export function walkRecipe(recipe: Recipe): StructureNode {
       rows: roots.reduce((n, t) => n + extentRows(t), 0),
       columns: Math.max(...roots.map(extentColumns)),
     },
-    children: recipe.recipeTrees.map(walk),
+    // Render only the unreferenced roots; referenced trees (ingredient
+    // declarations, `,action` steps, sub-recipes) are transcluded inline at
+    // their use site, not repeated as top-level grid children.
+    children: roots.map(walk),
   };
 
   const dataAttrs: Record<string, string> = {

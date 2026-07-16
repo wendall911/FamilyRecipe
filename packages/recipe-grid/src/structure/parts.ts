@@ -22,6 +22,8 @@ const COMPONENT = 'recipe-grid';
  * - `grid`              — the region that lays out the recipe trees.
  * - `title`             — the recipe title.
  * - `step`              — a Step node: a combining action over its inputs.
+ * - `inputs`            — a step's input column (its children), laid out left of
+ *                         the step's action; the left side of the bracket.
  * - `ingredient`        — an Ingredient leaf.
  * - `sub-recipe`        — a SubRecipe grouping.
  * - `sub-recipe-header` — the heading label of a `:=` sub-recipe.
@@ -34,6 +36,7 @@ export const RECIPE_GRID_PARTS = [
   'grid',
   'title',
   'step',
+  'inputs',
   'ingredient',
   'sub-recipe',
   'sub-recipe-header',

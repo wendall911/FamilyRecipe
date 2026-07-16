@@ -29,20 +29,37 @@ import type {
   Step as AstStep,
 } from './ast.ts';
 
-import { compileString, normaliseOutputName, svsToString } from './recipe-model.ts';
+import { compileString, normaliseOutputName, svsNormalize, svsToString } from './recipe-model.ts';
 
-/** A named sub-recipe output, so later references can resolve to its SubRecipe. */
-interface NamedOutput {
-  subRecipe: SubRecipe;
-  outputIndex: number;
+/**
+ * A resolvable name → the node a later reference resolves to. Covers both `:=`
+ * sub-recipe outputs (with an outputIndex) and `=` ingredient/step labels (a
+ * single node, no index).
+ */
+interface NamedNode {
+  resolvedNode: RecipeTreeNode;
+  outputIndex?: number;
+}
+
+/**
+ * Descend a chain of single-input steps to its sole ingredient, or null if the
+ * chain branches (a step with ≠1 inputs) or bottoms out in a non-ingredient.
+ * Used to name a bare `ingredient, action` line by the ingredient it wraps.
+ */
+function innermostIngredient(node: RecipeTreeNode): Ingredient | null {
+  if (node.kind === 'ingredient') return node;
+  if (node.kind === 'step' && node.inputs.length === 1) {
+    return innermostIngredient(node.inputs[0]);
+  }
+  return null;
 }
 
 class RecipeCompiler {
-  /** Known output names → their SubRecipe output, keyed by normalised name. */
-  private namedOutputs = new Map<string, NamedOutput>();
+  /** Known names (`:=` outputs and `=` labels) → their node, by normalised name. */
+  private namedNodes = new Map<string, NamedNode>();
 
   compile(ast: AstRecipe): Recipe {
-    this.namedOutputs = new Map();
+    this.namedNodes = new Map();
     return {
       recipeTrees: ast.stmts.map((stmt) => this.compileStmt(stmt)),
       follows: null,
@@ -54,30 +71,71 @@ class RecipeCompiler {
   }
 
   /**
-   * Compile a statement into a recipe tree node. A `:=` statement (stmt.named)
-   * is a sub-recipe heading: its tree is wrapped in a SubRecipe with
-   * hasHeading. Every other statement — an `=` output or a bare line — is the
-   * node the expression already compiled to (an ingredient or step).
+   * Compile a statement into a recipe tree node.
+   *
+   * A `:=` statement (stmt.named) is a sub-recipe heading: its tree is wrapped
+   * in a SubRecipe, and each output name registers a resolvable reference
+   * target (with its outputIndex).
+   *
+   * An `=` statement carries a single label on its expression (threaded onto the
+   * compiled node by compileExpr); the label registers the node itself as a
+   * resolvable target. A bare line registers nothing.
+   *
+   * Names are registered AFTER the statement compiles, so resolution stays
+   * backward-only (a later line can reference this name; an earlier one cannot).
    */
   private compileStmt(stmt: AstStmt): RecipeTreeNode {
     const tree = this.compileExpr(stmt.expr);
 
-    if (!stmt.named) return tree;
+    if (stmt.named) {
+      const outputNames = (stmt.outputs ?? []).map((o) => compileString(o));
 
-    const outputNames = (stmt.outputs ?? []).map((o) => compileString(o));
+      const subRecipe: SubRecipe = {
+        kind: 'subRecipe',
+        subTree: tree,
+        outputNames,
+      };
 
-    const subRecipe: SubRecipe = {
-      kind: 'subRecipe',
-      subTree: tree,
-      outputNames,
-      hasHeading: true,
-    };
+      outputNames.forEach((outputName, outputIndex) => {
+        this.namedNodes.set(normaliseOutputName(outputName), {
+          resolvedNode: subRecipe,
+          outputIndex,
+        });
+      });
 
-    outputNames.forEach((outputName, outputIndex) => {
-      this.namedOutputs.set(normaliseOutputName(outputName), { subRecipe, outputIndex });
-    });
+      return subRecipe;
+    }
 
-    return subRecipe;
+    // `=` label (if any) was threaded onto the node by compileExpr; register it
+    // as a resolvable target pointing at the node itself.
+    if (stmt.expr.label !== undefined) {
+      this.namedNodes.set(normaliseOutputName(compileString(stmt.expr.label)), {
+        resolvedNode: tree,
+      });
+    } else if (tree.kind === 'ingredient') {
+      // A bare ingredient-list declaration (`2 tsp honey`) registers by its
+      // description so a later step referencing `honey` resolves to THIS node —
+      // which carries the quantity. The ingredient then renders once, at its
+      // use site, with its amount (matching the recipe grid: each ingredient
+      // appears exactly once, where it is used). A declaration that is never
+      // referenced simply stays a root of its own.
+      this.namedNodes.set(normaliseOutputName(tree.description), { resolvedNode: tree });
+    } else if (tree.kind === 'step') {
+      // A bare `ingredient, action` line (e.g. `2 cloves garlic, crushed`)
+      // compiles to a chain of single-input steps bottoming out in one
+      // ingredient. It carries no `=` label, but a later line still references
+      // it by that ingredient's name (`garlic`). Register the innermost
+      // ingredient's description → the WHOLE step chain, so the reference
+      // resolves to the full body (like an `=`-labelled step does), rendering
+      // once at its use site. Only a single-input chain ending in one
+      // ingredient has an unambiguous name; anything else registers nothing.
+      const inner = innermostIngredient(tree);
+      if (inner !== null) {
+        this.namedNodes.set(normaliseOutputName(inner.description), { resolvedNode: tree });
+      }
+    }
+
+    return tree;
   }
 
   /** Compile any expression node, recursing through nested steps and inputs. */
@@ -87,35 +145,58 @@ class RecipeCompiler {
   }
 
   private compileStep(step: AstStep): Step {
-    return {
+    const compiled: Step = {
       kind: 'step',
       description: compileString(step.name),
       inputs: step.inputs.map((input) => this.compileExpr(input)),
     };
+    if (step.label !== undefined) {
+      compiled.label = svsToString(compileString(step.label));
+    }
+    return compiled;
   }
 
-  /** A name matching an earlier output is a Reference; otherwise an Ingredient. */
+  /**
+   * A name matching an earlier registered name (a `:=` output or an `=` label)
+   * is a Reference back-pointer to that node; otherwise it is an Ingredient.
+   */
   private compileReference(ref: AstReference): Reference | Ingredient {
     const name = compileString(ref.name);
-    const named = this.namedOutputs.get(normaliseOutputName(name));
+    const named = this.namedNodes.get(normaliseOutputName(name));
 
     if (named !== undefined) {
-      return {
+      const reference: Reference = {
         kind: 'reference',
-        subRecipe: named.subRecipe,
-        outputIndex: named.outputIndex,
+        resolvedNode: named.resolvedNode,
         amount: this.compileAmount(ref.amount),
       };
+      // outputIndex only applies to a multi-output SubRecipe target.
+      if (named.outputIndex !== undefined) {
+        reference.outputIndex = named.outputIndex;
+      }
+      return reference;
     }
 
-    // A bare ingredient's amount is a quantity or nothing. A `remainder`
-    // ("use the rest") carries no numeric value — it is a readable label, never
-    // exposed as a quantity — so it leaves the ingredient quantity-less.
-    return {
+    // A bare ingredient (no matching name). Its amount is a quantity or nothing.
+    // A `remainder` ("use the rest") carries no numeric amount — it is display
+    // text only (no back-reference, no traversal; that is a validator concern),
+    // so its wording is folded into the description and the ingredient stays
+    // quantity-less.
+    const description =
+      ref.amount?.kind === 'remainder'
+        ? svsNormalize([ref.amount.wording, ' ', ...name])
+        : name;
+    const ingredient: Ingredient = {
       kind: 'ingredient',
-      description: name,
+      description,
       quantity: ref.amount?.kind === 'quantity' ? this.compileQuantity(ref.amount) : null,
     };
+    // An `=`-labelled ingredient carries its label (the handle later lines
+    // reference); it is registered in namedNodes and also stored on the node.
+    if (ref.label !== undefined) {
+      ingredient.label = svsToString(compileString(ref.label));
+    }
+    return ingredient;
   }
 
   /** An absent amount ("use X") means all of X; the ingredient list holds the total. */

@@ -379,62 +379,112 @@ Resume anchor. Everything below reflects the actual, verified state of
 `packages/recipe-grid` (the only package with real work). Sections above are the
 architectural charter; where they conflict with this section, this section wins.
 
-## Done and verified (tests + typecheck pass)
+## Done and verified (typecheck passes; verified by probing the pipeline, not counting)
 
 - **Grammar -> AST (stages 1+2, fused in Peggy actions):** actioned and probed for every
-  construct the two real recipes + the contrived kitchen-sink fixture use:
+  construct the real recipes + the contrived kitchen-sink fixture use:
   - ingredient quantities (integer / decimal / exact fraction via `fraction.js`), unit-less
     counts, known units (`units.ts` names, substituted for `@KNOWN_UNITS@` at generate time),
     prepositions ("of the").
-  - named sub-recipes (`:=`) and multi-output (`=`); references resolve by name.
+  - `:=` sub-recipe headings (one or more comma-separated output names) and `=` ingredient/
+    step labels. These are independent optionals on a statement (never conflated). We do NOT
+    have a concept of `:=` without a heading -- a nameless nested grouping is just a `Step`.
   - **Remainder** ("Remaining X" -> `amount.kind: 'remainder'`, case-insensitive, wording
     preserved as authored).
   - **Quoted strings** (`"..."` / `'...'`) as a literal-name escape hatch: body captured raw
     via `$()`, escapes NOT resolved, punctuation like `( , %` preserved. Bad input breaks.
   - **`{N}` interpolation** -> `InterpolatedValue` embedded in the name (scalable number,
-    literal surrounding text, braces stripped). `explicit_quantity` was removed (with orphans
-    `freeform_unit`, `static_string`) -- `{...}` is never a reference amount.
-- **`model.ts`:** the `[G2]`/`[EXT]` superset types. `RecipeScaling` is the single source of
-  truth for scaling metadata (`markdown.ts`'s `RecipeMeta` aliases it).
-- **`recipe-model.ts`:** the behaviour bridge (free functions over the decorative model
-  types): `compileString`, `svsNormalize/Equal/ToString`, `normaliseOutputName`,
-  `quantitiesHaveEqualValue` (`[DEFERRED: units]` -- same-unit only), `amountIsFullQuantityOf`,
-  `nodesEqual` (structural), `substitute` (immutable, per-node), `inferOutputName/Quantity`.
-  This is what the compiler will consume.
-- **`markdown.ts`:** `extractRecipe(md) -> { title, blocks, meta }` -- strips YAML frontmatter
-  (via `yaml`), parses scaling meta with defaults, lexes the body with `marked`.
-- **Fixtures + committed tests:** `tiffin.md` (fixed), `egg-fried-rice.md` (servings, base 2),
-  `acid-phosphate.md` (servings; exercises remainder + partial-quantity + null-amount = "all
-  of it"), `kitchen-sink.md` (contrived; quoted strings + `{N}` interpolation). Note fixtures
-  live in `packages/recipe-grid/tests/fixtures/` AND `apps/site/src/content/recipes/`; the
-  user copies to the site copy manually.
+    literal surrounding text, braces stripped).
+- **Stage 3 -- the compiler (`compiler.ts`) IS WRITTEN and verified against the Grid 2
+  turkish-pizza table.** It transcribes the AST into the `model.ts` DAG. The resolution
+  model (evolved this session, diverges from a literal `compiler.py` port):
+  - **Every ingredient appears exactly once, at its use site, carrying its quantity.** There
+    is no separate rendered ingredient list -- the `.md` ingredient-list lines are quantity
+    *declarations* that render where they are used. A bare `2 tsp honey` line registers its
+    name; a later step's `honey` reference resolves back to that one node.
+  - **Names register in one table** (`namedNodes`), by normalised name, AFTER each statement
+    compiles (so resolution is single-pass, **backward-only** -- a later line resolves an
+    earlier name; forward refs degrade silently, no validator). What registers: a `:=` output
+    (-> the SubRecipe, with an outputIndex), an `=` label (-> its node), a bare ingredient
+    declaration (-> the ingredient), and a bare `ingredient, action` line (-> the whole step
+    chain, keyed by the innermost ingredient's name, via `innermostIngredient`).
+  - **A reference is a back-pointer, not a copy.** `Reference` was generalised: its field is
+    `resolvedNode: RecipeTreeNode` (renamed from `subRecipe: SubRecipe`), so a reference can
+    point at an Ingredient, Step, or SubRecipe. `outputIndex?` applies only to multi-output
+    SubRecipe targets. No `label` on a reference (the label lives on the defining node).
+  - **Remainder on a bare ingredient** folds its wording into the description (display text
+    only; no amount, no tree traversal -- that is a validator concern).
+- **`model.ts`:** the `[G2]`/`[EXT]` superset types. `SubRecipe.hasHeading` was REMOVED
+  (vestigial -- a Grid 2 ingredient-as-SubRecipe artifact; a `:=` always has a heading).
+  `RecipeReference` (cross-file) is kept as deferred future work, unwired.
+- **`recipe-model.ts`:** the behaviour bridge. `nodesEqual`/`substitute` treat a `reference`
+  as a **leaf compared by target identity** (the DAG is cyclic via back-pointers; deep
+  recursion would loop). `hasHeading` comparison removed.
+- **`markdown.ts`:** `extractRecipe(md) -> { title, blocks, meta }` -- strips YAML
+  frontmatter, parses scaling meta with defaults, lexes the body with `marked`. Unchanged.
+- **The structure passes (`src/structure/`):** the framework-neutral render layer.
+  - **`walk.ts`** -- DAG -> `StructureNode` tree with `data-recipe-grid-*` part markers +
+    grid extents. Produces the **one fused box**: only unreferenced roots render at the top
+    level (in turkish-pizza, just the final `bake` step); every referenced tree (ingredient
+    declarations, `,action` steps, sub-recipes) is transcluded INLINE where it is used. A
+    reference transcludes its target's full structure.
+  - **`build.ts`** -- `StructureNode` -> a plain `ElementNode` `<div>` tree. A `step` emits an
+    `inputs` column wrapper then its label `<p>` (source order = reading order: inputs ->
+    action), so the flex bracket resolves and a later ARIA pass has correct order.
+  - **`parts.ts`** -- the `data-recipe-grid-*` part vocabulary (added `inputs`).
+- **`src/styles/recipe-grid.css`** -- the headless, **layout-only** flex stylesheet keyed on
+  the part markers; establishes the fused left-to-right bracket. NO colour/borders/theme --
+  the consuming app owns all appearance. Exported from `package.json`.
+
+## The layout (confirmed this session)
+
+One fused box: all ingredients on the left, processing flows right, the whole recipe is one
+tree rooted at its final step (the far-right terminal spans everything, like Grid 2's
+`rowspan`). Sub-recipe headers (`Dough`/`Topping`) and leading instructions (`preheat ...`)
+are left-anchored. References render the referenced body inline in place. Baseline shape is
+the Grid 2 `turkish_pizza.html` table; ours is flexbox, fixed-width (landscape-on-phone is
+the expected viewing mode -- responsive reflow is a rendering-layer concern, not the layout's
+job). The structure is verified correct against the real pipeline output; minor visual
+tweaks remain, easily handled once wired.
 
 ## Immediate next steps (in order)
 
-1. **Stage 3 -- the compiler** (`compiler.py` port -> a `compile(sources) -> Recipe[]`
-   function over `model.ts`, using the `recipe-model.ts` bridge). It resolves
-   Reference-vs-Ingredient via a cross-statement name table, wraps `SubRecipe` outputs,
-   inlines single-use sub-recipes, and chains `follows`. The bridge is ready; the compiler is
-   NOT written. Canonical references are checked out at `FamilyRecipe/recipe_grid/`
-   (`compiler.py`, `recipe.py`).
-2. **Wire `parse()`** in `index.ts` to return the real model. It currently returns a
-   PLACEHOLDER: `{ title, source: JSON.stringify(trees) }`. The public surface is `parse(md)
-   -> model`.
-3. **`-svelte` binding + `apps/site` render path** -- consume the model, render the flex grid.
+1. **Small structural tweaks to the layout** -- the fused render is content-correct and
+   structurally close; a few flex tweaks remain, best done against the wired `-svelte` view.
+2. **`-svelte` binding + `apps/site` render path** -- consume the built element tree +
+   headless CSS, render in-site. After this the check is a simple in-browser view of the
+   local site.
+3. **Wire `parse()` / scaling** in `index.ts`. `parse()` still returns a PLACEHOLDER
+   (`{ title, source: JSON.stringify(recipe) }`) and `compile()` hardcodes
+   `scalingType:'fixed', base:1` -- the `extractRecipe` `meta` (frontmatter scaling) is NOT
+   yet merged into the compiled `Recipe`. Deferred deliberately until there was a real render.
 
 ## Known gaps / deferred (do not treat as done)
 
+- **Scaling metadata not wired:** frontmatter `meta` (`servings`/base) is not merged into the
+  compiled `Recipe`; `compile()` defaults to `fixed`/1. Deferred (see next-steps #3).
 - **Unit conversions:** deferred; seams marked `[DEFERRED: units]`.
-- **`offset: null`** on substrings coalesced inside `{...}` (cosmetic; interior offsets lost).
-- **Scaling runtime function** (`scale(node, factor)`): the model preserves scalable values;
-  the actual runtime scaler is not written (a renderer/binding concern).
+- **Scaling runtime function** (`scale(node, factor)`): model preserves scalable values; the
+  runtime scaler is not written (a renderer/binding concern).
+- **`RecipeReference` (cross-file):** type exists, unwired; deferred future work.
+- **No DAG/structure tests yet:** verification is by probing the pipeline. AST tests exist.
+- **`offset: null`** on substrings coalesced inside `{...}` (cosmetic).
 
 ## Working notes for a resuming session
 
+- **Verify by reading the actual output and matching shapes -- do NOT do math against data.**
+  Counting nodes and comparing to an expected number is how bugs slip through. The `.md` is
+  the source of truth for what ingredients exist; the DAG output either looks like the right
+  shape or it does not. Probe the pipeline (it is the oracle); read the structures. The Grid 2
+  table got us TO our shape and is largely spent now -- we render our own DAG; compare against
+  our own dumps, not Grid 2's `<table>`.
+- **Probe scripts live in `packages/recipe-grid/debug/`** (see its README). Read-only dumps of
+  each stage (AST, DAG, walk-structure, built elements, full render). Run e.g.
+  `node debug/probe-compile.mjs`. Useful only if a session re-enters AST/DAG internals; the
+  likelier next work (real recipes + metadata) won't need them.
 - The Peggy string model is NOT the Python one. Build AST from raw `$()`-captured text; do not
-  translate Python `str`-class operations 1:1. Numbers: JS has one `number` primitive; exact
-  fractions use `fraction.js`. Probe the parser empirically (it is the oracle) rather than
-  reasoning about output.
+  translate Python `str`-class ops 1:1. Numbers: JS has one `number`; exact fractions use
+  `fraction.js`.
 - The generated parser (`generated/grammar.generated.{js,d.ts}`) is committed and shipped.
   `generate` is a maintainer-only step; after any `grammar.peggy` change it must be
   regenerated. Consumers/CI never run generate.

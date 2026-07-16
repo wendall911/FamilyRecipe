@@ -68,7 +68,7 @@ function isNumberPart(p: ScaledValueString[number]): p is Exclude<ScaledValueStr
  * value. The runtime scaler targets these spans; this pass leaves them unscaled.
  */
 function inlineContent(text: ScaledValueString): ElementNode[] {
-  return text.map((piece) =>
+  return text.map((piece): ElementNode =>
     isNumberPart(piece)
       ? {
           tag: 'span',
@@ -129,6 +129,23 @@ export function build(node: StructureNode): ElementNode {
       attrs,
       children: text !== undefined ? inlineContent(text) : [],
     };
+  }
+
+  // A step is the bracket: its inputs form a column on the left, its action
+  // (label) sits to the right. Emit inputs-then-label so DOM order matches
+  // reading order (inputs → action), which the flex layout and a later ARIA
+  // pass both rely on.
+  if (node.part === part('step')) {
+    const stepChildren: ElementNode[] = [
+      { tag: 'div', attrs: { [part('inputs')]: '' }, children: node.children.map(build) },
+    ];
+    if (node.content !== undefined) {
+      const labelEls = contentChildren(node.content);
+      if (labelEls.length > 0) {
+        stepChildren.push({ tag: 'p', attrs: {}, children: labelEls });
+      }
+    }
+    return { tag, attrs, children: stepChildren };
   }
 
   const children: ElementNode[] = [];

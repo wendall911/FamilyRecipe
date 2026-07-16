@@ -1,0 +1,105 @@
+/*
+ * recipe-grid — headless layout stylesheet.
+ *
+ * LAYOUT ONLY. This file establishes the flexbox bracket structure that turns
+ * the `data-recipe-grid-*` element tree (from build.ts) into the fused
+ * left-to-right recipe grid: ingredients on the left, processing flowing right,
+ * the whole recipe one box rooted at its final step.
+ *
+ * It paints NOTHING — no colour, borders, spacing-for-looks, or type. A
+ * consumer (e.g. the site) supplies all visual styling on top of this
+ * structure. This is the standard headless split: the package guarantees the
+ * layout; the consumer owns the appearance.
+ *
+ * Selectors key on the part markers emitted by build.ts / parts.ts:
+ *   root, grid, title, step, inputs, ingredient, sub-recipe,
+ *   sub-recipe-header, reference, quantity, scaled-value.
+ *
+ * Copyright (C) FamilyRecipe contributors. Licensed AGPL-3.0-only.
+ */
+
+/* The recipe is one box; the grid lays out its trees. */
+[data-recipe-grid-root] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+[data-recipe-grid-grid] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/*
+ * A step is the bracket unit: a row whose input column sits on the left and
+ * whose action (label) sits on the right. build.ts emits inputs-then-label, so
+ * source order already reads inputs -> action; flex row keeps that left->right.
+ */
+[data-recipe-grid-step] {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+/*
+ * The input column: a step's children stacked vertically, filling the bracket
+ * height so the action label (its sibling) aligns against the whole stack.
+ */
+[data-recipe-grid-inputs] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+/* Each input shares the column height so the bracket stays flush. */
+[data-recipe-grid-inputs] > * {
+  flex: 1 1 auto;
+}
+
+/*
+ * The action label of a step (build.ts emits it as the trailing <p>). It sits
+ * to the right of the inputs column and centres against the whole bracket —
+ * the flex equivalent of the table's rowspan.
+ */
+[data-recipe-grid-step] > p {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Leaves: an ingredient / a transcluded reference. Terminals of the bracket. */
+[data-recipe-grid-ingredient],
+[data-recipe-grid-reference] {
+  display: flex;
+  align-items: center;
+  flex: 1 0 auto;
+}
+
+[data-recipe-grid-ingredient] > p,
+[data-recipe-grid-reference] > p {
+  margin: 0;
+}
+
+/*
+ * A sub-recipe (`:=`) grouping: a labelled band wrapping its bracket. The
+ * heading is left-anchored above the sub-recipe's own bracket.
+ */
+[data-recipe-grid-sub-recipe] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+[data-recipe-grid-sub-recipe-header] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* A scaled value is inline within its text; no layout box of its own. */
+[data-recipe-grid-quantity],
+[data-recipe-grid-scaled-value] {
+  display: inline;
+}
