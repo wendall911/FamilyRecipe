@@ -1,25 +1,25 @@
 /**
  * Recipe Grid model — the object model / data structure for a parsed recipe.
  *
- * This is a **superset** of the Recipe Grid 2 semantic model (mossblaser's
- * `recipe_grid`, ported from `recipe_grid/recipe.py`). It aims for full
- * fidelity with that model, then adds FamilyRecipe-specific extensions.
+ * A divergent port of the Recipe Grid 2 semantic model: faithful where the two
+ * agree, deliberately different where this project's goals differ (e.g.
+ * Remainder replaces Grid 2's numeric Proportion; Reference is generalised to
+ * target any node). Consumes most Grid 2 recipes; not a strict superset.
+ * (Full attribution / licensing lives in the README + credits, not here.)
  *
  * Provenance is tagged per declaration:
- *   [G2]  — faithful to Recipe Grid 2 (recipe_grid, GPL-family; AGPL-compatible).
- *   [EXT] — FamilyRecipe extension, not present in Recipe Grid 2.
+ *   [G2]  — faithful to Recipe Grid 2.
+ *   [EXT] — a recipe-grid extension, not present in Recipe Grid 2.
  *
  * NOTE ON TYPES: TypeScript here is *decorative* — erased at compile time.
- * These types describe the shape of plain JS objects; they enforce nothing at
- * runtime. Grid 2's invariants (e.g. a Reference may only target a prior
- * SubRecipe root; multi-output SubRecipes may only be tree roots) are NOT
- * expressible as types and must live in a separate runtime constraint layer
- * (next design step). Discriminated unions use a `kind` tag purely for
- * runtime dispatch.
+ * These types describe the shape of plain JS objects and enforce nothing at
+ * runtime. Grid 2's invariants (a Reference may only target a prior SubRecipe
+ * root; multi-output SubRecipes may only be tree roots) are NOT enforced —
+ * validation is deferred to the future editor (an invalid recipe may break).
  *
- * NOTE ON REFERENCES: a reference is a pointer, not a guarantee. A reference to
- * a target that does not exist is still a valid reference (like a hyperlink to a
- * 404). Nothing here resolves or validates target existence.
+ * NOTE ON REFERENCES: a reference is a pointer, not a guarantee — a reference
+ * to a non-existent target is still valid (like a hyperlink to a 404).
+ * Resolution/validation happens elsewhere, not here.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
