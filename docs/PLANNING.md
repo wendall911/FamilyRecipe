@@ -57,125 +57,6 @@ Kraft Dinner
 ```
 ![kd-example](https://github.com/TheSonOfThomp/recipe-parser/blob/master/kd-example.png)
 
-## The Plan
-  1. Utilize Recipe Grid 2 MD format, parsed by a TypeScript implementation of the
-     recipe_grid parser (reference: https://github.com/mossblaser/recipe_grid). We
-     replicate the *input* grammar only; the output is ours. Not a runtime Python
-     dependency.
-     1. The parser package (`@wendall911/recipe-grid`) is framework-agnostic: its only
-        public surface is `parse(md) -> model`. The model (the nested recipe tree) is
-        THE interface. No `render()` in this package -- rendering is a separate package.
-     1. **Parser engine: Peggy.** The parser is built on Peggy (the maintained
-        PEG.js successor), not a hand-written parser. recipe_grid's own parser is
-        a PEG: `grammar.peg` (pure grammar) consumed by `peggie` (Python), with
-        semantics in a separate `ast.py` transformer. We mirror that split in
-        TypeScript:
-        - Port `grammar.peg` -> a Peggy grammar (same ~20 rules; peggie's
-          `r"..."` regex-terminal syntax becomes Peggy regex/char-class rules).
-        - Port `ast.py`'s `RecipeTransformer` -> a transformer producing
-          `model.ts`.
-        - Indentation-sensitivity (peggie is indentation-aware) is expressed in
-          Peggy via semantic predicates over an indent-stack held in the
-          grammar's initializer block -- the standard PEG approach (used by
-          CoffeeScript/Jade grammars), not a special library. INDENT/DEDENT
-          logic that a Python lexer emits as tokens is done inline via predicates
-          here.
-
-        **Three-stage pipeline** (mirrors recipe_grid; kept distinct for
-        maintainability and to keep the [EXT] superset extensible per-stage):
-        1. **Grammar (Peggy)** -- port of `grammar.peg`. Peggy parses source
-           into a raw parse tree. Syntax only.
-        2. **AST** -- port of `parser/ast.py`. A transformer turns the raw parse
-           tree into a syntactic AST (`Recipe/Stmt/Expr/Step/Reference/Quantity/
-           Proportion/String/...`). This AST is the stable seam between parser
-           and compiler.
-        3. **Compiler -> model** -- port of `compiler.py`. Resolves names
-           (Reference vs Ingredient via a cross-statement name table), wraps
-           `SubRecipe` outputs, inlines single-use sub-recipes, and chains
-           `follows`. Output is the `model.ts` DAG.
-
-        The AST stage is load-bearing, not ceremony: name resolution needs the
-        whole parsed document before it can decide Reference-vs-Ingredient, so it
-        cannot be folded into per-rule grammar actions. Collapsing the stages
-        couples the compiler to Peggy's tree shape and makes future Grid-2-plus
-        extensions harder to reason about; new syntax lands in stage 1+2, new
-        semantics in stage 3, with the AST as the contract between them.
-
-        Reinventing a PEG engine is out of scope; Peggy is the engine, the
-        grammar and transformer are ours. References:
-        - Peggy docs: https://peggyjs.org/documentation.html
-        - Peggy repo: https://github.com/peggyjs/peggy
-        - Peggy.js tutorial (Tomassetti): https://tomassetti.me/a-peggy-js-tutorial/
-        - Adams, "Principled parsing for indentation-sensitive languages":
-          https://www.researchgate.net/publication/268466333
-        - Indentation-in-PEG precedent (CoffeeScript/Jade, PEG.js group):
-          https://groups.google.com/g/pegjs/c/Votinwk5g7c
-  1. The framework-neutral grid -- layout, base CSS, ARIA/semantic structure -- lives in
-     the core `@wendall911/recipe-grid` alongside the parser. The Svelte binding
-     (`@wendall911/recipe-grid-svelte`) is a thin adapter that renders that structure as
-     headless Svelte components (bits-ui-style, `data-recipe-grid-*`), NO theme. Consumers
-     supply colors/fonts/spacing.
-     1. Both `apps/site` and `apps/editor` consume the Svelte binding; a future `-react`
-        binding reuses the same core layout/a11y. One structure, one a11y implementation,
-        one layout -- themed differently per app.
-  1. `apps/site` (Svelte 5, runes) generates the static website.
-     1. Recipe `.md` files are content, discovered at build time via `import.meta.glob`.
-        One `.md` file per recipe; the model drives the shared renderer components.
-     1. State management uses Svelte 5 runes (`$state`, `$derived`, `$effect`). Runes
-        are the default in Svelte 5 -- no `svelte-options` opt-in, and no Redux.
-     1. The index globs the recipe `.md` files and reads metadata (title, etc.) from
-        each parsed model.
-  1. Build via CI (Node). No Python step at runtime -- the parser is ported to TypeScript.
-
-### Discover recipe content with `import.meta.glob`
-Recipes are `.md` files under content, loaded as raw strings and fed to the parser:
-
-```svelte
-<script lang="ts">
-    import { parse } from '@wendall911/recipe-grid';
-
-    // eager: raw text of every recipe .md, keyed by path
-    const files = import.meta.glob('/src/content/recipes/*.md', {
-        eager: true,
-        query: '?raw',
-        import: 'default',
-    }) as Record<string, string>;
-
-    const recipes = Object.entries(files).map(([path, md]) => ({
-        slug: path.split('/').pop()!.replace(/\.md$/, ''),
-        model: parse(md),
-    }));
-</script>
-```
-
-### Render a parsed recipe (Svelte binding + app theme)
-The core owns structure/a11y/layout; the Svelte binding renders it; the app owns theme.
-The app goes through the binding only -- it never imports the core parser directly. It
-loads the model via the binding's `loadRecipe`, and themes the emitted markup via the
-core's stable `data-recipe-grid-*` hooks:
-
-```svelte
-<!-- apps/site: consumes the Svelte binding only -->
-<script lang="ts">
-    import { Recipe, loadRecipe } from '@wendall911/recipe-grid-svelte';
-    import '@wendall911/recipe-grid-svelte/styles.css'; // structural CSS (from the core)
-
-    let { md }: { md: string } = $props();
-    const model = $derived(loadRecipe(md));
-</script>
-
-<!-- The binding renders the core's structure + a11y + layout; app CSS themes it -->
-<Recipe.Root {model}>
-    <Recipe.Title />
-    <Recipe.Grid />
-</Recipe.Root>
-```
-## Card Layout
-- https://flexboxfroggy.com/
-- https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/
-
----
-
 # Architecture
 
 ## Two packages, two apps, one monorepo
@@ -195,7 +76,7 @@ publishing is a later, optional step.
 
 1. **`packages/recipe-grid`** = `@wendall911/recipe-grid` -- the framework-agnostic
    **core**. Pure TypeScript, no framework binding. Ports the Recipe Grid 2 *input
-   grammar* from recipe_grid (Python) via `parse(md) -> model`, AND owns everything
+   grammar* from recipe_grid (Python), AND owns everything
    framework-neutral about presenting a recipe: the grid **layout**, the structural
    **base CSS** (the flex that makes the recipe grid resolve), and the **ARIA**/semantic
    structure. It exposes the renderable grid structure + stable `data-*` hooks; framework
@@ -226,34 +107,14 @@ a framework-neutral form. A framework binding (`-svelte` now, a future `-react`)
 thin adapter over that shared core -- so adding a framework does not re-implement layout,
 base CSS, or ARIA, and both apps share one implementation.
 
-## File layout
-
-```
-FamilyRecipe/
-├── pnpm-workspace.yaml           # declares packages/* and apps/*
-├── package.json                  # root, private
-├── packages/
-│   ├── recipe-grid/              # @wendall911/recipe-grid (core: parser + layout/CSS/ARIA)
-│   └── recipe-grid-svelte/       # @wendall911/recipe-grid-svelte (Svelte binding)
-└── apps/
-    ├── site/                     # static consumer
-    │   └── src/
-    │       └── content/
-    │           └── recipes/      # *.md, globbed by recipe/[slug]
-    └── editor/                   # later: authenticated editor + live preview
-```
-
-Recipe `.md` files live under `apps/site/src/content/recipes/` because they are content.
-The `recipe/[slug]` route loads the raw `.md`, parses it, and renders via the shared
-Svelte renderer.
-
 ## Data model
 
 The object model lives in `packages/recipe-grid/src/model.ts` and is the interface the
-renderer consumes. It is a **superset of the Recipe Grid 2 semantic model** (mossblaser's
-`recipe_grid`, ported from `recipe_grid/recipe.py`). Recipe Grid 2 is checked out under
-`FamilyRecipe/recipe_grid/` as a comprehension reference (AGPL-compatible; clean-room
-reimplementation of the *input grammar* and model, not a source port).
+renderer consumes. It began as a superset of the Recipe Grid 2 semantic model (mossblaser's
+`recipe_grid`) and has since diverged into its own fork -- faithful where the two agree,
+deliberately different where this project's goals differ. A clean-room reimplementation of
+the *input grammar* and model, not a source port. Recipe Grid 2 is a reference, not a
+canonical source.
 
 Provenance is tagged per declaration in the model file:
 
@@ -414,7 +275,7 @@ architectural charter; where they conflict with this section, this section wins.
     SubRecipe targets. No `label` on a reference (the label lives on the defining node).
   - **Remainder on a bare ingredient** folds its wording into the description (display text
     only; no amount, no tree traversal -- that is a validator concern).
-- **`model.ts`:** the `[G2]`/`[EXT]` superset types. `SubRecipe.hasHeading` was REMOVED
+- **`model.ts`:** the `[G2]`/`[EXT]` types. `SubRecipe.hasHeading` was REMOVED
   (vestigial -- a Grid 2 ingredient-as-SubRecipe artifact; a `:=` always has a heading).
   `RecipeReference` (cross-file) is kept as deferred future work, unwired.
 - **`recipe-model.ts`:** the behaviour bridge. `nodesEqual`/`substitute` treat a `reference`
@@ -449,15 +310,15 @@ tweaks remain, easily handled once wired.
 
 ## Immediate next steps (in order)
 
-1. **Small structural tweaks to the layout** -- the fused render is content-correct and
-   structurally close; a few flex tweaks remain, best done against the wired `-svelte` view.
-2. **`-svelte` binding + `apps/site` render path** -- consume the built element tree +
-   headless CSS, render in-site. After this the check is a simple in-browser view of the
-   local site.
-3. **Wire `parse()` / scaling** in `index.ts`. `parse()` still returns a PLACEHOLDER
-   (`{ title, source: JSON.stringify(recipe) }`) and `compile()` hardcodes
-   `scalingType:'fixed', base:1` -- the `extractRecipe` `meta` (frontmatter scaling) is NOT
-   yet merged into the compiled `Recipe`. Deferred deliberately until there was a real render.
+1. **Derive a schema for the grammar/model** -- orients a session to the input shape
+   without an AST/DAG walkthrough.
+2. **Wire `parse()`** in `index.ts` to return the real consumable (DOM chunk + metadata).
+   Currently returns a PLACEHOLDER (`{ title, source: JSON.stringify(recipe) }`); `compile()`
+   hardcodes `scalingType:'fixed', base:1` and the `extractRecipe` `meta` (frontmatter) is
+   not yet merged into the compiled `Recipe`.
+3. **`-svelte` binding + `apps/site` render path** -- consume the built element tree +
+   headless CSS, render in-site.
+4. **Small structural tweaks to the layout** -- flex tweaks against the wired `-svelte` view.
 
 ## Known gaps / deferred (do not treat as done)
 
