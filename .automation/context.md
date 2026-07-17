@@ -12,6 +12,7 @@ FamilyRecipe/
 ├── packages/
 │   ├── recipe-grid/          # headless, mobile-first, a11y-first core. A compiler:
 │   │                         #   markdown -> AST (PEG/Peggy) -> DAG model -> render structure.
+│   │                         #   Format/DAG quick-ref: docs/RECIPE-FORMAT.md
 │   │                         #   Exports two things: the render structure (DOM chunk + metadata)
 │   │                         #   and the headless CSS. both core, not optional. Scaling and unit
 │   │                         #   conversion are opt-in, separately-exported extensions. Model is internal.
