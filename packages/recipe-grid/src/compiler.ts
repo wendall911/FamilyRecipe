@@ -14,6 +14,7 @@ import type {
   Ingredient,
   Quantity,
   Recipe,
+  RecipeScaling,
   RecipeTreeNode,
   Reference,
   Step,
@@ -58,15 +59,17 @@ class RecipeCompiler {
   /** Known names (`:=` outputs and `=` labels) → their node, by normalised name. */
   private namedNodes = new Map<string, NamedNode>();
 
-  compile(ast: AstRecipe): Recipe {
+  compile(ast: AstRecipe, meta: RecipeScaling): Recipe {
     this.namedNodes = new Map();
     return {
       recipeTrees: ast.stmts.map((stmt) => this.compileStmt(stmt)),
       follows: null,
-      // Scaling comes from frontmatter (markdown.ts); index.ts merges the
-      // extracted RecipeScaling when wiring. Default = a frontmatter-less recipe.
-      scalingType: 'fixed',
-      base: 1,
+      // Scaling metadata (from the YAML frontmatter, extracted by markdown.ts)
+      // is recipe data and belongs on the Recipe; the compiler stamps whatever
+      // RecipeScaling it is handed. Resolving default vs. configured values is
+      // the extraction layer's job, not the compiler's.
+      scalingType: meta.scalingType,
+      base: meta.base,
     };
   }
 
@@ -223,6 +226,6 @@ class RecipeCompiler {
  * Compile one parsed recipe (a grammar AST `Recipe`) into a `model.ts` `Recipe`.
  * One file is one recipe; parsing is the caller's concern, this consumes AST.
  */
-export function compile(ast: AstRecipe): Recipe {
-  return new RecipeCompiler().compile(ast);
+export function compile(ast: AstRecipe, meta: RecipeScaling): Recipe {
+  return new RecipeCompiler().compile(ast, meta);
 }

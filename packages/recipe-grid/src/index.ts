@@ -8,10 +8,10 @@ export interface RecipeModel {
 }
 
 export function parse(md: string): RecipeModel {
-    const { title, blocks } = extractRecipe(md);
+    const { title, blocks, meta } = extractRecipe(md);
     // Placeholder surface: the compiled DAG has no layout yet, so it is
     // stringified for visibility. The real model/render seam comes later.
-    const recipe = compile(parseGrammar(blocks[0]));
+    const recipe = compile(parseGrammar(blocks[0]), meta);
     return {
         title: title ?? '',
         source: JSON.stringify(recipe, null, 2),
