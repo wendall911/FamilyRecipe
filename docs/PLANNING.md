@@ -308,22 +308,34 @@ the expected viewing mode -- responsive reflow is a rendering-layer concern, not
 job). The structure is verified correct against the real pipeline output; minor visual
 tweaks remain, easily handled once wired.
 
-## Immediate next steps (in order)
+## Immediate next steps
 
-1. **Derive a schema for the grammar/model** -- orients a session to the input shape
-   without an AST/DAG walkthrough.
-2. **Wire `parse()`** in `index.ts` to return the real consumable (DOM chunk + metadata).
-   Currently returns a PLACEHOLDER (`{ title, source: JSON.stringify(recipe) }`); `compile()`
-   hardcodes `scalingType:'fixed', base:1` and the `extractRecipe` `meta` (frontmatter) is
-   not yet merged into the compiled `Recipe`.
-3. **`-svelte` binding + `apps/site` render path** -- consume the built element tree +
-   headless CSS, render in-site.
-4. **Small structural tweaks to the layout** -- flex tweaks against the wired `-svelte` view.
+Two defined pieces of work land **before** wiring `parse()`:
+
+1. **Required recipe id/slug (metadata).** An explicit, intrinsic recipe
+   identifier declared in frontmatter (declared, not inferred from title/filename;
+   the `.md` may live without a filename, e.g. in a database). This is the identity
+   a cross-recipe reference resolves to. Wiring metadata through correctly here also
+   fixes the default-value bug in-flow: `compile()` currently emits `fixed`/1 instead
+   of consuming the real `scalingType`/`base` from the AST, so id/slug + scaling ride
+   the same corrected meta-merge. Metadata is critical infrastructure, not a
+   nice-to-have.
+2. **External recipe reference.** A markdown-link surface with a bare id target
+   (`[Dough](dough)`) mapped through `marked`'s `link` token to a `RecipeReference`
+   AST node, rendered as a data-bound `<a>`. Depends on #1 (it resolves to an id).
+   Unresolved is valid (pointer, not guarantee); how a resolved reference is wired
+   (route, sibling, etc.) is the consumer's call.
+
+Then **wire `parse()`** in `index.ts` to return the real consumable (DOM chunk +
+metadata); it currently returns a PLACEHOLDER (`{ title, source:
+JSON.stringify(recipe) }`). Rather than stub, the `-svelte` binding + `apps/site`
+render path get wired to consume real `parse()` output on that pass, followed by
+small flex/layout tweaks against the live rendered view.
 
 ## Known gaps / deferred (do not treat as done)
 
 - **Scaling metadata not wired:** frontmatter `meta` (`servings`/base) is not merged into the
-  compiled `Recipe`; `compile()` defaults to `fixed`/1. Deferred (see next-steps #3).
+  compiled `Recipe`; `compile()` defaults to `fixed`/1. Deferred.
 - **Unit conversions:** deferred; seams marked `[DEFERRED: units]`.
 - **Scaling runtime function** (`scale(node, factor)`): model preserves scalable values; the
   runtime scaler is not written (a renderer/binding concern).
