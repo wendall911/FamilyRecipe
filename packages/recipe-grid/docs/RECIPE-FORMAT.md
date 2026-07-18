@@ -21,6 +21,7 @@ lexed. Declares how the recipe scales; applied at runtime.
 |---------------|----------------------------|---------------------------------------|
 | `scalingType` | `servings` \| `fixed`      | required when frontmatter is present  |
 | `base`        | number                     | base to scale from; default `1`       |
+| `slug`        | string                     | recipe id; defaults to a slug of the title  |
 
 Absent frontmatter defaults to `{ scalingType: 'fixed', base: 1 }`, so a recipe
 with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`;
@@ -37,6 +38,7 @@ The body is an indented block. Each construct maps to a model node:
 | `2 tsp honey`                 | `Ingredient` {quantity, description} | a quantity line; a leaf node                            |
 | `honey, whipped`              | `Step` {inputs}                    | a quantity line **with a trailing action** -> a Step     |
 | `label = value`               | the node the `value` produces, carrying `label` | binds a `label` (the identifier later references resolve to) to the produced node (`Ingredient`, or `Step` if the value has a trailing action). The `label` rides on that produced node and **drives its output markup** (e.g. `red peppers = 150g ..., finely chopped` -> label `red peppers` on the **Step**) |
+| `[Dough](pizza-dough)`        | `RecipeReference` {targetSlug}     | **cross-file** reference; the sibling/alternative to `label` -- a bare markdown link, self-naming so no `=`. Binds an ingredient or step to an external recipe (href = target slug; link text = the local name later lines resolve to). A pointer; the target may not exist |
 | `Foo :=` heading              | `SubRecipe` {outputNames}          | a named region; its title row spans whatever it contains (steps, ingredients, nested sub-recipes; no restriction), and its output is referenced by later lines |
 | `action(a, b)` / `x, action`  | `Step` {inputs}                    | the combiner                                             |
 | bare later use of a label     | `Reference` {resolvedNode ->}      | **the back-edge that makes it a DAG**                    |
