@@ -259,19 +259,21 @@ export type Recipe = {
  */
 export type RecipeReference = {
   kind: "recipeReference";
-  /** [EXT] Identity (slug) of the target recipe file. */
-  targetSlug: string;
-  /** [EXT] Which named output of the target, if it has several. */
-  outputName?: ScaledValueString;
-  /** [EXT] How much of the target to use, if specified. */
-  amount?: Amount;
   /**
-   * [G2] The author's recipe-local mapping label from an `ingredient = X`
-   * binding, when the labeled node is a cross-recipe link. The handle later
-   * lines reference. Never surfaces as display; distinct from a canonical
-   * schema key. See {@link Ingredient.label}.
+   * [EXT] The link text: both the displayed name and the handle later lines
+   * resolve to. A bare markdown link is self-defining, so there is no separate
+   * `label` (which exists elsewhere only to give a node an internal id distinct
+   * from its display text — a split this node does not have).
    */
-  label?: string;
+  name: string;
+  /** [EXT] Identity (slug) of the target recipe file — the link destination. */
+  targetSlug: string;
+  /**
+   * [EXT] The markdown link title (the third `[text](slug "title")` token), when
+   * authored. Carried through the DAG so the render side constructs the
+   * `<a title="...">`. Optional: a bare link has none.
+   */
+  title?: string;
 };
 
 /**

@@ -95,8 +95,29 @@ export interface Reference {
     label?: String;
 }
 
-/** An expression: a step or a reference. */
-export type Expr = Step | Reference;
+/**
+ * A cross-file reference — a bare markdown link, e.g. `[Dough](pizza-dough)`
+ * or `[Dough](pizza-dough "Dad's pizza dough")`. Points at another recipe by
+ * slug. Its bodies are captured raw (plain strings, not {@link String} nodes),
+ * matching the markdown-link surface: self-naming, so the link text is both the
+ * display name and the reference handle. A pointer only — the target may not
+ * exist; that (and slug validity) is a separate validation concern, not the
+ * parser's.
+ */
+export interface ExternalReference {
+    kind: 'externalReference';
+    /** Source offset (in chars). */
+    offset: number;
+    /** The link text: display name and reference handle. */
+    name: string;
+    /** The link destination: the target recipe's slug. */
+    targetSlug: string;
+    /** The markdown link title (quotes stripped), when authored; else absent. */
+    title?: string;
+}
+
+/** An expression: a step, a reference, or a cross-file external reference. */
+export type Expr = Step | Reference | ExternalReference;
 
 /** A statement in a recipe. */
 export interface Stmt {

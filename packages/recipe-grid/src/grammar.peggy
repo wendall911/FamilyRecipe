@@ -63,9 +63,43 @@ output
   = string
 
 expr
-  = step
+  = external_reference
+  / step
   / reference
   / "(" sp? inner:ltr_shorthand sp? ")" { return inner; }
+
+/*
+ * A bare markdown link, e.g. "[Dough](pizza-dough)" — a cross-file reference to
+ * another recipe by identity. Tried before `step`/`reference` so a link is not
+ * globbed as literal ingredient text. Self-naming: the link text is the local
+ * name later lines resolve to; the href is the target recipe id. Both bodies
+ * are captured raw — validation (is the slug real, does the target exist) is a
+ * separate concern against the full AST, not the parser's: garbage in, garbage
+ * out. The sibling/alternative to `label`; like `label`, it may sit on an
+ * ingredient or a step.
+ */
+external_reference
+  = "[" name:$([^\]\r\n]+) "]" hsp?
+    "(" target:$([^)"'\r\n \t]+) titlePart:(hsp? t:link_title { return t; })? ")" {
+      return {
+        kind: 'externalReference',
+        offset: location().start.offset,
+        name,
+        targetSlug: target,
+        ...(titlePart !== null ? { title: titlePart } : {}),
+      };
+    }
+
+/*
+ * The optional markdown link title — the quoted third token in
+ * "[text](slug \"title\")". Quotes matched outside $() so they are stripped;
+ * the raw inner text is returned (a plain string, matching name/targetSlug —
+ * not a String node). CommonMark also permits a (…)-wrapped title; that form
+ * is intentionally not supported here.
+ */
+link_title
+  = '"' t:$([^"\r\n]*) '"' { return t; }
+  / "'" t:$([^'\r\n]*) "'" { return t; }
 
 ltr_shorthand
   = first:expr steps:(hsp? "," hsp? a:action { return a; })* {
