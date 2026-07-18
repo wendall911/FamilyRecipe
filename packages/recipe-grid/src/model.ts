@@ -212,13 +212,34 @@ export type RecipeScaling = {
   base?: RecipeNumber;
 };
 
+/**
+ * [EXT] Recipe-level metadata, resolved by the markdown/extraction layer and
+ * handed to the compiler as one bundle; the compiler stamps the relevant fields
+ * onto the {@link Recipe}. Grows over time (scaling now; room for further
+ * recipe-level data such as nutrition). This is the single source of truth for
+ * its shape; the markdown layer references it.
+ */
+export type RecipeMeta = RecipeScaling & {
+  /**
+   * [EXT] The recipe id: the authored frontmatter value if present, else a slug
+   * derived from the title. Always resolved to a concrete string by the
+   * extraction layer, so it is required here.
+   */
+  slug: string;
+};
+
 export type Recipe = {
   /** [G2] The recipe tree roots. */
   recipeTrees: RecipeTreeNode[];
   /** [G2] Prior recipe section this one follows, or null. */
   follows: Recipe | null;
-  /** [EXT] This recipe's own identity, for cross-file references (see below). */
-  slug?: string;
+  /**
+   * [EXT] This recipe's own identity (the recipe id), for cross-file references
+   * (see below). Always resolved by the extraction layer (authored in
+   * frontmatter, else derived from the title) and stamped by the compiler, so
+   * it is always present on a compiled Recipe.
+   */
+  slug: string;
 } & RecipeScaling;
 
 // ─────────────────────────────────────────────────────────────────────────────

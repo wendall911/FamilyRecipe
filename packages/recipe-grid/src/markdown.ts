@@ -1,14 +1,12 @@
 import { marked, type Token, type Tokens } from 'marked';
 import { parse as parseYaml } from 'yaml';
 
-import type { RecipeScaling } from './model.ts';
+import type { RecipeMeta } from './model.ts';
 
-/**
- * [EXT] Recipe-level scaling metadata, declared in the YAML frontmatter block.
- * The shape is owned by {@link RecipeScaling} in model.ts (single source of
- * truth); this alias names it in the markdown/extraction layer.
- */
-export type RecipeMeta = RecipeScaling;
+// RecipeMeta (the resolved recipe-level metadata bundle) is owned by model.ts;
+// re-exported here so existing consumers importing it from the markdown layer
+// keep working.
+export type { RecipeMeta };
 
 export interface ExtractedRecipe {
     title: string | null;
@@ -18,6 +16,21 @@ export interface ExtractedRecipe {
 
 const RECIPE_LANGS = new Set(['', 'recipe', 'new-recipe']);
 const SCALING_TYPES = new Set(['servings', 'fixed']);
+
+/*
+ * [EXT] Derive a URL-safe slug from a plain string (the recipe title). A boring,
+ * deterministic normalisation: lower-case, drop anything that is not a letter,
+ * digit, whitespace or hyphen, then collapse runs of whitespace/hyphen into a
+ * single '-' and trim leading/trailing '-'. Used only as the DEFAULT recipe id
+ * when the frontmatter does not declare an explicit `slug`.
+ */
+export function slugify(input: string): string {
+    return input
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/[\s-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
 
 function isRecipeCode(token: Token): token is Tokens.Code {
     if (token.type !== 'code') return false;
@@ -45,7 +58,7 @@ function splitFrontmatter(md: string): { yaml: string | null; body: string } {
  * RecipeNumber, and so currently falls back to 1 — fraction bases are a later
  * concern.
  */
-function toMeta(data: unknown): RecipeMeta {
+function toMeta(data: unknown, title: string): RecipeMeta {
     const record = (data ?? {}) as Record<string, unknown>;
     const rawType = record.scalingType;
     const scalingType =
@@ -53,12 +66,14 @@ function toMeta(data: unknown): RecipeMeta {
             ? (rawType as 'servings' | 'fixed')
             : 'fixed';
     const base = typeof record.base === 'number' ? record.base : 1;
-    return { scalingType, base };
+    // slug is the recipe id: the authored frontmatter value if present, else a
+    // slug derived from the title. Always resolved to a concrete string here.
+    const slug = typeof record.slug === 'string' && record.slug !== '' ? record.slug : slugify(title);
+    return { scalingType, base, slug };
 }
 
 export function extractRecipe(md: string): ExtractedRecipe {
     const { yaml, body } = splitFrontmatter(md);
-    const meta = toMeta(yaml === null ? null : parseYaml(yaml));
 
     const tokens = marked.lexer(body);
 
@@ -72,6 +87,10 @@ export function extractRecipe(md: string): ExtractedRecipe {
             blocks.push(token.text);
         }
     }
+
+    // Metadata is resolved after the title is known: the slug default derives
+    // from the title, so title folds into the meta bundle here.
+    const meta = toMeta(yaml === null ? null : parseYaml(yaml), title ?? '');
 
     return { title, blocks, meta };
 }

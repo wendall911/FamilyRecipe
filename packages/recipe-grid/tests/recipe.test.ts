@@ -71,10 +71,10 @@ const nameText = (r: ReferenceNode): string => r.name.substrings.map((s) => s.st
 // acid-phosphate is the structurally-correct case: one "560ml distilled water"
 // ingredient, referenced partially (210ml) then by remainder. It exercises the
 // remainder amount, a partial-quantity reference, and a null amount ("all of it").
-test('acid-phosphate: frontmatter scaling metadata is extracted', () => {
+test('acid-phosphate: frontmatter metadata is extracted', () => {
     const { title, meta } = extractRecipe(fixture('acid-phosphate.md'));
     assert.equal(title, 'Acid Phosphate');
-    assert.deepEqual(meta, { scalingType: 'servings', base: 1 });
+    assert.deepEqual(meta, { scalingType: 'servings', base: 1, slug: 'acid-phosphate' });
 });
 
 test('acid-phosphate block parses to a Recipe of 6 statements', () => {

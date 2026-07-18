@@ -1,6 +1,7 @@
 ---
 scalingType: servings
 base: 1
+slug: acid-phosphate
 ---
 Acid Phosphate
 ==============
