@@ -16,7 +16,7 @@ Red Pepper and Lamb Lahmacun (Turkish Pizza)
     1 tsp red pepper flakes
     1 tsp sumac
     coriander = {1 handful} fresh coriander or parsley, roughly chopped
-    [dough](pizza-dough)
+    [dough](pizza-dough "Dad's pizza dough.")
 
     Topping := mix(
         lamb mince,
