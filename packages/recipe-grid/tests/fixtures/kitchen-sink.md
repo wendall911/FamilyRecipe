@@ -20,6 +20,10 @@ down how each is handled. Do not cook this.
     100ml cream
     2 tbsp sugar
     red peppers = 150g roasted red peppers from jar, finely chopped
+    [Pizza Dough](pizza-dough)
+    [Roux](roux "Dad's basic roux")
+    [Stock](vegetable-stock 'homemade stock')
+    [Pastry](sweet-pastry), rolled thin
 
     Dough := knead(
       200g "plain flour (12% protein)",

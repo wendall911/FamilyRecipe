@@ -200,3 +200,38 @@ test('kitchen-sink: `Remaining` on a deeply nested reference is a remainder amou
     assert.equal(rem.kind, 'remainder');
     assert.equal(rem.wording, 'Remaining');
 });
+
+interface ExternalRefNode {
+    kind: 'externalReference';
+    name: string;
+    targetSlug: string;
+    title?: string;
+}
+
+test('kitchen-sink: external reference forms (bare, "-title, \'-title, and as a step)', () => {
+    const { blocks } = extractRecipe(fixture('kitchen-sink.md'));
+    const stmts = (parse(blocks[0]) as { stmts: StmtNode[] }).stmts;
+
+    // Bare link: name + slug, no title.
+    const bare = stmts[11].expr as ExternalRefNode;
+    assert.deepEqual(
+        { kind: bare.kind, name: bare.name, targetSlug: bare.targetSlug, title: bare.title },
+        { kind: 'externalReference', name: 'Pizza Dough', targetSlug: 'pizza-dough', title: undefined },
+    );
+
+    // Double-quoted title (apostrophe inside preserved).
+    const dq = stmts[12].expr as ExternalRefNode;
+    assert.equal(dq.title, "Dad's basic roux");
+
+    // Single-quoted title.
+    const sq = stmts[13].expr as ExternalRefNode;
+    assert.equal(sq.title, 'homemade stock');
+
+    // As a step: the `, action` fold wraps the external reference as the step's input.
+    const step = stmts[14].expr as StepNode;
+    assert.equal(step.kind, 'step');
+    assert.equal(substringsText(step.name.substrings), 'rolled thin');
+    const input = step.inputs[0] as ExternalRefNode;
+    assert.equal(input.kind, 'externalReference');
+    assert.equal(input.targetSlug, 'sweet-pastry');
+});
