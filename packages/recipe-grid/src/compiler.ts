@@ -15,6 +15,7 @@ import type {
   Quantity,
   Recipe,
   RecipeMeta,
+  RecipeReference,
   RecipeTreeNode,
   Reference,
   Step,
@@ -22,6 +23,7 @@ import type {
 } from './model.ts';
 
 import type {
+  ExternalReference as AstExternalReference,
   Expr as AstExpr,
   Quantity as AstQuantity,
   Recipe as AstRecipe,
@@ -91,6 +93,19 @@ class RecipeCompiler {
   private compileStmt(stmt: AstStmt): RecipeTreeNode {
     const tree = this.compileExpr(stmt.expr);
 
+    // A cross-file link (an `externalReference` statement → a recipeReference
+    // node) is a self-contained outward pointer: it renders itself as an <a> and
+    // carries no `label` (its markdown-link shape already holds display text,
+    // href, and title). Unlike Ingredient and Step, it is never a
+    // name-registration target and never a Reference back-edge, so it must not
+    // enter the label/name ladder below — return it as its own root. Guarding on
+    // `stmt.expr.kind` (not `tree.kind`) is deliberate: it narrows `stmt.expr`,
+    // so the later `stmt.expr.label` access is typed against only the AST kinds
+    // that have a `label` — `externalReference` has none.
+    if (stmt.expr.kind === 'externalReference') {
+      return tree;
+    }
+
     if (stmt.named) {
       const outputNames = (stmt.outputs ?? []).map((o) => compileString(o));
 
@@ -143,9 +158,32 @@ class RecipeCompiler {
   }
 
   /** Compile any expression node, recursing through nested steps and inputs. */
-  private compileExpr(expr: AstExpr): Step | Reference | Ingredient {
+  private compileExpr(expr: AstExpr): Step | Reference | Ingredient | RecipeReference {
     if (expr.kind === 'step') return this.compileStep(expr);
+    if (expr.kind === 'externalReference') return this.compileExternalReference(expr);
     return this.compileReference(expr);
+  }
+
+  /**
+   * A cross-file link (`[Dough](pizza-dough "…")`) lowers to a standalone
+   * RecipeReference leaf carrying name / targetSlug / title straight through —
+   * the render side turns it into an `<a href=slug [title]>name</a>`. It
+   * registers NO resolvable name: it is an outward pointer, not an in-document
+   * node to be shared, so it never becomes a Reference back-edge (that is the
+   * distinct intra-file mechanism). Whether the slug resolves (a live recipe or
+   * a 404) is a site/index concern, not the compiler's — a dangling link is a
+   * valid DAG.
+   */
+  private compileExternalReference(ref: AstExternalReference): RecipeReference {
+    const node: RecipeReference = {
+      kind: 'recipeReference',
+      name: ref.name,
+      targetSlug: ref.targetSlug,
+    };
+    if (ref.title !== undefined) {
+      node.title = ref.title;
+    }
+    return node;
   }
 
   private compileStep(step: AstStep): Step {
