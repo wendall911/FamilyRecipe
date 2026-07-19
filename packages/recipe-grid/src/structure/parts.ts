@@ -9,7 +9,9 @@
  * (a runtime binding that rescales reactively, or a static renderer that emits
  * each scale ahead of time) can compute scaled output from the same markup.
  *
- * This module names things only; it emits no DOM and computes no values.
+ * This module names things only: the part markers, the machine-readable data
+ * attributes, and the semantic HTML tag each part renders as. It emits no DOM
+ * and computes no values.
  */
 
 const COMPONENT = 'recipe-grid';
@@ -64,6 +66,66 @@ export function part(name: RecipeGridPart): `data-${typeof COMPONENT}-${RecipeGr
 export const PART_ATTRS = Object.fromEntries(
     RECIPE_GRID_PARTS.map((p) => [p, part(p)]),
 ) as { readonly [P in RecipeGridPart]: `data-${typeof COMPONENT}-${P}` };
+
+/**
+ * The suggested component name a framework binding uses for a part: the kebab
+ * part title-cased to PascalCase (`recipe-reference` -> `RecipeReference`,
+ * `sub-recipe-header` -> `SubRecipeHeader`, `scaled-value` -> `ScaledValue`).
+ *
+ * This is a naming convention, not a strict part-to-model mapping. Parts are not
+ * 1:1 with the model concepts (`title`, `inputs`, `sub-recipe-header` are render
+ * structure, not model nodes), so every part gets a suggested name here even
+ * when it has no model concept. It is derived, not a hand table: the rule (kebab
+ * -> Pascal) is the stable thing, so a new part is covered without an edit, and
+ * the derived name for a part that IS a model concept coincides with that
+ * concept's name (`sub-recipe` -> `SubRecipe`) without this module referencing
+ * the model. A binding (`-svelte`, `-react`, `-vue`) reads this to name its
+ * components the same way across frameworks, without digging into internals.
+ */
+export function componentNameForPart(name: RecipeGridPart): string {
+    return name
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
+}
+
+/**
+ * Every part's suggested binding component name, keyed by part.
+ */
+export const PART_COMPONENT_NAMES = Object.fromEntries(
+    RECIPE_GRID_PARTS.map((p) => [p, componentNameForPart(p)]),
+) as { readonly [P in RecipeGridPart]: string };
+
+/**
+ * The semantic HTML tag each part renders as. The element a part IS is a
+ * semantic fact, not a layout choice: a title is a heading (`h1`), a sub-recipe
+ * header a subheading (`h2`), a cross-file link an `a`. Everything structural is
+ * a neutral `div`; inline text pieces are `span`s. Layout (flex, grid) is CSS,
+ * so it changes without touching these tags. Keyed by the marker attribute name
+ * so a lookup is `tagForPart(node.part)`; this is the mapping a framework
+ * binding consumes to render the structure without re-deciding element choice.
+ */
+export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
+    [part('root')]: 'div',
+    [part('grid')]: 'div',
+    [part('title')]: 'h1',
+    [part('step')]: 'div',
+    [part('inputs')]: 'div',
+    [part('ingredient')]: 'div',
+    [part('sub-recipe')]: 'div',
+    [part('sub-recipe-header')]: 'h2',
+    [part('reference')]: 'div',
+    [part('recipe-reference')]: 'a',
+    [part('quantity')]: 'span',
+    [part('scaled-value')]: 'span',
+} as { readonly [P in RecipeGridPart]: string };
+
+/**
+ * The semantic HTML tag for a part marker; a neutral `div` when unmapped.
+ */
+export function tagForPart(partAttr: string): string {
+    return TAG_FOR_PART[partAttr as keyof typeof TAG_FOR_PART] ?? 'div';
+}
 
 /**
  * Data attributes that make scaling machine-readable. A scalable value carries

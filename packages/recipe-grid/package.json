@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./parts": "./src/structure/parts.ts",
     "./styles/recipe-grid.css": "./src/styles/recipe-grid.css"
   },
   "scripts": {

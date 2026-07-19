@@ -21,7 +21,7 @@
  */
 
 import type { Quantity, ScaledValueString } from '../model.ts';
-import { DATA_KEYS, part } from './parts.ts';
+import { DATA_KEYS, part, tagForPart } from './parts.ts';
 import type { Content, StructureNode } from './walk.ts';
 
 /**
@@ -36,25 +36,6 @@ export interface ElementNode {
     text?: string;
     // Child elements.
     children: ElementNode[];
-}
-
-const PART_TO_TAG: Record<string, string> = {
-    [part('root')]: 'div',
-    [part('grid')]: 'div',
-    [part('sub-recipe')]: 'div',
-    [part('step')]: 'div',
-    [part('ingredient')]: 'div',
-    [part('reference')]: 'div',
-    [part('recipe-reference')]: 'a',
-    [part('title')]: 'h1',
-    [part('sub-recipe-header')]: 'h2',
-};
-
-/**
- * The tag for a structural or heading part; defaults to a neutral div.
- */
-function tagForPart(partAttr: string): string {
-    return PART_TO_TAG[partAttr] ?? 'div';
 }
 
 /**
