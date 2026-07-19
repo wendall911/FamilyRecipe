@@ -24,6 +24,7 @@ import type {
     Quantity,
     Recipe,
     RecipeNumber,
+    RecipeReference,
     RecipeTreeNode,
     Reference,
     ScaledValueString,
@@ -33,11 +34,13 @@ import type {
 
 import { DATA_KEYS, part, type RecipeGridPart } from './parts.ts';
 
-/** The space a node's subtree occupies in the recipe grid. */
+/**
+ * The space a node's subtree occupies in the recipe grid.
+ */
 export interface Extent {
-    /** Table rows spanned: one per terminal, plus one for a sub-recipe header. */
+    // Table rows spanned: one per terminal, plus one for a sub-recipe header.
     rows: number;
-    /** Table columns spanned: step depth plus the terminal column. */
+    // Table columns spanned: step depth plus the terminal column.
     columns: number;
 }
 
@@ -47,9 +50,9 @@ export interface Extent {
  * Absent on nodes that carry no text of their own (a reference is a pointer).
  */
 export interface Content {
-    /** A scale-aware string: an ingredient/step description, or an output name. */
+    // A scale-aware string: an ingredient/step description, or an output name.
     text?: ScaledValueString;
-    /** A quantity carried alongside the text (an ingredient's or reference's amount). */
+    // A quantity carried alongside the text (an ingredient's or reference's amount).
     quantity?: Quantity;
 }
 
@@ -58,15 +61,21 @@ export interface Content {
  * text it carries, the grid space it occupies, and its children (already mapped).
  */
 export interface StructureNode {
-    /** The part marker attribute name, e.g. `data-recipe-grid-step`. */
+    // The part marker attribute name, e.g. `data-recipe-grid-step`.
     part: `data-recipe-grid-${RecipeGridPart}`;
-    /** Machine-readable attributes, keyed by attribute name. */
+    // The core's `data-recipe-grid-*` bindings, keyed by attribute name.
     dataAttrs: Record<string, string>;
-    /** The text this node carries, or undefined for a pure-structure node. */
+    /*
+     * Semantic HTML attributes to set on the element (e.g. an `<a>`'s `title`),
+     * keyed by attribute name. Distinct from `dataAttrs`: these are real HTML
+     * attributes, not `data-*` bindings. Absent when the node sets none.
+     */
+    attrs?: Record<string, string>;
+    // The text this node carries, or undefined for a pure-structure node.
     content?: Content;
-    /** The grid space this node's subtree occupies. */
+    // The grid space this node's subtree occupies.
     extent: Extent;
-    /** The mapped children of this node. */
+    // The mapped children of this node.
     children: StructureNode[];
 }
 
@@ -112,17 +121,23 @@ export function extentColumns(node: RecipeTreeNode): number {
     }
 }
 
-/** The grid extent of a node's subtree. */
+/**
+ * The grid extent of a node's subtree.
+ */
 export function extentOf(node: RecipeTreeNode): Extent {
     return { rows: extentRows(node), columns: extentColumns(node) };
 }
 
-/** Serialise a RecipeNumber for a `data-*` value, preserving exact fractions. */
+/**
+ * Serialise a RecipeNumber for a `data-*` value, preserving exact fractions.
+ */
 function serializeValue(value: RecipeNumber): string {
     return JSON.stringify(value);
 }
 
-/** The `data-*` attributes carried by a quantity's value. */
+/**
+ * The `data-*` attributes carried by a quantity's value.
+ */
 function quantityDataAttrs(quantity: Quantity): Record<string, string> {
     return { [DATA_KEYS.value]: serializeValue(quantity.value) };
 }
@@ -176,6 +191,30 @@ function walkReference(node: Reference): StructureNode {
     };
 }
 
+function walkRecipeReference(node: RecipeReference): StructureNode {
+    /*
+     * A cross-file link renders itself as an <a>. Its `name` is the link text
+     * (carried as content), and its `targetSlug` rides through as a data binding
+     * for the consumer to resolve into whatever link they need. Its `title`,
+     * when authored, is a real HTML attribute (the <a>'s `title`), so it rides
+     * in `attrs`, not `dataAttrs`. It has no children; it is a leaf, not a
+     * transclusion.
+     */
+    const structureNode: StructureNode = {
+        part: part('recipe-reference'),
+        dataAttrs: {
+            [DATA_KEYS.targetSlug]: node.targetSlug,
+        },
+        content: { text: [node.name] },
+        extent: extentOf(node),
+        children: [],
+    };
+    if (node.title !== undefined) {
+        structureNode.attrs = { title: node.title };
+    }
+    return structureNode;
+}
+
 function walkSubRecipe(node: SubRecipe): StructureNode {
     /*
      * A sub-recipe always has a heading (its `:=` output name); emit it above
@@ -199,7 +238,9 @@ function walkSubRecipe(node: SubRecipe): StructureNode {
     };
 }
 
-/** Map a single recipe tree node to its render structure. */
+/**
+ * Map a single recipe tree node to its render structure.
+ */
 export function walk(node: RecipeTreeNode): StructureNode {
     switch (node.kind) {
         case 'ingredient':
@@ -211,12 +252,7 @@ export function walk(node: RecipeTreeNode): StructureNode {
         case 'subRecipe':
             return walkSubRecipe(node);
         case 'recipeReference':
-            return {
-                part: part('reference'),
-                dataAttrs: {},
-                extent: extentOf(node),
-                children: [],
-            };
+            return walkRecipeReference(node);
     }
 }
 

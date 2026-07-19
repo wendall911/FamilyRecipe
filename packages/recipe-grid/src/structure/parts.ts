@@ -28,6 +28,7 @@ const COMPONENT = 'recipe-grid';
  * - `sub-recipe`        a SubRecipe grouping.
  * - `sub-recipe-header` the heading label of a `:=` sub-recipe.
  * - `reference`         an intra-document reference to a sub-recipe output.
+ * - `recipe-reference`  a cross-file link to another recipe by slug.
  * - `quantity`          an amount rendered inline with an ingredient or reference.
  * - `scaled-value`      a value that rescales with the recipe.
  */
@@ -41,6 +42,7 @@ export const RECIPE_GRID_PARTS = [
     'sub-recipe',
     'sub-recipe-header',
     'reference',
+    'recipe-reference',
     'quantity',
     'scaled-value',
 ] as const;
@@ -56,7 +58,9 @@ export function part(name: RecipeGridPart): `data-${typeof COMPONENT}-${RecipeGr
     return `data-${COMPONENT}-${name}`;
 }
 
-/** Every part's marker attribute name, keyed by part. */
+/**
+ * Every part's marker attribute name, keyed by part.
+ */
 export const PART_ATTRS = Object.fromEntries(
     RECIPE_GRID_PARTS.map((p) => [p, part(p)]),
 ) as { readonly [P in RecipeGridPart]: `data-${typeof COMPONENT}-${P}` };
@@ -74,6 +78,15 @@ export const PART_ATTRS = Object.fromEntries(
  * - `scalingType` on the root: 'servings' | 'fixed'.
  * - `base`        on the root: the as-authored base to scale from.
  *
+ * The cross-file link binding attribute, on a `recipe-reference` element. The
+ * core stays framework-neutral: it does not know how the consumer resolves the
+ * target (an external site link, an in-page anchor, a route), so it emits the
+ * raw slug as a data binding for the consumer to wire trivially, rather than
+ * baking a resolved href into the markup. (The link's `title` is a real HTML
+ * attribute, not a data binding, so it does not live here.)
+ *
+ * - `targetSlug`  on a `recipe-reference` element: the target recipe's slug.
+ *
  * Additional recipe metadata is surfaced on the root under the same
  * `data-recipe-grid-*` convention so a future model superset extends without a
  * new mechanism.
@@ -82,6 +95,7 @@ export const DATA_KEYS = {
     value: `data-${COMPONENT}-value`,
     scalingType: `data-${COMPONENT}-scaling-type`,
     base: `data-${COMPONENT}-base`,
+    targetSlug: `data-${COMPONENT}-target-slug`,
 } as const;
 
 export type DataKey = keyof typeof DATA_KEYS;

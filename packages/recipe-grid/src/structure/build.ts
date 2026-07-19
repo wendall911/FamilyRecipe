@@ -24,15 +24,17 @@ import type { Quantity, ScaledValueString } from '../model.ts';
 import { DATA_KEYS, part } from './parts.ts';
 import type { Content, StructureNode } from './walk.ts';
 
-/** A plain, serialisable element description. */
+/**
+ * A plain, serialisable element description.
+ */
 export interface ElementNode {
-    /** The HTML tag name, e.g. 'div', 'p', 'h1', 'span'. */
+    // The HTML tag name, e.g. 'div', 'p', 'h1', 'span'.
     tag: string;
-    /** Attributes, keyed by attribute name (part marker, data-*). */
+    // Attributes, keyed by attribute name (part marker, data-*).
     attrs: Record<string, string>;
-    /** Literal text content, when this element is a leaf of text. */
+    // Literal text content, when this element is a leaf of text.
     text?: string;
-    /** Child elements. */
+    // Child elements.
     children: ElementNode[];
 }
 
@@ -43,21 +45,29 @@ const PART_TO_TAG: Record<string, string> = {
     [part('step')]: 'div',
     [part('ingredient')]: 'div',
     [part('reference')]: 'div',
+    [part('recipe-reference')]: 'a',
     [part('title')]: 'h1',
     [part('sub-recipe-header')]: 'h2',
 };
 
-/** The tag for a structural or heading part; defaults to a neutral div. */
+/**
+ * The tag for a structural or heading part; defaults to a neutral div.
+ */
 function tagForPart(partAttr: string): string {
     return PART_TO_TAG[partAttr] ?? 'div';
 }
 
-/** The part marker attribute carried by every element. */
+/**
+ * The attributes carried by an element: its part marker, the core's data-*
+ * bindings, and any semantic HTML attributes the node sets (e.g. an <a>'s title).
+ */
 function markerAttrs(node: StructureNode): Record<string, string> {
-    return { [node.part]: '', ...node.dataAttrs };
+    return { [node.part]: '', ...node.dataAttrs, ...node.attrs };
 }
 
-/** True when a ScaledValueString part is a scalable number (vs literal text). */
+/**
+ * True when a ScaledValueString part is a scalable number (vs literal text).
+ */
 function isNumberPart(p: ScaledValueString[number]): p is Exclude<ScaledValueString[number], string> {
     return typeof p !== 'string';
 }
@@ -83,7 +93,9 @@ function inlineContent(text: ScaledValueString): ElementNode[] {
     );
 }
 
-/** A quantity as a `<span>`: its value (scalable) plus unit/preposition text. */
+/**
+ * A quantity as a `<span>`: its value (scalable) plus unit/preposition text.
+ */
 function quantityElement(quantity: Quantity): ElementNode {
     const valueSpan: ElementNode = {
         tag: 'span',
@@ -128,6 +140,24 @@ export function build(node: StructureNode): ElementNode {
             tag,
             attrs,
             children: text !== undefined ? inlineContent(text) : [],
+        };
+    }
+
+    /*
+     * A recipe-reference is a bare <a>: its only content is the link text. Its
+     * target-slug binding and its `title` HTML attribute are already on `attrs`
+     * (via markerAttrs). The text sits directly on the anchor (no wrapping <p> or
+     * <span>), so the consumer gets a plain, trivially styleable link. Link text
+     * is literal (no scalable numbers), so the ScaledValueString flattens to a
+     * single string.
+     */
+    if (node.part === part('recipe-reference')) {
+        const text = node.content?.text;
+        return {
+            tag,
+            attrs,
+            text: text !== undefined ? text.map(String).join('') : '',
+            children: [],
         };
     }
 
