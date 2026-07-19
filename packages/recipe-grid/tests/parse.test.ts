@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { extractRecipe } from '../src/markdown.ts';
-import { parseToTree } from '../src/index.ts';
+import { parse } from '../src/index.ts';
 
 const RECIPES_DIR = fileURLToPath(
     new URL('../../../apps/site/src/content/recipes/', import.meta.url),
@@ -21,10 +21,7 @@ for (const slug of ['tiffin', 'egg-fried-rice']) {
         assert.ok(blocks.length >= 1, 'expected at least one recipe block');
     });
 
-    test(`${slug}: each recipe block parses`, () => {
-        const { blocks } = extractRecipe(readRecipe(slug));
-        for (const block of blocks) {
-            assert.doesNotThrow(() => parseToTree(block));
-        }
+    test(`${slug}: parses without throwing`, () => {
+        assert.doesNotThrow(() => parse(readRecipe(slug)));
     });
 }

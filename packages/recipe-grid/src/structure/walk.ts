@@ -1,10 +1,16 @@
 /**
- * Walk a compiled recipe DAG and map each node to its render part.
+ * Walk a compiled recipe DAG into the render structure.
  *
  * The framework-neutral structure pass. Each {@link RecipeTreeNode} becomes a
- * {@link StructureNode} carrying its part marker, machine-readable `data-*`
- * attributes, its grid extent, and its children. It emits data only (no DOM,
- * no CSS) for a downstream builder to turn into elements.
+ * tree of {@link StructureNode}s that fully describes the element tree: each node
+ * carries its tag, a part marker (when it is a part), machine-readable `data-*`
+ * attributes, semantic HTML attributes, the literal text of leaf nodes, the grid
+ * extent, and children. It is a complete representation of the DOM to render, not
+ * a partial one: every element that
+ * must exist (a step's `inputs` column, a content `<p>`, a `quantity` span, the
+ * inline text/`scaled-value` spans) is a real node here. A downstream renderer
+ * (the built element tree, or a framework binding) turns this into elements with
+ * no further structural decisions of its own.
  *
  * The grid extent is the space a node's subtree occupies when laid out like the
  * recipe table:
@@ -32,7 +38,7 @@ import type {
     SubRecipe,
 } from '../model.ts';
 
-import { DATA_KEYS, part, type RecipeGridPart } from './parts.ts';
+import { DATA_KEYS, part, tagForPart, type RecipeGridPart } from './parts.ts';
 
 /**
  * The space a node's subtree occupies in the recipe grid.
@@ -45,24 +51,22 @@ export interface Extent {
 }
 
 /**
- * The text a node carries. A description or output name is a scale-aware string
- * (literal text interleaved with scalable numbers); a quantity is its own shape.
- * Absent on nodes that carry no text of their own (a reference is a pointer).
- */
-export interface Content {
-    // A scale-aware string: an ingredient/step description, or an output name.
-    text?: ScaledValueString;
-    // A quantity carried alongside the text (an ingredient's or reference's amount).
-    quantity?: Quantity;
-}
-
-/**
- * A node's render structure: its part marker, its `data-*` attribute bag, the
- * text it carries, the grid space it occupies, and its children (already mapped).
+ * A node's render structure: the element to emit and its subtree.
+ *
+ * A node is either a part node (it carries a `data-recipe-grid-<part>` marker and
+ * renders as the semantic tag for that part) or a plain element node (a bare
+ * `<p>` or `<span>` with no marker, used for a content paragraph or a literal
+ * text run). `tag` is the element to emit; for a part node it is the semantic tag
+ * of the part, for a plain node it is set directly.
  */
 export interface StructureNode {
-    // The part marker attribute name, e.g. `data-recipe-grid-step`.
-    part: `data-recipe-grid-${RecipeGridPart}`;
+    // The HTML tag to emit, e.g. 'div', 'p', 'h1', 'span', 'a'.
+    tag: string;
+    /*
+     * The part marker attribute name (e.g. `data-recipe-grid-step`), when the
+     * node is a part; absent on a plain `<p>` / `<span>` element node.
+     */
+    part?: `data-recipe-grid-${RecipeGridPart}`;
     // The core's `data-recipe-grid-*` bindings, keyed by attribute name.
     dataAttrs: Record<string, string>;
     /*
@@ -71,13 +75,19 @@ export interface StructureNode {
      * attributes, not `data-*` bindings. Absent when the node sets none.
      */
     attrs?: Record<string, string>;
-    // The text this node carries, or undefined for a pure-structure node.
-    content?: Content;
+    // Literal text content, when this node is a text leaf; absent otherwise.
+    text?: string;
     // The grid space this node's subtree occupies.
     extent: Extent;
-    // The mapped children of this node.
+    // The child nodes of this node.
     children: StructureNode[];
 }
+
+/*
+ * A zero-size extent for the inline element nodes (paragraphs, spans) that carry
+ * text rather than occupying grid cells of their own.
+ */
+const INLINE_EXTENT: Extent = { rows: 0, columns: 0 };
 
 /**
  * The rows a node's subtree occupies: one per terminal, following a reference
@@ -136,44 +146,132 @@ function serializeValue(value: RecipeNumber): string {
 }
 
 /**
- * The `data-*` attributes carried by a quantity's value.
+ * A part node: the element for a `data-recipe-grid-<part>` marker.
  */
-function quantityDataAttrs(quantity: Quantity): Record<string, string> {
-    return { [DATA_KEYS.value]: serializeValue(quantity.value) };
+function partNode(
+    name: RecipeGridPart,
+    fields: Partial<Omit<StructureNode, 'tag' | 'part'>>,
+): StructureNode {
+    return {
+        tag: tagForPart(part(name)),
+        part: part(name),
+        dataAttrs: {},
+        extent: INLINE_EXTENT,
+        children: [],
+        ...fields,
+    };
+}
+
+/**
+ * A plain `<span>` text leaf: a bare span carrying a run of literal text, no
+ * part marker.
+ */
+function textSpan(text: string): StructureNode {
+    return { tag: 'span', dataAttrs: {}, text, extent: INLINE_EXTENT, children: [] };
+}
+
+/**
+ * A `scaled-value` span: a marked span carrying a scalable number's base value
+ * (so a runtime scaler can rescale it) plus the number as its text.
+ */
+function scaledValueSpan(value: RecipeNumber): StructureNode {
+    return partNode('scaled-value', {
+        dataAttrs: { [DATA_KEYS.value]: serializeValue(value) },
+        text: String(value),
+    });
+}
+
+/**
+ * True when a ScaledValueString piece is a scalable number (vs literal text).
+ */
+function isNumberPiece(
+    piece: ScaledValueString[number],
+): piece is Exclude<ScaledValueString[number], string> {
+    return typeof piece !== 'string';
+}
+
+/**
+ * The inline children of a scale-aware string: each literal run becomes a plain
+ * `<span>` text leaf, each scalable number a marked `scaled-value` span.
+ */
+function inlineContent(text: ScaledValueString): StructureNode[] {
+    return text.map((piece) =>
+        isNumberPiece(piece) ? scaledValueSpan(piece) : textSpan(piece),
+    );
+}
+
+/**
+ * A quantity as a `quantity` span: its value (scalable) plus unit/preposition
+ * text as a trailing plain span when present.
+ */
+function quantityNode(quantity: Quantity): StructureNode {
+    const children: StructureNode[] = [scaledValueSpan(quantity.value)];
+    const unitText =
+        quantity.unit !== null ? `${quantity.valueUnitSpacing}${quantity.unit}` : '';
+    const trailing = `${unitText}${quantity.preposition}`;
+    if (trailing !== '') {
+        children.push(textSpan(trailing));
+    }
+    return partNode('quantity', { children });
+}
+
+/**
+ * The inline nodes rendering a node's carried quantity and text, if any: the
+ * quantity span first, then the text runs.
+ */
+function contentNodes(text?: ScaledValueString, quantity?: Quantity): StructureNode[] {
+    const out: StructureNode[] = [];
+    if (quantity !== undefined) {
+        out.push(quantityNode(quantity));
+    }
+    if (text !== undefined) {
+        out.push(...inlineContent(text));
+    }
+    return out;
+}
+
+/**
+ * A content `<p>`: the paragraph wrapping a node's carried text/quantity. Only
+ * emitted when the content produces inline nodes.
+ */
+function contentParagraph(children: StructureNode[]): StructureNode {
+    return { tag: 'p', dataAttrs: {}, extent: INLINE_EXTENT, children };
 }
 
 function walkIngredient(node: Ingredient): StructureNode {
     const dataAttrs: Record<string, string> = {};
-    const content: Content = { text: node.description };
     if (node.quantity !== null) {
-        Object.assign(dataAttrs, quantityDataAttrs(node.quantity));
-        content.quantity = node.quantity;
+        dataAttrs[DATA_KEYS.value] = serializeValue(node.quantity.value);
     }
-    return {
-        part: part('ingredient'),
+    const inline = contentNodes(node.description, node.quantity ?? undefined);
+    return partNode('ingredient', {
         dataAttrs,
-        content,
         extent: extentOf(node),
-        children: [],
-    };
+        children: inline.length > 0 ? [contentParagraph(inline)] : [],
+    });
 }
 
 function walkStep(node: Step): StructureNode {
-    return {
-        part: part('step'),
-        dataAttrs: {},
-        content: { text: node.description },
-        extent: extentOf(node),
-        children: node.inputs.map(walk),
-    };
+    /*
+     * A step is the bracket: its inputs form a column on the left, its action
+     * (label) sits to the right. Emit inputs-then-label so DOM order matches
+     * reading order (inputs -> action), which the flex layout and a later ARIA
+     * pass both rely on.
+     */
+    const children: StructureNode[] = [
+        partNode('inputs', { children: node.inputs.map(walk) }),
+    ];
+    const label = contentNodes(node.description);
+    if (label.length > 0) {
+        children.push(contentParagraph(label));
+    }
+    return partNode('step', { extent: extentOf(node), children });
 }
 
 function walkReference(node: Reference): StructureNode {
     const dataAttrs: Record<string, string> = {};
-    const content: Content = {};
     if (node.amount !== undefined && node.amount.kind === 'quantity') {
-        Object.assign(dataAttrs, quantityDataAttrs(node.amount));
-        content.quantity = node.amount;
+        dataAttrs[DATA_KEYS.value] = serializeValue(node.amount.value);
     }
     /*
      * A reference transcludes its target: the resolved node's full structure
@@ -182,33 +280,26 @@ function walkReference(node: Reference): StructureNode {
      * The reference keeps its own part marker and any amount; the target's body
      * is its child.
      */
-    return {
-        part: part('reference'),
+    return partNode('reference', {
         dataAttrs,
-        content,
         extent: extentOf(node),
         children: [walk(node.resolvedNode)],
-    };
+    });
 }
 
 function walkRecipeReference(node: RecipeReference): StructureNode {
     /*
-     * A cross-file link renders itself as an <a>. Its `name` is the link text
-     * (carried as content), and its `targetSlug` rides through as a data binding
-     * for the consumer to resolve into whatever link they need. Its `title`,
-     * when authored, is a real HTML attribute (the <a>'s `title`), so it rides
-     * in `attrs`, not `dataAttrs`. It has no children; it is a leaf, not a
-     * transclusion.
+     * A cross-file link is a bare <a>: its only content is the link text, which
+     * sits directly on the anchor (no wrapping <p> or <span>). Its `targetSlug`
+     * rides through as a data binding for the consumer to resolve into whatever
+     * link they need; its `title`, when authored, is a real HTML attribute. It
+     * has no children; it is a leaf, not a transclusion.
      */
-    const structureNode: StructureNode = {
-        part: part('recipe-reference'),
-        dataAttrs: {
-            [DATA_KEYS.targetSlug]: node.targetSlug,
-        },
-        content: { text: [node.name] },
+    const structureNode = partNode('recipe-reference', {
+        dataAttrs: { [DATA_KEYS.targetSlug]: node.targetSlug },
+        text: node.name,
         extent: extentOf(node),
-        children: [],
-    };
+    });
     if (node.title !== undefined) {
         structureNode.attrs = { title: node.title };
     }
@@ -218,24 +309,17 @@ function walkRecipeReference(node: RecipeReference): StructureNode {
 function walkSubRecipe(node: SubRecipe): StructureNode {
     /*
      * A sub-recipe always has a heading (its `:=` output name); emit it above
-     * the sub-recipe's tree.
+     * the sub-recipe's tree. The heading carries its text inline directly (it is
+     * an <h2>), with no wrapping <p>.
      */
-    const children: StructureNode[] = [
-        {
-            part: part('sub-recipe-header'),
-            dataAttrs: {},
-            content: { text: node.outputNames[0] },
-            extent: { rows: 1, columns: extentColumns(node.subTree) },
-            children: [],
-        },
-        walk(node.subTree),
-    ];
-    return {
-        part: part('sub-recipe'),
-        dataAttrs: {},
+    const header = partNode('sub-recipe-header', {
+        extent: { rows: 1, columns: extentColumns(node.subTree) },
+        children: inlineContent(node.outputNames[0]),
+    });
+    return partNode('sub-recipe', {
         extent: extentOf(node),
-        children,
-    };
+        children: [header, walk(node.subTree)],
+    });
 }
 
 /**
@@ -294,20 +378,16 @@ export function walkRecipe(recipe: Recipe): StructureNode {
     recipe.recipeTrees.forEach((t) => collectReferenced(t, referenced));
     const roots = recipe.recipeTrees.filter((t) => !referenced.has(t));
 
-    const grid: StructureNode = {
-        part: part('grid'),
-        dataAttrs: {},
-        extent: {
-            rows: roots.reduce((n, t) => n + extentRows(t), 0),
-            columns: Math.max(...roots.map(extentColumns)),
-        },
-        /*
-         * Render only the unreferenced roots; referenced trees (ingredient
-         * declarations, `,action` steps, sub-recipes) are transcluded inline at
-         * their use site, not repeated as top-level grid children.
-         */
-        children: roots.map(walk),
+    const gridExtent: Extent = {
+        rows: roots.reduce((n, t) => n + extentRows(t), 0),
+        columns: Math.max(...roots.map(extentColumns)),
     };
+    /*
+     * Render only the unreferenced roots; referenced trees (ingredient
+     * declarations, `,action` steps, sub-recipes) are transcluded inline at
+     * their use site, not repeated as top-level grid children.
+     */
+    const grid = partNode('grid', { extent: gridExtent, children: roots.map(walk) });
 
     const dataAttrs: Record<string, string> = {
         [DATA_KEYS.scalingType]: recipe.scalingType,
@@ -316,10 +396,5 @@ export function walkRecipe(recipe: Recipe): StructureNode {
         dataAttrs[DATA_KEYS.base] = serializeValue(recipe.base);
     }
 
-    return {
-        part: part('root'),
-        dataAttrs,
-        extent: grid.extent,
-        children: [grid],
-    };
+    return partNode('root', { dataAttrs, extent: gridExtent, children: [grid] });
 }

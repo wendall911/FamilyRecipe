@@ -8,12 +8,12 @@ import { build, type ElementNode } from './structure/build.ts';
  * Re-export the public vocabulary so a binding author (or any consumer) has the
  * whole surface from one entry point, without spelunking the internals:
  *   - RecipeMeta            recipe-level metadata (slug, scaling).
- *   - StructureNode, Content, Extent   the render-structure tree: part-tagged
- *                           nodes a framework binding renders as components.
+ *   - StructureNode, Extent the render-structure tree: a complete element tree a
+ *                           framework binding renders one node at a time.
  *   - ElementNode           the built element tree: a frameworkless DOM chunk.
  */
 export type { RecipeMeta } from './markdown.ts';
-export type { StructureNode, Content, Extent } from './structure/walk.ts';
+export type { StructureNode, Extent } from './structure/walk.ts';
 export type { ElementNode } from './structure/build.ts';
 
 /**
