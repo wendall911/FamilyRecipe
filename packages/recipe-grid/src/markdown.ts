@@ -1,15 +1,17 @@
 import { marked, type Token, type Tokens } from 'marked';
 import { parse as parseYaml } from 'yaml';
-
 import type { RecipeMeta } from './model.ts';
 
-// RecipeMeta (the resolved recipe-level metadata bundle) is owned by model.ts;
-// re-exported here so existing consumers importing it from the markdown layer
-// keep working.
+/*
+ * RecipeMeta (the resolved recipe-level metadata bundle) is owned by model.ts;
+ * re-exported here so existing consumers importing it from the markdown layer
+ * keep working.
+ */
 export type { RecipeMeta };
 
 export interface ExtractedRecipe {
     title: string | null;
+    description: string | null;
     blocks: string[];
     meta: RecipeMeta;
 }
@@ -33,8 +35,12 @@ export function slugify(input: string): string {
 }
 
 function isRecipeCode(token: Token): token is Tokens.Code {
-    if (token.type !== 'code') return false;
+    if (token.type !== 'code') {
+        return false;
+    }
+
     const lang = (token as Tokens.Code).lang ?? '';
+
     return RECIPE_LANGS.has(lang);
 }
 
@@ -47,8 +53,17 @@ const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/;
 
 function splitFrontmatter(md: string): { yaml: string | null; body: string } {
     const match = FRONTMATTER.exec(md);
-    if (match === null) return { yaml: null, body: md };
-    return { yaml: match[1], body: md.slice(match[0].length) };
+
+    if (match === null) {
+        return {
+            yaml: null,
+            body: md
+        };
+    }
+    return {
+        yaml: match[1],
+        body: md.slice(match[0].length)
+    };
 }
 
 /*
@@ -69,28 +84,49 @@ function toMeta(data: unknown, title: string): RecipeMeta {
     // slug is the recipe id: the authored frontmatter value if present, else a
     // slug derived from the title. Always resolved to a concrete string here.
     const slug = typeof record.slug === 'string' && record.slug !== '' ? record.slug : slugify(title);
-    return { scalingType, base, slug };
+
+    return {
+        scalingType,
+        base,
+        slug
+    };
 }
 
 export function extractRecipe(md: string): ExtractedRecipe {
     const { yaml, body } = splitFrontmatter(md);
-
     const tokens = marked.lexer(body);
+    const blocks: string[] = [];
 
     let title: string | null = null;
-    const blocks: string[] = [];
+    let description: string | null = null;
 
     for (const token of tokens) {
         if (title === null && token.type === 'heading' && token.depth === 1) {
             title = token.text;
-        } else if (isRecipeCode(token)) {
+        }
+        else if (description === null && token.type === 'paragraph') {
+            /*
+             * The recipe description: the header prose after the title. Like the
+             * title, captured once — the first paragraph, which sits between the
+             * title and the indented recipe body.
+             */
+            description = token.text;
+        }
+        else if (isRecipeCode(token)) {
             blocks.push(token.text);
         }
     }
 
-    // Metadata is resolved after the title is known: the slug default derives
-    // from the title, so title folds into the meta bundle here.
+    /*
+     * Metadata is resolved after the title is known: the slug default derives
+     * from the title, so title folds into the meta bundle here.
+     */
     const meta = toMeta(yaml === null ? null : parseYaml(yaml), title ?? '');
 
-    return { title, blocks, meta };
+    return {
+        title,
+        description,
+        blocks,
+        meta
+    };
 }

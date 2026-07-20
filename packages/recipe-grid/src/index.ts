@@ -26,6 +26,8 @@ export type { ElementNode } from './structure/build.ts';
 export interface RecipeModel {
     // The recipe title (the `# ...` heading), or '' when the source has none.
     title: string;
+    // The recipe description (the header prose after the title), or ''
+    description: string;
     // Recipe-level metadata: slug, scaling, and anything the model adds later.
     meta: RecipeMeta;
     // The render structure: part-tagged nodes for a binding to render as components.
@@ -40,12 +42,13 @@ export interface RecipeModel {
  * and build the element tree.
  */
 export function parse(md: string): RecipeModel {
-    const { title, blocks, meta } = extractRecipe(md);
+    const { title, description, blocks, meta } = extractRecipe(md);
     const recipe = compile(parseGrammar(blocks[0]), meta);
     const structure = walkRecipe(recipe);
     const root = build(structure);
     return {
         title: title ?? '',
+        description: description ?? '',
         meta,
         structure,
         root,

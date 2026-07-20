@@ -12,7 +12,7 @@ shared-node back-edge is the whole distinction.
 
 ---
 
-## 1. YAML frontmatter (recipe-level metadata)
+## YAML frontmatter (recipe-level metadata)
 
 A `---`-fenced YAML block at the top of the file, split off before the body is
 lexed. Declares how the recipe scales; applied at runtime.
@@ -29,7 +29,19 @@ with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`;
 
 ---
 
-## 2. Body constructs (surface -> model node)
+## Recipe header (title, description)
+
+Between the frontmatter and the body: the human-facing header. Neither is part
+of the DAG.
+
+| md surface            | produces      |
+|-----------------------|---------------|
+| the recipe heading    | `title`       |
+| prose after the title | `description` |
+
+---
+
+## Body constructs (surface -> model node)
 
 The body is an indented block. Each construct maps to a model node:
 
@@ -64,7 +76,7 @@ so `12%` stays description; it is never read as a value.
 
 ---
 
-## 3. Pipeline
+## Pipeline
 
 ```
 markdown -> AST (PEG/Peggy) -> DAG model -> walk -> render structure (DOM + headless CSS)
