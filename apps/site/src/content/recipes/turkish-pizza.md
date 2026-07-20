@@ -6,6 +6,8 @@ slug: turkish-pizza
 Red Pepper and Lamb Lahmacun (Turkish Pizza)
 ==================================================
 
+Thin, crisp Turkish flatbreads under a spiced red pepper and lamb topping.
+
     lamb mince = 250g "lamb mince (10% fat)"
     onion = 1 onion, grated
     bell pepper = 1 red bell pepper, finely chopped
