@@ -220,21 +220,18 @@ dependency), so the editor app supersedes it. Do not assume a target is confirme
 
 ---
 
-## Immediate next steps
+## Next steps
 
-One defined piece of work lands **before** wiring `parse()`:
+The `-svelte` component shapes are set. Testing them is next.
 
-- **External recipe reference.** A markdown-link surface with a bare id target
-  (`[Dough](dough)`) mapped through `marked`'s `link` token to a `RecipeReference`
-  AST node, rendered as a data-bound `<a>`. Resolves to a recipe id (the required
-  slug is already in place). Unresolved is valid (pointer, not guarantee); how a
-  resolved reference is wired (route, sibling, etc.) is the consumer's call.
+The plan is jsdom + binding tests in `recipe-grid-svelte`, one part component at a
+time, with the harness modeled on the bits-ui test setup.
 
-Then **wire `parse()`** in `index.ts` to return the real consumable (DOM chunk +
-metadata); it currently returns a PLACEHOLDER (`{ title, source:
-JSON.stringify(recipe) }`). Rather than stub, the `-svelte` binding + `apps/site`
-render path get wired to consume real `parse()` output on that pass, followed by
-small flex/layout tweaks against the live rendered view.
+A kitchen-sink fixture recipe -- a real `.md` with one example of each node type in
+the spec -- is the canonical input every component test renders from.
+
+Each test renders a part from the fixture and checks its DOM shape and content,
+covering the bindings, not only static markup.
 
 ## Known gaps / deferred (do not treat as done)
 
