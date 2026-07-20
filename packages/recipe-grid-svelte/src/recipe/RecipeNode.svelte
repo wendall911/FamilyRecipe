@@ -11,6 +11,7 @@
     import SubRecipeHeader from './SubRecipeHeader.svelte';
     import Reference from './Reference.svelte';
     import RecipeReference from './RecipeReference.svelte';
+    import Remainder from './Remainder.svelte';
     import Quantity from './Quantity.svelte';
     import ScaledValue from './ScaledValue.svelte';
 
@@ -41,6 +42,7 @@
         [PART_ATTRS['sub-recipe-header']]: SubRecipeHeader,
         [PART_ATTRS.reference]: Reference,
         [PART_ATTRS['recipe-reference']]: RecipeReference,
+        [PART_ATTRS.remainder]: Remainder,
         [PART_ATTRS.quantity]: Quantity,
         [PART_ATTRS['scaled-value']]: ScaledValue,
     };
