@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { parse } from '../generated/grammar.generated.js';
+import { parse } from '../src/generated/grammar.generated.js';
 import { extractRecipe } from '../src/markdown.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));

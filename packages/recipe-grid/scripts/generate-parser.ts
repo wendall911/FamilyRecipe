@@ -15,7 +15,7 @@ import { KNOWN_UNITS_PEGGY } from '../src/units.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const srcDir = fileURLToPath(new URL('../src/', import.meta.url));
-const generatedDir = fileURLToPath(new URL('../generated/', import.meta.url));
+const generatedDir = fileURLToPath(new URL('../src//generated/', import.meta.url));
 
 const grammar = readFileSync(`${srcDir}grammar.peggy`, 'utf8');
 const substituted = grammar.replace(/@KNOWN_UNITS@/g, KNOWN_UNITS_PEGGY);

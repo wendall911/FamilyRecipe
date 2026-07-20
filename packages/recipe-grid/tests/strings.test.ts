@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parse } from '../generated/grammar.generated.js';
+import { parse } from '../src/generated/grammar.generated.js';
 import { findAll } from './helpers.ts';
 
 function substringsOf(src: string): { offset: number; string: string }[] {

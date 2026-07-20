@@ -1,4 +1,4 @@
-import { parse as parseGrammar } from '../generated/grammar.generated.js';
+import { parse as parseGrammar } from './generated/grammar.generated.js';
 import { extractRecipe, type RecipeMeta } from './markdown.ts';
 import { compile } from './compiler.ts';
 import { walkRecipe, type StructureNode } from './structure/walk.ts';
