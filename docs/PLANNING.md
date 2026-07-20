@@ -227,8 +227,7 @@ The `-svelte` component shapes are set. Testing them is next.
 The plan is jsdom + binding tests in `recipe-grid-svelte`, one part component at a
 time, with the harness modeled on the bits-ui test setup.
 
-A kitchen-sink fixture recipe -- a real `.md` with one example of each node type in
-the spec -- is the canonical input every component test renders from.
+A we will levarage a fixture in `recipe-grid-svelte` that is a real md file with one example of each node type in the spec -- is the canonical input every component test renders from.
 
 Each test renders a part from the fixture and checks its DOM shape and content,
 covering the bindings, not only static markup.
