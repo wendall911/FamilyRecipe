@@ -33,6 +33,7 @@ import type {
     RecipeReference,
     RecipeTreeNode,
     Reference,
+    Remainder,
     ScaledValueString,
     Step,
     SubRecipe,
@@ -273,6 +274,25 @@ function walkReference(node: Reference): StructureNode {
     if (node.amount !== undefined && node.amount.kind === 'quantity') {
         dataAttrs[DATA_KEYS.value] = serializeValue(node.amount.value);
     }
+    const children: StructureNode[] = [];
+    /*
+     * A remainder amount ("use the rest") is its own block-level `remainder`
+     * part (a <div>), emitted before the transcluded body so the "Remaining"
+     * wording reads ahead of it. It carries no value (a remainder has none —
+     * the ingredient list is the definitive amount) and no scale-aware pieces,
+     * so it is a single literal-text node: the <div> holds one <p> whose text
+     * is the wording, built inline (not via the content-node helpers, which
+     * exist for the composite ingredient/step cases).
+     */
+    if (node.amount !== undefined && node.amount.kind === 'remainder') {
+        children.push(
+            partNode('remainder', {
+                children: [
+                    { tag: 'p', dataAttrs: {}, extent: INLINE_EXTENT, text: node.amount.wording, children: [] },
+                ],
+            }),
+        );
+    }
     /*
      * A reference transcludes its target: the resolved node's full structure
      * (an ingredient, or a step with its own inputs) renders inline where the
@@ -280,10 +300,11 @@ function walkReference(node: Reference): StructureNode {
      * The reference keeps its own part marker and any amount; the target's body
      * is its child.
      */
+    children.push(walk(node.resolvedNode));
     return partNode('reference', {
         dataAttrs,
         extent: extentOf(node),
-        children: [walk(node.resolvedNode)],
+        children,
     });
 }
 

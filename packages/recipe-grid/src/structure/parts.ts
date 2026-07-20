@@ -30,6 +30,8 @@ const COMPONENT = 'recipe-grid';
  * - `sub-recipe`        a SubRecipe grouping.
  * - `sub-recipe-header` the heading label of a `:=` sub-recipe.
  * - `reference`         an intra-document reference to a sub-recipe output.
+ * - `remainder`         a "use the rest" note at a reference (the remainder
+ *                       wording, e.g. "Remaining"); carries no value.
  * - `recipe-reference`  a cross-file link to another recipe by slug.
  * - `quantity`          an amount rendered inline with an ingredient or reference.
  * - `scaled-value`      a value that rescales with the recipe.
@@ -44,6 +46,7 @@ export const RECIPE_GRID_PARTS = [
     'sub-recipe',
     'sub-recipe-header',
     'reference',
+    'remainder',
     'recipe-reference',
     'quantity',
     'scaled-value',
@@ -115,6 +118,7 @@ export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
     [part('sub-recipe')]: 'div',
     [part('sub-recipe-header')]: 'h2',
     [part('reference')]: 'div',
+    [part('remainder')]: 'div',
     [part('recipe-reference')]: 'a',
     [part('quantity')]: 'span',
     [part('scaled-value')]: 'span',
