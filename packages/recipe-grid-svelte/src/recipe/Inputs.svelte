@@ -3,7 +3,7 @@
     import RecipeNode from './RecipeNode.svelte';
 
     /*
-     * The wrapper for the recipe-grid `grid` part. It binds the node
+     * The wrapper for the recipe-grid `inputs` part. It binds the node
      * that part emits: the element's tag, its marker, its data attributes, any
      * attributes, its text, and its children.
      */

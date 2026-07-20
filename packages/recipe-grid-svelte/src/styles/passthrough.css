@@ -1,0 +1,7 @@
+/*
+ * Convenience passthrough of recipe-grid's headless layout stylesheet, so a
+ * Svelte consumer can import styles from this binding as the single door
+ * (`@wendall911/recipe-grid-svelte/styles.css`) without also depending on
+ * recipe-grid. This file holds no styles of its own; the binding owns no CSS.
+ */
+@import '@wendall911/recipe-grid/styles/recipe-grid.css';

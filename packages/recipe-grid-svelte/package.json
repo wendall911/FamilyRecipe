@@ -6,7 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./recipe-grid.css": "./src/styles/passthrough.css"
   },
   "scripts": {
     "test": "vitest run"
