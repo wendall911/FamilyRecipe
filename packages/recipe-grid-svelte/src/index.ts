@@ -16,4 +16,4 @@ export function parse(md: string): RecipeModel {
 
 export type { RecipeModel } from '@wendall911/recipe-grid';
 
-export { default as RecipeNode } from './recipe/RecipeNode.svelte';
+export { default as RecipeGrid } from './recipe/RecipeGrid.svelte';

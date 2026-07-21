@@ -18,10 +18,11 @@
     "svelte": "^5"
   },
   "devDependencies": {
-    "typescript": "^6.0.3",
-    "vitest": "^3.2.4",
-    "jsdom": "^25.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
-    "svelte": "^5.56.4"
+    "@testing-library/svelte": "^5.4.2",
+    "jsdom": "^25.0.1",
+    "svelte": "^5.56.4",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
   }
 }
