@@ -1,3 +1,24 @@
+## Project identity & naming
+
+**What this is / isn't.** **FamilyRecipe** is the project — a personal recipe
+publishing site (`apps/site`) built on a headless rendering **core**,
+**`recipe-grid`**, which is a compiler for a single, human-readable recipe
+**card**: ingredients on the left flowing into steps, the "Cooking for Engineers"
+layout, from a human-readable markdown format that *is* the data.
+**`recipe-grid-svelte`** is the Svelte 5 binding. It is **not** a content/SEO
+recipe site: no schema-spam, no story-blog padding, no keyword surface. Treat the
+model and the card as the product; make no assumptions about "what a recipe site
+is."
+
+**Lineage & naming (open).** The core is a clean-room TypeScript reimplementation
+in the Recipe Grid lineage. Its relationship to Recipe Grid 2 mirrors Grid 2's own
+relationship to its predecessor: largely a superset, not strictly
+backward-compatible — a G2 recipe with title-derived scaling needs a conversion
+pass to YAML frontmatter, and the recipe-in-recipe named-output construct is
+unsupported. Upgrading is light, not arduous. This is not "Recipe Grid 3" — not a
+successor version but a parallel reimplementation. Formal project name: TBD
+(package: @wendall911/recipe-grid).
+
 # Goal
 Goal is to make a family recipe book with a very simple table layout.
 
@@ -113,13 +134,22 @@ The object model lives in `packages/recipe-grid/src/model.ts` and is the interfa
 renderer consumes. It began as a superset of the Recipe Grid 2 semantic model (mossblaser's
 `recipe_grid`) and has since diverged into its own fork -- faithful where the two agree,
 deliberately different where this project's goals differ. A clean-room reimplementation of
-the *input grammar* and model, not a source port. Recipe Grid 2 is a reference, not a
+the *input grammar* and model, not a source port. The intent began as a 1:1 port;
+typed->untyped is not 1:1 -- TypeScript holds the shape decoratively, JavaScript is a
+different language with its own considerations, so the model is faithful where the
+languages agree and diverges where JS requires. The PEG layer is not reinvented (Peggy);
+divergence is at the model, not the parser. Recipe Grid 2 is a reference, not a
 canonical source.
 
 Provenance is tagged per declaration in the model file:
 
 - **[G2]** -- faithful to Recipe Grid 2 (documented reference for "what is canon").
 - **[EXT]** -- FamilyRecipe extension, not present in Recipe Grid 2.
+
+**Core surface: `parse(md) -> RecipeModel`** -- `{ title, description, meta,
+structure, root }`. `structure` (part-tagged nodes) is what a framework binding
+renders; `root` (built element tree) is a mount-directly DOM chunk for raw consumers
+and debugging. A binding consumes the first four; `root` is not needed by `-svelte`.
 
 ### Recipe Grid 2 model (a DAG)
 
@@ -205,11 +235,10 @@ shallow by design -- where a step needs its own breakdown it becomes a separate
 recipe-grid (a sub-recipe, typically a link-out rather than an embed), which is what
 `RecipeReference` models.
 
-## Build sequence
-
-Deliberately incremental; the browser is the source of truth at each step (sighted
-workflow -- visual output in the browser is the primary check, tests are the regression
-net).
+**Card and forest.** Each recipe is one **card** -- a single tree, laid out in
+flexbox. A collection isn't a container of cards; the **cross-file `RecipeReference`
+edges between cards form the forest.** The card is whole and complete on its own;
+references tie the edges.
 
 ## Deployment (not finalized)
 
@@ -222,15 +251,35 @@ dependency), so the editor app supersedes it. Do not assume a target is confirme
 
 ## Next steps
 
-The `-svelte` component shapes are set. Testing them is next.
+Complete the thin, headless Svelte 5 binding over the existing recipe-grid compiler that lives in `recipe-grid-svelte`. It takes recipe markdown as a string, runs it through recipe-grid's parse(), and presents the result as composable Svelte components. One clean install for a Svelte consumer; the core is a transitive implementation detail, never a second thing they wire up.
 
-The plan is jsdom + binding tests in `recipe-grid-svelte`, one part component at a
-time, with the harness modeled on the bits-ui test setup.
+The published surface — two exports, total:
 
-A we will levarage a fixture in `recipe-grid-svelte` that is a real md file with one example of each node type in the spec -- is the canonical input every component test renders from.
+- Recipe — the namespaced component (Root + Title, Description, Grid).
+- CSS — passthrough of recipe-grid's headless CSS (already wired).
+- No recipe-grid types cross the boundary; only recipe-grid-svelte's own component typings publish. No passthrough to build or manage — that non-work is deliberate.
 
-Each test renders a part from the fixture and checks its DOM shape and content,
-covering the bindings, not only static markup.
+The component model:
+
+- Recipe.Root — doesn't exist yet; this is the core build work. Receives the md string (implementor sources it however — file/DB/inline/fetch, their concern). Calls parse() once, yielding title (string), description (string), meta (parsed YAML frontmatter), structure (the DOM/DAG render). Holds that state. Pattern reference: bits-ui Avatar — component owns its own state/binding.
+- Root parses once and holds the result; Title / Description / Grid render from it. The card is whole — this is a binding that renders the core's structure, not a composition of the card downstream.
+- meta is live control state, not inert display data — it drives reactive transforms on Grid (scaling ingredients being the concrete case, tied to the format's scalingType/base and {N} interpolation). So a meta change re-derives what Grid renders.
+- meta is also exposed outward to the implementor via $bindable props — two-way, because the route drives the scale control and Root reacts. This is the piece you flagged as fuzzy.
+- Grid wraps the structured DOM verbatim — the card layout is the compiler's output, not a design choice.
+
+Current on-disk reality (the gap to close):
+
+- Components exist as RecipeGrid.svelte, RecipeTitle.svelte, RecipeDescription.svelte in src/recipe/; they compose the three pieces as-is.
+- No Root. index.ts currently exposes RecipeGrid.svelte behind a minimal test-wrapper that binds it, used to dump/confirm fidelity to the structured DOM. That's temporary scaffolding.
+- Intended layout: components → src/components/, export/construction root (index.ts, and the future Root) in src/. Flat, not a deep tree — the wrapper does one thing and won't grow.
+- Fixed constraints (not ours to negotiate): Svelte 5 sets the terms for how this is built; the TS compiler / svelte-package set the terms for build/export. We conform; we don't design around them.
+
+The known open items — canonical-source lookups, not memory:
+
+- Svelte 5 $bindable / $props mechanics — declaration and call-site usage for the outward two-way meta/scale binding.
+- How that $bindable state composes with $derived so Grid re-transforms on scale change.
+- The Root→parts channel (Svelte 5 idiom — canonical lookup) for exposing the parsed pieces the parts render.
+- svelte-package packaging specifics for the namespaced Recipe export.
 
 ## Known gaps / deferred (do not treat as done)
 
