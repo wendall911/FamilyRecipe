@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { it } from 'vitest';
 import { mount, unmount } from 'svelte';
 import { parse } from '@wendall911/recipe-grid';
-import { Recipe } from '../../src/index.ts';
+import { Recipe } from '../../src/index.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 

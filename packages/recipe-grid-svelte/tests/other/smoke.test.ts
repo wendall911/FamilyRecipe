@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parse } from '@wendall911/recipe-grid';
-import { Recipe } from '../../src/index.ts';
+import { Recipe } from '../../src/index.js';
 
 /*
  * Smoke test: the package's public surface resolves. The parser lives in

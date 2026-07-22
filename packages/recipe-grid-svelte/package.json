@@ -4,12 +4,24 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
+  "svelte": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
-    ".": "./src/index.ts",
-    "./recipe-grid.css": "./src/styles/passthrough.css"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js"
+    },
+    "./recipe-grid.css": "./dist/styles/passthrough.css"
   },
   "scripts": {
-    "test": "vitest run"
+    "build": "svelte-package -i src",
+    "test": "vitest run",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@wendall911/recipe-grid": "workspace:*"
@@ -18,11 +30,13 @@
     "svelte": "^5"
   },
   "devDependencies": {
+    "@sveltejs/package": "^2.5.8",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@testing-library/svelte": "^5.4.2",
     "jsdom": "^25.0.1",
-    "svelte": "^5.56.4",
+    "svelte": "^5.56.7",
+    "svelte-check": "^4.7.3",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }
