@@ -8,7 +8,7 @@ import type { RecipeModel } from '@wendall911/recipe-grid';
  * compiler pass, so `parsed` is a plain field — not reactive. Client-side
  * reactivity (e.g. scaling) is a later, separate layer.
  */
-export class RecipeRootState {
+export class RecipeContext {
 
     parsed: RecipeModel;
 
