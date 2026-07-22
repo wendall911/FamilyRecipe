@@ -7,4 +7,4 @@
     let { title }: { title: string } = $props();
 </script>
 
-<svelte:element this="h1">{title}</svelte:element>
+<svelte:element this={'h1'}>{title}</svelte:element>

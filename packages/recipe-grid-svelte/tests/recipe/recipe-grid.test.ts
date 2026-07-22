@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { it } from 'vitest';
 import { mount, unmount } from 'svelte';
-import { parse, RecipeGrid } from '../../src/index.ts';
+import { parse } from '@wendall911/recipe-grid';
+import { Recipe } from '../../src/index.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -13,10 +14,10 @@ function loadFixture(name: string): string {
     return readFileSync(join(here, '..', 'fixtures', name), 'utf8');
 }
 
-it('renders the fixture through RecipeGrid', () => {
+it('renders the fixture through Recipe.Grid', () => {
     const node = parse(loadFixture('turkish-pizza.md')).structure;
 
-    const component = mount(RecipeGrid, {
+    const component = mount(Recipe.Grid, {
         target: document.body,
         props: { node },
     });

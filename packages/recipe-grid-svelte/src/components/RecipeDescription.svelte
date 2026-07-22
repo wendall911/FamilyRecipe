@@ -7,4 +7,4 @@
     let { description }: { description: string } = $props();
 </script>
 
-<svelte:element this="p">{description}</svelte:element>
+<svelte:element this={'p'}>{description}</svelte:element>
