@@ -4,22 +4,20 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { it } from 'vitest';
 import { mount, unmount } from 'svelte';
-import { parse } from '@wendall911/recipe-grid';
-import { Recipe } from '../../src/index.js';
+import RootHarness from './RootHarness.svelte';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// Loader inline for now; a shared util comes once more tests need it.
 function loadFixture(name: string): string {
     return readFileSync(join(here, '..', 'fixtures', name), 'utf8');
 }
 
-it('renders the fixture through Recipe.Grid', () => {
-    const node = parse(loadFixture('turkish-pizza.md')).structure;
+it('mounts Recipe.Root with a context-reading child from raw md', () => {
+    const md = loadFixture('turkish-pizza.md');
 
-    const component = mount(Recipe.Grid, {
+    const component = mount(RootHarness, {
         target: document.body,
-        props: { node },
+        props: { md },
     });
 
     console.log('start');
