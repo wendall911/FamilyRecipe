@@ -31,6 +31,10 @@
     const mergedProps = $derived({ ...rest });
 </script>
 
-<svelte:element this={as} {...mergedProps}>
+{#if as}
+    <svelte:element this={as} {...mergedProps}>
+        {@render children?.()}
+    </svelte:element>
+{:else}
     {@render children?.()}
-</svelte:element>
+{/if}

@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { getContext } from 'svelte';
     import type { StructureNode } from '@wendall911/recipe-grid';
+    import type { RecipeContext } from '../recipe.js';
 
     /*
      * The recipe card. recipe-grid walks a recipe to a fully self-describing
@@ -9,8 +11,12 @@
      * and dispatches on nothing, because every node renders the same way. The
      * data-* markers ride through, so a consumer styles or binds against the
      * rendered card without this component knowing what any part means.
+     *
+     * The structure node comes from the Root's context (like Title/Description
+     * read their pieces); this part requires a <Recipe.Root> ancestor.
      */
-    let { node }: { node: StructureNode } = $props();
+    const recipe = getContext<RecipeContext>('recipe');
+    const node: StructureNode = recipe.parsed.structure;
 </script>
 
 {#snippet render(n: StructureNode)}
