@@ -2,6 +2,7 @@
 scalingType: servings
 base: 4
 slug: turkish-pizza
+source: "https://cooking.example.com/turkish-pizza"
 ---
 Red Pepper and Lamb Lahmacun (Turkish Pizza)
 ==================================================
