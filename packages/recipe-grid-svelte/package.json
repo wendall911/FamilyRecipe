@@ -2,7 +2,7 @@
   "name": "@wendall911/recipe-grid-svelte",
   "version": "0.0.0",
   "private": true,
-  "license": "AGPL-3.0-only",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "svelte": "./dist/index.js",
   "files": [
@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "svelte-package -i src",
-    "test": "vitest run",
+    "test": "vitest run --reporter=verbose",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
