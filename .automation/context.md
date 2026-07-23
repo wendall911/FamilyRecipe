@@ -4,7 +4,7 @@ FamilyRecipe is a monorepo for a greenfield tabular flexbox table layout for rec
 
 Developed agile, not waterfall.
 
-Licensed AGPL-3.0. Copyleft protects users' freedom; AGPL extends it to network/SaaS use.
+Licensed AGPL-3.0-or-later. Copyleft protects users' freedom; AGPL extends it to network/SaaS use.
 
 ```
 FamilyRecipe/
