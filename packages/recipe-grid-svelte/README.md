@@ -67,6 +67,29 @@ Renders the recipe description.
 
 Renders the recipe card. Takes no props; it wraps the core's structure as DOM, one node at a time, carrying each node's `data-recipe-grid-*` markers through so you can style or bind against the rendered card.
 
+## Metadata
+
+The parsed model carries the recipe's frontmatter as `meta`: `scalingType`, `base`, and `slug` (the recipe's identifier). Read it two ways.
+
+Without rendering -- parse once and read `meta`, e.g. to map a `slug` to a route:
+
+```ts
+import { Recipe } from '@wendall911/recipe-grid-svelte';
+
+const { meta } = new Recipe.RecipeContext(md).parsed;
+```
+
+From a `Recipe.Root` descendant -- read the model from context:
+
+```svelte
+<script lang="ts">
+    import { getContext } from 'svelte';
+    import { Recipe } from '@wendall911/recipe-grid-svelte';
+
+    const { meta } = getContext<Recipe.RecipeContext>('recipe').parsed;
+</script>
+```
+
 ## Styles
 
 The headless layout stylesheet lives in the core and is re-exported here as a single import:
@@ -84,7 +107,7 @@ The format is defined by the core, `recipe-grid`. See its canonical documentatio
 ## Exported types
 
 - `StructureNode` - re-exported from the core; the render structure a binding walks.
-- `RecipeContext` - the driver Root places in context.
+- `RecipeContext` - the driver Root places in context; its `parsed` holds `{ title, description, meta, structure, root }`.
 
 ## License
 
