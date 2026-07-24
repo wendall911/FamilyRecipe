@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { loadRecipe } from '@wendall911/recipe-grid-svelte';
-import type { EntryGenerator, PageLoad } from './$types';
+import { Recipe } from '@wendall911/recipe-grid-svelte';
+import type { PageLoad } from './$types';
 
 const files = import.meta.glob('$content/recipes/*.md', {
     eager: true,
@@ -8,18 +8,11 @@ const files = import.meta.glob('$content/recipes/*.md', {
     import: 'default',
 }) as Record<string, string>;
 
-const bySlug = new Map(
-    Object.entries(files).map(([path, md]) => [
-        path.split('/').pop()!.replace(/\.md$/, ''),
-        md,
-    ])
-);
-
-export const entries: EntryGenerator = () =>
-    [...bySlug.keys()].map((slug) => ({ slug }));
-
 export const load: PageLoad = ({ params }) => {
-    const md = bySlug.get(params.slug);
+    const md = Object.values(files).find(
+        (md) => new Recipe.RecipeContext(md).parsed.meta.slug === params.slug,
+    );
     if (md === undefined) error(404, 'Recipe not found');
-    return { model: loadRecipe(md) };
+
+    return { md };
 };

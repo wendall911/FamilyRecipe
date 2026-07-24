@@ -1,5 +1,6 @@
 ---
 scalingType: fixed
+slug: rasin-bread
 ---
 Rasin Bread
 ===========
