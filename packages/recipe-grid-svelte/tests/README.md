@@ -1,7 +1,6 @@
 # tests
 
-jsdom + testing-library. Verifies the wrapper wraps a recipe into a
-consumable card, not that recipe-grid is correct (that is recipe-grid's job).
+jsdom + testing-library. Verifies the wrapper wraps a recipe into a consumable card, not that recipe-grid is correct (that is recipe-grid's job).
 
 ## Run
 
@@ -12,7 +11,7 @@ consumable card, not that recipe-grid is correct (that is recipe-grid's job).
 - `fixtures/` - recipe `.md` inputs. Data only, no logic.
 - `util/`     - test helpers (e.g. `loadFixture`).
 - `recipe/`   - jsdom tests plus their `.svelte` harnesses.
-- `other/`    - non-target package checks (exports resolve, debug/dump).
+- `other/`    - non-target package checks (exports resolve, analysis dump, etc.).
 
 ## What each file is
 
@@ -27,7 +26,6 @@ consumable card, not that recipe-grid is correct (that is recipe-grid's job).
 
 ---
 
-Code is the oracle; tests keep us honest. Keep files small; split when
-unreadable.
+Code is the oracle; tests keep us honest. Keep files small; split when unreadable.
 
 ---

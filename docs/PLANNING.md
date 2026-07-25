@@ -92,7 +92,7 @@ Provenance is tagged per declaration in the model file:
 - **[G2]** -- faithful to Recipe Grid 2 (documented reference for "what is canon").
 - **[EXT]** -- FamilyRecipe extension, not present in Recipe Grid 2.
 
-**Core surface: `parse(md) -> RecipeModel`** -- `{ title, description, meta, structure, root }`. `structure` (part-tagged nodes) is what a framework binding renders; `root` (built element tree) is a mount-directly DOM chunk for raw consumers and debugging. A binding consumes the first four; `root` is not needed by `-svelte`.
+**Core surface: `parse(md) -> RecipeModel`** -- `{ title, description, meta, structure, root }`. `structure` (part-tagged nodes) is what a framework binding renders; `root` (built element tree) is a mount-directly DOM chunk for raw consumers and analysis. A binding consumes the first four; `root` is not needed by `-svelte`.
 
 ### Recipe Grid 2 model (a DAG)
 
@@ -155,6 +155,7 @@ Ask the user what is next. Let them guide you through the process. But reading t
 ## Working notes for a resuming session
 
 - **Verify by reading the actual output and matching shapes -- do NOT do math against data.** Counting nodes and comparing to an expected number is how bugs slip through. The `.md` is the source of truth for what ingredients exist; the DAG output either looks like the right shape or it does not. Probe the pipeline (it is the oracle); read the structures. The Grid 2 table got us TO our shape and is largely spent now -- we render our own DAG; compare against our own dumps, not Grid 2's `<table>`.
-- **Probe scripts live in `packages/recipe-grid/debug/`** (see its README). Read-only dumps of each stage (AST, DAG, walk-structure, built elements, full render). Run e.g.  `node debug/probe-compile.mjs`. Useful only if a session re-enters AST/DAG internals; the likelier next work (real recipes + metadata) won't need them.
+- **Probe scripts live in `packages/recipe-grid/utils/`** (see its README). Read-only dumps of each stage (AST, DAG, walk-structure, built elements, full render). Run e.g.  `node utils/probe-compile.mjs`. Useful only if a session re-enters AST/DAG internals; the likelier next work (real recipes + metadata) won't need them.
+- **Probe utils dumps are not for checking bugs. They are for data analysis** A raw javascript object will output [object Object] when dumped. This is a part of the language, and a normal expected output.
 - The Peggy string model is NOT the Python one. Build AST from raw `$()`-captured text; do not translate Python `str`-class ops 1:1. Numbers: JS has one `number`; exact fractions use `fraction.js`.
 - The generated parser (`generated/grammar.generated.{js,d.ts}`) is committed and shipped.  `generate` is a maintainer-only step; after any `grammar.peggy` change it must be regenerated. Consumers/CI never run generate.
