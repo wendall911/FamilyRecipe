@@ -35,6 +35,7 @@
         "tailwindcss": "^4.3.3",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.65.0",
-        "vite": "^8.1.5"
+        "vite": "^8.1.5",
+        "webdriverio": "^9.30.0"
     }
 }
