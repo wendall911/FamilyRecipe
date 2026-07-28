@@ -26,7 +26,7 @@ try {
     const dump = await browser.execute(() => {
         const PROPS = [
             'display', 'flex-direction', 'align-items', 'align-self',
-            'flex-grow', 'flex-shrink', 'flex-basis', 'margin',
+            'flex-grow', 'flex-shrink', 'flex-basis', 'margin', 'width',
         ];
         const root = document.querySelector('article');
         const lines: string[] = [];
@@ -62,7 +62,15 @@ try {
             const s = window.getComputedStyle(el);
             const props = PROPS.map((p) => `${p}:${s.getPropertyValue(p)}`).join('; ');
 
-            lines.push(`${'  '.repeat(depth)}<${tag}>${mkStr}${textStr}  ${props}`);
+            /*
+             * Resolved geometry: where the box actually landed after layout.
+             * The computed props say what was declared; the rect says what the
+             * browser did with it. Rounded — sub-pixel noise is not signal.
+             */
+            const r = el.getBoundingClientRect();
+            const box = `L:${Math.round(r.left)} R:${Math.round(r.right)} W:${Math.round(r.width)}`;
+
+            lines.push(`${'  '.repeat(depth)}<${tag}>${mkStr}${textStr}  ${box}  ${props}`);
 
             for (const child of Array.from(el.children)) {
                 walk(child, depth + 1);
