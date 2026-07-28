@@ -33,6 +33,7 @@
   "dependencies": {
     "fraction.js": "^5.3.4",
     "marked": "^18.0.6",
+    "parse-ingredient": "^2.2.0",
     "peggy": "^5.1.0",
     "yaml": "^2.9.0"
   }

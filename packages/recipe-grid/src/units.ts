@@ -1,46 +1,35 @@
 /**
- * Known unit names, ported from recipe_grid's units.py (UNIT_SYSTEM).
+ * Known unit names, derived from parse-ingredient's unit-of-measure definitions.
  *
- * Only the unit *names* are ported here — enough for the grammar to recognise a
- * unit. The unit-conversion system (scaling between units) is a separate,
- * later concern and is not included.
+ * Only the unit *names* are used here -- enough for the grammar to recognise a
+ * unit. Conversion and value handling stay in parse-ingredient; this module
+ * exists solely to hand Peggy a set of names to match.
  *
- * Order is preserved from units.py so the generated alternation's match
- * precedence matches the canonical grammar.
+ * Names are not transcribed. parse-ingredient owns the vocabulary; a change
+ * there flows through on the next generate.
  */
 
-/** All known unit names and aliases, in canonical order. */
-export const UNIT_NAMES: readonly string[] = [
-    // mass
-    'g', 'gram', 'grams',
-    'kg', 'kilo', 'kilos', 'kilogram', 'kilograms',
-    'lb', 'lbs', 'pound', 'pounds',
-    'oz', 'ozs', 'ounce', 'ounces',
-    // volume
-    'l', 'litre',
-    'ml', 'mill', 'mills', 'milliliter', 'milliliters',
-    'tsp', 'tsps', 'teaspoons', 'teaspoon', 'tea spoon', 'tea spoons',
-    'tbsp', 'tbsps', 'tablespoon', 'tablespoons', 'table spoon', 'table spoons',
-    'cup', 'cups',
-    'pint', 'pints',
-    // other
-    'clove', 'cloves',
-    'bulb', 'bulbs',
-    'can', 'cans', 'tin', 'tins',
-    'pinch', 'pinches',
-    'knob', 'knobs',
-    'packet', 'packets', 'pack', 'packs',
-    'box', 'boxes', 'boxen',
-    'bag', 'bags',
-    'sack', 'sacks',
-    'sachet', 'sachets',
-    'rasher', 'rashers',
-    'strip', 'strips',
+import { unitsOfMeasure } from 'parse-ingredient';
+
+/**
+ * Every name a unit may be written as: the canonical key, its short form, its
+ * plural, and every known alternate. Deduped so the same string can appear in
+ * more than one of those roles.
+ */
+const UNIT_NAMES: readonly string[] = [
+    ...new Set(
+        Object.entries(unitsOfMeasure).flatMap(([name, uom]) => [
+            name,
+            uom.short,
+            uom.plural,
+            ...uom.alternates,
+        ])
+    ),
 ];
 
 /**
- * A single unit name as a Peggy expression: a case-insensitive literal, or —
- * for a multi-word name — a sequence of literals separated by `hsp` (the
+ * A single unit name as a Peggy expression: a case-insensitive literal or 
+ * a multi-word name, a sequence of literals separated by `hsp` (the
  * grammar's horizontal-whitespace rule) so interior whitespace matches like
  * canonical's `\s+`.
  */
