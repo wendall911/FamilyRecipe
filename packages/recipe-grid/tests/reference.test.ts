@@ -39,10 +39,10 @@ test('bare ingredient: no quantity', () => {
     assert.equal(r.amount, null);
 });
 
-test('unit-less count with a multi-word name', () => {
+test('a size word is a unit: the name is what remains after it', () => {
     const r = referenceOf('2 large eggs\n');
-    assert.equal(nameText(r), 'large eggs');
+    assert.equal(nameText(r), 'eggs');
     assert.equal(r.amount?.kind, 'quantity');
     assert.deepEqual(r.amount?.value, 2);
-    assert.equal(unitText(r), null);
+    assert.equal(unitText(r), 'large');
 });

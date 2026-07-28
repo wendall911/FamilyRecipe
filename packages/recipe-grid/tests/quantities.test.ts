@@ -43,10 +43,10 @@ test('fraction value flows through into the quantity', () => {
     assert.equal(unitText(q), 'cup');
 });
 
-test('unit-less count: a non-unit word is not treated as a unit', () => {
+test('a size word is a unit: "large" binds as the unit, "eggs" as the name', () => {
     const q = quantityOf('2 large eggs\n');
     assert.deepEqual(q.value, 2);
-    assert.equal(unitText(q), null);
-    assert.equal(q.valueUnitSpacing, '');
+    assert.equal(unitText(q), 'large');
+    assert.equal(q.valueUnitSpacing, ' ');
     assert.equal(q.preposition, '');
 });
