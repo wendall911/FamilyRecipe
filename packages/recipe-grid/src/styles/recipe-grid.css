@@ -14,8 +14,6 @@
  * Selectors key on the part markers emitted by build.ts / parts.ts:
  *   root, grid, title, step, inputs, ingredient, sub-recipe,
  *   sub-recipe-header, reference, quantity, scaled-value.
- *
- * Copyright (C) FamilyRecipe contributors. Licensed AGPL-3.0-only.
  */
 
 /* The recipe is one box; the grid lays out its trees. */
