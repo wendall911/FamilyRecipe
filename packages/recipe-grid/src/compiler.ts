@@ -54,9 +54,10 @@ function innermostIngredient(node: RecipeTreeNode): Ingredient | null {
     if (node.kind === 'ingredient') {
         return node;
     }
-    if (node.kind === 'step' && node.inputs.length === 1) {
+    else if (node.kind === 'step' && node.inputs.length === 1) {
         return innermostIngredient(node.inputs[0]);
     }
+
     return null;
 }
 
@@ -68,6 +69,7 @@ class RecipeCompiler {
 
     compile(ast: AstRecipe, meta: RecipeMeta): Recipe {
         this.namedNodes = new Map();
+
         return {
             recipeTrees: ast.stmts.map((stmt) => this.compileStmt(stmt)),
             follows: null,
@@ -105,8 +107,7 @@ class RecipeCompiler {
         if (stmt.expr.kind === 'externalReference') {
             return tree;
         }
-
-        if (stmt.named) {
+        else if (stmt.named) {
             const outputNames = (stmt.outputs ?? []).map((o) => compileString(o));
 
             const subRecipe: SubRecipe = {
@@ -164,6 +165,7 @@ class RecipeCompiler {
              * an unambiguous name; anything else registers nothing.
              */
             const inner = innermostIngredient(tree);
+
             if (inner !== null) {
                 this.namedNodes.set(
                     normaliseOutputName(inner.description),
@@ -184,9 +186,10 @@ class RecipeCompiler {
         if (expr.kind === 'step') {
             return this.compileStep(expr);
         }
-        if (expr.kind === 'externalReference') {
+        else if (expr.kind === 'externalReference') {
             return this.compileExternalReference(expr);
         }
+
         return this.compileReference(expr);
     }
 
@@ -203,9 +206,11 @@ class RecipeCompiler {
             name: ref.name,
             targetSlug: ref.targetSlug,
         };
+
         if (ref.title !== undefined) {
             node.title = ref.title;
         }
+
         return node;
     }
 
@@ -215,9 +220,11 @@ class RecipeCompiler {
             description: compileString(step.name),
             inputs: step.inputs.map((input) => this.compileExpr(input)),
         };
+
         if (step.label !== undefined) {
             compiled.label = svsToString(compileString(step.label));
         }
+
         return compiled;
     }
 
@@ -235,10 +242,12 @@ class RecipeCompiler {
                 resolvedNode: named.resolvedNode,
                 amount: this.compileAmount(ref.amount),
             };
+
             // outputIndex only applies to a multi-output SubRecipe target.
             if (named.outputIndex !== undefined) {
                 reference.outputIndex = named.outputIndex;
             }
+
             return reference;
         }
 
@@ -256,6 +265,7 @@ class RecipeCompiler {
             description,
             quantity: ref.amount?.kind === 'quantity' ? this.compileQuantity(ref.amount) : null,
         };
+
         /*
          * An `=`-labelled ingredient carries its label (the handle later lines
          * reference); it is registered in namedNodes and also stored on the node.
@@ -263,6 +273,7 @@ class RecipeCompiler {
         if (ref.label !== undefined) {
             ingredient.label = svsToString(compileString(ref.label));
         }
+
         return ingredient;
     }
 
@@ -273,13 +284,14 @@ class RecipeCompiler {
         if (amount === null) {
             return undefined;
         }
-        if (amount.kind === 'remainder') {
+        else if (amount.kind === 'remainder') {
             return {
                 kind: 'remainder',
                 wording: amount.wording,
                 preposition: amount.preposition,
             };
         }
+
         return this.compileQuantity(amount);
     }
 
