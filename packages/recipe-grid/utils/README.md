@@ -25,3 +25,5 @@ node utils/probe-compile.mjs
 - `probe-multi-output.mjs` - AST + DAG for a multi-output `foo, bar, baz :=` heading.
 - `probe-remainder.mjs` - where the "remaining X" wording lands (AST vs compiled).
 - `probe-walk-vs-dag.mjs` - early walk/DAG comparison scratch.
+- `probe-extract-shape.mjs` - the `CardShape` from `extract-shape.ts`'s first pass: regions, cells in row/column order with their spans and neighbours, and an occupancy map. Takes an optional path argument (defaults to turkish-pizza);
+  `tests/fixtures/hot-hamburger.md`, so its geometry can be read against a known-correct one. Read the occupancy map as a grid — holes and overlaps show there, not in the numbers.
