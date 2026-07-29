@@ -22,7 +22,11 @@
  *      When added, it belongs alongside these functions and shares the library.
  *   2. Unit formatting — turning a unit string + value into display text.
  *      A renderer/library concern, not modelled here.
+ *   3. Unit identity — resolved here (`unitOfMeasureID`), from parse-ingredient's
+ *      `unitsOfMeasure`. No longer deferred.
  */
+
+import { unitsOfMeasure } from 'parse-ingredient';
 
 import type {
     RecipeNumber,
@@ -151,5 +155,43 @@ export function compileString(astString: AstString): ScaledValueString {
     );
 
     return svsNormalize(parts);
+}
+
+/**
+ * Every written form of a unit, lowercased, mapped to its canonical key: the
+ * `unitsOfMeasure` record key, its `short` and `plural` forms, and every
+ * `alternate`. Built once.
+ *
+ * First one wins. Lowercasing collides some forms across entries ("T" and "t",
+ * "C" and "c"); the earlier entry keeps the key. Sorting that out is a
+ * validation concern, not this lookup's.
+ */
+const unitIdByName: Map<string, string> = (() => {
+    const map = new Map<string, string>();
+
+    for (const [id, uom] of Object.entries(unitsOfMeasure)) {
+        for (const name of [id, uom.short, uom.plural, ...uom.alternates]) {
+            const key = name.toLowerCase();
+
+            if (!map.has(key)) {
+                map.set(key, id);
+            }
+        }
+    }
+
+    return map;
+})();
+
+/**
+ * The canonical unit key a written unit name resolves to, or null when the name
+ * is not a known unit. Case-insensitive, matching the grammar's unit
+ * alternation.
+ */
+export function unitOfMeasureID(unitOfMeasure: string | null): string | null {
+    if (unitOfMeasure === null) {
+        return null;
+    }
+
+    return unitIdByName.get(unitOfMeasure.toLowerCase()) ?? null;
 }
 

@@ -4,9 +4,12 @@
  * `compile(ast)` returns a single `Recipe` whose `recipeTrees` are the roots of
  * its one connected graph.
  *
- * This is a straight structural mapping. Every value is already present in the
- * AST; the only resolution is deciding, per named reference, whether it points
- * at an earlier sub-recipe output (a Reference) or is a plain Ingredient.
+ * Structure comes straight across: every structural value is already present in
+ * the AST. Two things are resolved here, not transcribed:
+ *   - per named reference, whether it points at an earlier sub-recipe output
+ *     (a Reference) or is a plain Ingredient;
+ *   - per quantity, the canonical unit key its authored unit name resolves to
+ *     (`unitOfMeasureID`, via `recipe-model.ts`).
  */
 
 import type {
@@ -32,7 +35,13 @@ import type {
     Step as AstStep,
 } from './ast.ts';
 
-import { compileString, normaliseOutputName, svsNormalize, svsToString } from './recipe-model.ts';
+import {
+    compileString,
+    normaliseOutputName,
+    svsNormalize,
+    svsToString,
+    unitOfMeasureID,
+} from './recipe-model.ts';
 
 /**
  * A resolvable name and the node a later reference resolves to. Covers both `:=`
@@ -296,10 +305,13 @@ class RecipeCompiler {
     }
 
     private compileQuantity(quantity: AstQuantity): Quantity {
+        const unit = quantity.unit !== null ? svsToString(compileString(quantity.unit)) : null;
+
         return {
             kind: 'quantity',
             value: quantity.value,
-            unit: quantity.unit !== null ? svsToString(compileString(quantity.unit)) : null,
+            unitOfMeasure: unit,
+            unitOfMeasureID: unitOfMeasureID(unit),
             valueUnitSpacing: quantity.valueUnitSpacing,
             preposition: quantity.preposition,
         };

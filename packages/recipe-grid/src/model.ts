@@ -53,16 +53,25 @@ export type ScaledValueStringPart = string | RecipeNumber;
 export type ScaledValueString = ScaledValueStringPart[];
 
 /**
- * [G2] An absolute quantity, e.g. "50g of", "3 apples".
- * Suggested rendering:
- *   value + (valueUnitSpacing + unit if unit != null) + preposition
+ * [EXT] An absolute quantity, e.g. "50g of", "3 apples". Diverges from Grid 2,
+ * which carried only the authored unit text: a quantity here also carries the
+ * canonical unit identity, so a consumer can convert without re-matching a
+ * string the grammar already matched.
  */
 export type Quantity = {
     kind: "quantity";
     // [G2] The amount.
     value: RecipeNumber;
-    // [G2] Unit name, or null for a unit-less count (e.g. 3 apples).
-    unit: string | null;
+    // [G2] Unit name as authored, or null for a unit-less count (e.g. 3 apples).
+    unitOfMeasure: string | null;
+    /**
+     * [EXT] The canonical unit key `unitOfMeasure` resolves to -- the
+     * parse-ingredient `unitsOfMeasure` record key ("cloves" -> "clove",
+     * "g" -> "gram"). Carried alongside `unitOfMeasure`, never instead of it:
+     * one is what the author wrote and what renders, the other is the handle a
+     * consumer looks up. Null exactly when `unitOfMeasure` is null.
+     */
+    unitOfMeasureID: string | null;
     // [G2] Whitespace between value and unit; "" when there is no unit.
     valueUnitSpacing: string;
     // [G2] Trailing preposition incl. leading space, e.g. " of" in "50g of".
