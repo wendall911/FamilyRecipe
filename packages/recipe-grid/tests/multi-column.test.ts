@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { parse } from '../src/generated/grammar.generated.js';
-import { extractRecipe } from '../src/markdown.ts';
+import { extractRecipe } from '../src/markdown.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixture = (name: string): string =>

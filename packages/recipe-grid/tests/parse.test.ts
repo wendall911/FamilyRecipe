@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { extractRecipe } from '../src/markdown.ts';
-import { parse } from '../src/index.ts';
+import { extractRecipe } from '../src/markdown.js';
+import { parse } from '../src/index.js';
 
 const RECIPES_DIR = fileURLToPath(
     new URL('../../../apps/site/src/content/recipes/', import.meta.url),

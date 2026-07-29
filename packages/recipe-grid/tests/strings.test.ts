@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { parse } from '../src/generated/grammar.generated.js';
-import { findAll } from './helpers.ts';
+import { findAll } from './helpers.js';
 
 function substringsOf(src: string): { offset: number; string: string }[] {
     const strings = findAll(parse(src), (o) => o.kind === 'string');

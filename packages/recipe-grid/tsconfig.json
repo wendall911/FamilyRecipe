@@ -1,18 +1,7 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "allowJs": true,
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "rewriteRelativeImportExtensions": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts", "src/**/*.js"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.build.json" },
+    { "path": "./tsconfig.test.json" }
+  ]
 }

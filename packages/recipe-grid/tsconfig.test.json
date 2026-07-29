@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "strict": true
+  },
+  "include": ["tests/**/*", "src/**/*"] 
+}

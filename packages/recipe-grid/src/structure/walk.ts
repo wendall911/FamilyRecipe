@@ -208,7 +208,7 @@ function inlineContent(text: ScaledValueString): StructureNode[] {
 function quantityNode(quantity: Quantity): StructureNode {
     const children: StructureNode[] = [scaledValueSpan(quantity.value)];
     const unitText =
-        quantity.unit !== null ? `${quantity.valueUnitSpacing}${quantity.unit}` : '';
+        quantity.unitOfMeasure !== null ? `${quantity.valueUnitSpacing}${quantity.unitOfMeasure}` : '';
     const trailing = `${unitText}${quantity.preposition}`;
     if (trailing !== '') {
         children.push(textSpan(trailing));

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { parse } from '../src/generated/grammar.generated.js';
-import { findAll } from './helpers.ts';
+import { findAll } from './helpers.js';
 
 interface StringNode {
     substrings: { string: string }[];

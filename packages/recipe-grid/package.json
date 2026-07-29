@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "generate": "node scripts/generate-parser.ts",
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.ts"
   },
