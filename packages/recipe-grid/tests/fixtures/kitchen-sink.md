@@ -19,6 +19,7 @@ down how each is handled. Do not cook this.
     150ml milk
     100ml cream
     2 tbsp sugar
+    3 liters of cat memes
     red peppers = 150g roasted red peppers from jar, finely chopped
     [Pizza Dough](pizza-dough)
     [Roux](roux "Dad's basic roux")
@@ -34,6 +35,7 @@ down how each is handled. Do not cook this.
     bake(
       mix(
         dough,
+        cat memes,
         {1 handful} fresh parsley,
         Remaining milk
       ),
