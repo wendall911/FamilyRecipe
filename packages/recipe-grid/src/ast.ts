@@ -1,27 +1,35 @@
 /**
  * Abstract Syntax Tree (AST) for the recipe syntax.
  *
- * Port of recipe_grid's parser/ast.py node types. This is the syntactic tree
- * the grammar produces; the compiler stage turns it into the recipe model.
+ * This is the syntactic tree the grammar produces; the compiler stage 
+ * turns it into the recipe model.
  */
 
-import type { Fraction } from './model.ts';
+import type {
+    Fraction
+} from './model.ts';
 
-/** A recipe numeric value: an integer/decimal, or an exact fraction. */
+/**
+ * A recipe numeric value: an integer/decimal, or an exact fraction.
+ */
 export type RecipeNumber = number | Fraction;
 
-/** A substring used literally within a String. */
+/**
+ * A substring used literally within a String.
+ */
 export interface Substring {
     kind: 'substring';
-    /** Source offset (in chars) of this substring. */
+    // Source offset (in chars) of this substring.
     offset: number;
     string: string;
 }
 
-/** A number forming part of a String, which scales with the recipe. */
+/**
+ * A number forming part of a String, which scales with the recipe.
+ */
 export interface InterpolatedValue {
     kind: 'interpolatedValue';
-    /** Source offset (in chars) of this value. */
+    // Source offset (in chars) of this value.
     offset: number;
     number: RecipeNumber;
 }
@@ -32,20 +40,22 @@ export interface InterpolatedValue {
  */
 export interface String {
     kind: 'string';
-    /** Source offset (in chars): the offset of the first substring. */
+    // Source offset (in chars): the offset of the first substring.
     offset: number;
     substrings: (Substring | InterpolatedValue)[];
 }
 
-/** An absolute quantity, e.g. "300g of". */
+/**
+ * An absolute quantity, e.g. "300g of".
+ */
 export interface Quantity {
     kind: 'quantity';
-    /** Source offset (in chars). */
+    // Source offset (in chars).
     offset: number;
     value: RecipeNumber;
-    /** The unit name, or null for a unitless quantity. */
+    // The unit name, or null for a unitless quantity.
     unit: String | null;
-    /** The whitespace, if any, between value and unit. */
+    // The whitespace, if any, between value and unit.
     valueUnitSpacing: string;
     /**
      * An unquoted preposition following the quantity (e.g. " of" in "50g of
@@ -56,47 +66,49 @@ export interface Quantity {
 
 /**
  * "Use whatever is left" of a referenced output, e.g. "remaining" or "rest of".
- * A bare marker — no numeric value. (Diverges from Grid 2's numeric Proportion,
+ * A bare marker, no numeric value. (Diverges from [G2] numeric Proportion,
  * which the real recipe corpus never uses; splits are only ever "the rest".)
  */
 export interface Remainder {
     kind: 'remainder';
-    /** Source offset (in chars). */
+    // Source offset (in chars).
     offset: number;
-    /** The wording used (e.g. "remaining", "rest"). */
+    // The wording used (e.g. "remaining", "rest").
     wording: string;
-    /** The words and whitespace following the remainder wording. */
+    // The words and whitespace following the remainder wording.
     preposition: string;
 }
 
 /** A step, e.g. 'mix(tomatoes, herbs)'. */
 export interface Step {
     kind: 'step';
-    /** Source offset (in chars): the offset of the step name. */
+    // Source offset (in chars): the offset of the step name.
     offset: number;
-    /** The description of the step ('mix' in this example). */
+    // The description of the step ('mix' in this example).
     name: String;
-    /** The inputs to this step ('tomatoes' and 'herbs'). */
+    // The inputs to this step ('tomatoes' and 'herbs').
     inputs: Expr[];
-    /** The `ingredient = X` label naming this node, when authored; else null. */
-    label?: String;
-}
-
-/** A reference to an ingredient or a sub-recipe. */
-export interface Reference {
-    kind: 'reference';
-    /** Source offset (in chars). */
-    offset: number;
-    /** The name of the ingredient or sub-recipe. */
-    name: String;
-    /** The amount of the referenced item — an absolute quantity or the rest, or null. */
-    amount: Quantity | Remainder | null;
-    /** The `ingredient = X` label naming this node, when authored; else null. */
+    // The `ingredient = X` label naming this node, when authored; else null.
     label?: String;
 }
 
 /**
- * A cross-file reference — a bare markdown link, e.g. `[Dough](pizza-dough)`
+ * A reference to an ingredient or a sub-recipe.
+ */
+export interface Reference {
+    kind: 'reference';
+    // Source offset (in chars).
+    offset: number;
+    // The name of the ingredient or sub-recipe.
+    name: String;
+    // The amount of the referenced item: an absolute quantity or the rest, or null.
+    amount: Quantity | Remainder | null;
+    // The `ingredient = X` label naming this node, when authored; else null.
+    label?: String;
+}
+
+/**
+ * A cross-file reference, a bare markdown link, e.g. `[Dough](pizza-dough)`
  * or `[Dough](pizza-dough "Dad's pizza dough")`. Points at another recipe by
  * slug. Its bodies are captured raw (plain strings, not {@link String} nodes),
  * matching the markdown-link surface: self-naming, so the link text is both the
@@ -106,36 +118,42 @@ export interface Reference {
  */
 export interface ExternalReference {
     kind: 'externalReference';
-    /** Source offset (in chars). */
+    // Source offset (in chars).
     offset: number;
-    /** The link text: display name and reference handle. */
+    // The link text: display name and reference handle.
     name: string;
-    /** The link destination: the target recipe's slug. */
+    // The link destination: the target recipe's slug.
     targetSlug: string;
-    /** The markdown link title (quotes stripped), when authored; else absent. */
+    // The markdown link title (quotes stripped), when authored; else absent.
     title?: string;
 }
 
-/** An expression: a step, a reference, or a cross-file external reference. */
+/**
+ * An expression: a step, a reference, or a cross-file external reference.
+ */
 export type Expr = Step | Reference | ExternalReference;
 
-/** A statement in a recipe. */
+/**
+ * A statement in a recipe.
+ */
 export interface Stmt {
     kind: 'stmt';
-    /** Source offset (in chars). */
+    // Source offset (in chars).
     offset: number;
-    /** The expression contained in this statement. */
+    // The expression contained in this statement.
     expr: Expr;
-    /** Explicitly named outputs produced by this statement, or null. */
+    // Explicitly named outputs produced by this statement, or null.
     outputs: String[] | null;
-    /** True if `:=` was used (the sub-recipe is explicitly named). */
+    // True if `:=` was used (the sub-recipe is explicitly named).
     named: boolean;
 }
 
-/** Root of a recipe AST: the list of statements. */
+/**
+ * Root of a recipe AST: the list of statements.
+ */
 export interface Recipe {
     kind: 'recipe';
-    /** Source offset (in chars): the offset of the first statement. */
+    // Source offset (in chars): the offset of the first statement.
     offset: number;
     stmts: Stmt[];
 }
