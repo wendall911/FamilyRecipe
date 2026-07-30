@@ -1,10 +1,8 @@
 # utils/ — pipeline probe scripts
 
-Temporary not committed diagnostic scripts that dump each stage of the pipeline so you can **read the shape** and check it by eye. They are the oracle for DAG/structure work: probe the pipeline, don't reason about (or count) output. Not shipped, not tested - throwaway harnesses kept around in case a session digs into internals.
+Diagnostic scripts that dump each stage of the pipeline so tools can **read the shape** and check it. They are the oracle for DAG/structure work: probe the pipeline, don't reason about (or count) output. Not shipped, not tested - modifiable harnesses kept for when internals are a target of the work.
 
-Run any of them with node from anywhere; paths resolve relative to the package
-(`const PKG = new URL('..', import.meta.url).pathname`). Most target the
-turkish-pizza recipe in `apps/site`.
+Run any of them with node from anywhere; paths resolve relative to the package (`const PKG = new URL('..', import.meta.url).pathname`). Most target the turkish-pizza recipe in `apps/site`, and can be modified to accept a path if it needs to exist. These are not always reflective of a 1:1 use and may have some cruft, they get used/abused for this work.
 
 ```
 node utils/probe-compile.mjs
