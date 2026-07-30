@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { compileFixture } from './libs/dag-harness.ts';
+import { isReference, isStep } from './libs/dag-helpers.ts';
 import {
     normaliseOutputName,
     numberValue,
@@ -215,8 +216,270 @@ test('a quantity value keeps the kind it was authored in', () => {
  * recipe a DAG rather than a tree.
  */
 
+test('a := heading compiles to a subRecipe wrapping the step it names', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `Dough := knead(...)` -- the heading names a region; the node carries the
+     * declared output name and wraps the step the `:=` bound. Found by its
+     * output name rather than position, so the fixture can grow around it.
+     */
+    const dough = recipe.recipeTrees.find(
+        (node): node is SubRecipe =>
+            node.kind === 'subRecipe'
+            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+    );
+
+    assert.ok(dough, 'expected a Dough subRecipe');
+
+    // One declared output: `Dough :=` names a single result.
+    assert.equal(dough.outputNames.length, 1);
+
+    /*
+     * The `:=` wraps exactly one child tree -- here the `knead` step whose
+     * arguments are the region's inputs. The guard is the assertion, so a
+     * subTree that stops being a step fails here rather than reading undefined
+     * off a cast.
+     */
+    const subTree = dough.subTree;
+
+    assert.ok(isStep(subTree), 'expected the subTree to be a step');
+    assert.equal(svsToString(subTree.description), 'knead');
+});
+
+test('a later line reaching a := output resolves to that node, not a copy', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `Dough := knead(...)` declared above; `bake(mix(dough, ...))` reaches it
+     * by name. The reference holds the subRecipe object itself, so the node has
+     * a second parent -- the back-edge that makes this a DAG rather than a tree.
+     */
+    const dough = recipe.recipeTrees.find(
+        (node): node is SubRecipe =>
+            node.kind === 'subRecipe'
+            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+    );
+
+    assert.ok(dough, 'expected a Dough subRecipe');
+
+    const bake = recipe.recipeTrees.find(
+        (node): node is Step => node.kind === 'step' && svsToString(node.description) === 'bake',
+    );
+
+    assert.ok(bake, 'expected a bake step');
+
+    const mix = bake.inputs.find(
+        (node): node is Step => isStep(node) && svsToString(node.description) === 'mix',
+    );
+
+    assert.ok(mix, 'expected a mix step under bake');
+
+    const toDough = mix.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === dough,
+    );
+
+    /*
+     * Object identity, not a structural comparison: a deep-equal copy would
+     * satisfy a shape check while being a separate node, which is the tree the
+     * DAG is not.
+     */
+    assert.ok(toDough, 'expected a reference resolving to the Dough subRecipe');
+});
+
+test('a reference carries an amount only when the line draws a measured portion', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `Dough := knead(200g "plain flour (12% protein)", 1/2 cup butter, milk)`
+     * -- two of the three inputs restate a quantity and the third does not. The
+     * amount is what the line asked for, not a property of the node it targets.
+     */
+    const dough = recipe.recipeTrees.find(
+        (node): node is SubRecipe =>
+            node.kind === 'subRecipe'
+            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+    );
+
+    assert.ok(dough, 'expected a Dough subRecipe');
+    assert.ok(isStep(dough.subTree), 'expected the subTree to be a step');
+
+    const flour = recipe.recipeTrees.find(
+        (node): node is Ingredient =>
+            node.kind === 'ingredient'
+            && svsToString(node.description) === 'plain flour (12% protein)',
+    );
+
+    assert.ok(flour, 'expected a plain flour ingredient');
+
+    const milk = recipe.recipeTrees.find(
+        (node): node is Ingredient =>
+            node.kind === 'ingredient' && svsToString(node.description) === 'milk',
+    );
+
+    assert.ok(milk, 'expected a milk ingredient');
+
+    const toFlour = dough.subTree.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === flour,
+    );
+
+    assert.ok(toFlour, 'expected a reference resolving to the flour ingredient');
+
+    /*
+     * `200g` restated on the reference. The ingredient declares the same
+     * amount, but this is the draw the step made, carried on the edge.
+     */
+    assert.ok(toFlour.amount, 'expected the flour reference to carry an amount');
+    assert.equal(toFlour.amount.kind, 'quantity');
+
+    const toMilk = dough.subTree.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === milk,
+    );
+
+    assert.ok(toMilk, 'expected a reference resolving to the milk ingredient');
+
+    // `milk` names the output with no amount: all of it, so nothing to carry.
+    assert.equal(toMilk.amount, undefined);
+});
+
+test('a reference resolves to a labelled step, not only a := output', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `Filling := fold(whip(...), mix(red peppers, ...))` -- the region nests
+     * steps rather than holding a flat list, and `red peppers` names an
+     * `=`-labelled step declared above. A reference targets any node, so the
+     * handle a later line resolves need not be a `:=` output.
+     */
+    const filling = recipe.recipeTrees.find(
+        (node): node is SubRecipe =>
+            node.kind === 'subRecipe'
+            && node.outputNames.some((output) => normaliseOutputName(output) === 'filling'),
+    );
+
+    assert.ok(filling, 'expected a Filling subRecipe');
+    assert.ok(isStep(filling.subTree), 'expected the subTree to be a step');
+    assert.equal(svsToString(filling.subTree.description), 'fold');
+
+    const mix = filling.subTree.inputs.find(
+        (node): node is Step => isStep(node) && svsToString(node.description) === 'mix',
+    );
+
+    assert.ok(mix, 'expected a mix step nested under fold');
+
+    const peppers = recipe.recipeTrees.find(
+        (node): node is Step => isStep(node) && node.label === 'red peppers',
+    );
+
+    assert.ok(peppers, 'expected a step labelled red peppers');
+
+    const toPeppers = mix.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === peppers,
+    );
+
+    assert.ok(toPeppers, 'expected a reference resolving to the labelled step');
+
+    /*
+     * A step has one result, so there is no output to index -- the field is
+     * absent rather than defaulted.
+     */
+    assert.equal(toPeppers.outputIndex, undefined);
+});
+
 /* --- Recipe --------------------------------------------------------------
  *
- * The entry point the rest is structured into: roots, the follows chain, and
- * the frontmatter the compiler stamps on.
+ * The entry point the rest is structured into: roots, and the frontmatter the 
+ * compiler stamps on.
  */
+
+test('the compiler stamps the resolved frontmatter onto the recipe', () => {
+    const recipe: Recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `scalingType: servings` / `base: 4` as authored. The extraction layer
+     * resolves the metadata and the compiler stamps it; the DAG carries it
+     * rather than the markdown layer holding it separately.
+     */
+    assert.equal(recipe.scalingType, 'servings');
+    assert.equal(recipe.base, 4);
+
+    /*
+     * The fixture authors no slug, so the recipe takes one derived from its
+     * title -- always a concrete string, since a cross-file reference resolves
+     * against it.
+     */
+    assert.equal(recipe.slug, 'kitchen-sink-test');
+
+    /*
+     * The roots the body declared. Read as a list of what is there, not a
+     * count: every top-level line is a root, including the ones nothing
+     * references.
+     */
+    assert.ok(recipe.recipeTrees.length > 0, 'expected the body to compile to roots');
+});
+
+test('a remainder marks the last draw on an ingredient, carrying no value', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `bake(mix(..., Remaining milk), 0.5 tsp of the salt)` -- the main step is
+     * where the chain ends, so the final draw lands here. `Dough := knead(...)`
+     * already took milk without an amount; this use says what is left of it.
+     */
+    const bake = recipe.recipeTrees.find(
+        (node): node is Step => isStep(node) && svsToString(node.description) === 'bake',
+    );
+
+    assert.ok(bake, 'expected a bake step');
+
+    const mix = bake.inputs.find(
+        (node): node is Step => isStep(node) && svsToString(node.description) === 'mix',
+    );
+
+    assert.ok(mix, 'expected a mix step under bake');
+
+    const milk = recipe.recipeTrees.find(
+        (node): node is Ingredient =>
+            node.kind === 'ingredient' && svsToString(node.description) === 'milk',
+    );
+
+    assert.ok(milk, 'expected a milk ingredient');
+
+    const toMilk = mix.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === milk,
+    );
+
+    assert.ok(toMilk, 'expected a reference resolving to the milk ingredient');
+    assert.ok(toMilk.amount, 'expected the milk reference to carry an amount');
+    assert.equal(toMilk.amount.kind, 'remainder');
+
+    /*
+     * The wording as authored, kept for display. A remainder holds no value --
+     * the ingredient list is the definitive amount, and what is left of it is a
+     * validation question, not one the compiler answers.
+     */
+    const remainder: Remainder = toMilk.amount;
+
+    assert.equal(remainder.wording, 'Remaining');
+    assert.equal(remainder.preposition, '');
+
+    /*
+     * `0.5 tsp of the salt` -- a measured draw alongside the remainder, and the
+     * preposition survives with its leading space, as authored.
+     */
+    const salt = recipe.recipeTrees.find(
+        (node): node is Ingredient =>
+            node.kind === 'ingredient' && svsToString(node.description) === 'salt',
+    );
+
+    assert.ok(salt, 'expected a salt ingredient');
+
+    const toSalt = bake.inputs.find(
+        (node): node is Reference => isReference(node) && node.resolvedNode === salt,
+    );
+
+    assert.ok(toSalt, 'expected a reference resolving to the salt ingredient');
+    assert.ok(toSalt.amount, 'expected the salt reference to carry an amount');
+    assert.equal(toSalt.amount.kind, 'quantity');
+    assert.equal(toSalt.amount.preposition, ' of the');
+});
