@@ -120,9 +120,10 @@ export type Ingredient = {
     quantity: Quantity | null;
     /**
      * [G2] The author's recipe-local mapping label from an `ingredient = X`
-     * binding -- the handle later lines reference. Never surfaces as display
-     * (the description is what shows); distinct from a canonical schema key
-     * (see identity.canonicalName), since a shorthand label may not be canonical.
+     * binding -- the handle later lines reference, and the text drawn where a
+     * reference to this node appears. It does not replace the description, which
+     * is what this node itself shows. Distinct from a canonical schema key (see
+     * identity.canonicalName), since a shorthand label may not be canonical.
      */
     label?: string;
     // [EXT] Optional structured/canonical identity for schema mapping.

@@ -1,5 +1,5 @@
 /**
- * Recipe model behaviour — the free-function layer bridging the decorative
+ * Recipe model behaviour. The free-function layer bridging the decorative
  * types in `model.ts` to real operations.
  *
  * `model.ts` declares plain-object shapes; TypeScript there enforces nothing at
@@ -7,23 +7,22 @@
  * module.
  *
  * Provenance:
- *   [G2] - faithful to Recipe Grid 2's compiler
+ *   [EXT] - compatible with [G2] but adopts a real units library, not a hand 
+ *   authored list.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- * DEFERRED: units
- * ─────────────────────────────────────────────────────────────────────────────
- * A real quantity/unit library (conversion, scaling arithmetic, formatting) is
- * a separate, deferred concern. Every place that library will plug in is marked
- * inline with `[DEFERRED: units]`. Grep that tag to find every seam. The seams:
+ * -----------------------------------------------------------------------------
+ * UNITS
+ * -----------------------------------------------------------------------------
+ * parse-ingredient is a dependency of this package and rides along to
+ * consumers. Its `unitsOfMeasure` feeds the grammar's unit alternation
+ * (`units.ts`) and the identity lookup below, so every unit the parser matches
+ * is one the converter knows.
  *
- *   1. Scaling (`scale(node, factor)`) — Grid 2's `.scale()` method family
- *      rescales embedded numbers and quantity values. Not ported here: scaling
- *      is a runtime concern the renderer drives, not something compilation runs.
- *      When added, it belongs alongside these functions and shares the library.
- *   2. Unit formatting — turning a unit string + value into display text.
- *      A renderer/library concern, not modelled here.
- *   3. Unit identity — resolved here (`unitOfMeasureID`), from parse-ingredient's
- *      `unitsOfMeasure`. No longer deferred.
+ * This layer binds a quantity's authored unit name to its canonical key
+ * (`unitOfMeasureID`), and carries both. Values stay as authored; the key is
+ * the handle. A consumer holds the same library and can convert, scale, or
+ * format from those bindings -- a locale display, a unit selector, scaling at
+ * render. Those are consumer decisions, not shapes the DAG carries.
  */
 
 import { unitsOfMeasure } from 'parse-ingredient';
