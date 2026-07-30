@@ -1,6 +1,8 @@
 # FamilyRecipe — Project Context
 
-FamilyRecipe is a monorepo for a greenfield tabular flexbox table layout for recipes. This is a novel approach to recipes that uses the Cooking for Engineers approach of a single card for recipes with ingredients on the left that flow into instructions on the right. It is a novel project that should make no assumptions about how recipes work or what they mean.
+FamilyRecipe is a monorepo for a greenfield tabular flexbox layout for recipes. This is a novel approach to recipes that uses the Cooking for Engineers approach of a single card for recipes, not a list of recipes followed by instructions. It is a novel project that should make no assumptions about how recipes work or what they mean.
+
+The DAG is the only representation that can accurately describe the flexbox layout. The compiler produces a real DAG with edges that extend to other recipes. There is no tree, only a DAG.
 
 Developed agile, not waterfall.
 
