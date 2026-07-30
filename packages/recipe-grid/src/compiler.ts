@@ -81,7 +81,6 @@ class RecipeCompiler {
 
         return {
             recipeTrees: ast.stmts.map((stmt) => this.compileStmt(stmt)),
-            follows: null,
             /*
              * Recipe-level metadata (from the YAML frontmatter, resolved by
              * markdown.ts) is recipe data and belongs on the Recipe; the compiler

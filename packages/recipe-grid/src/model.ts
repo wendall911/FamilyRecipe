@@ -163,8 +163,8 @@ export type SubRecipe = {
 
 /**
  * [G2] An **intra-document** reference: a back-pointer to a labelled node earlier
- * in the same {@link Recipe} (or its `follows` chain). Grid 2's own reuse
- * mechanism only referenced a {@link SubRecipe} output.
+ * in the same {@link Recipe}. Grid 2's own reuse mechanism only referenced a 
+ * {@link SubRecipe} output.
  *
  * [EXT] Generalises the target to *any* {@link RecipeTreeNode}, so a
  * reference can also resolve to an `=`-labelled {@link Ingredient} or {@link Step}, 
@@ -225,8 +225,6 @@ export type RecipeMeta = RecipeScaling & {
 export type Recipe = {
     // [G2] The recipe tree roots.
     recipeTrees: RecipeTreeNode[];
-    // [G2] Prior recipe section this one follows, or null.
-    follows: Recipe | null;
     /**
      * [EXT] This recipe's own identity (the recipe id), for cross-file references
      * (see below). Always resolved by the extraction layer (authored in
