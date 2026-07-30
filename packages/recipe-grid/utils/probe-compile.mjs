@@ -1,5 +1,10 @@
 // Compile a fixture through the real parser + new compiler and print the DAG,
 // so it can be checked against the rendered table. Read-only; writes nothing.
+//
+//   node utils/probe-compile.mjs [path-to-recipe.md]
+//
+// Defaults to turkish-pizza. A path is resolved relative to the working
+// directory.
 import { readFileSync } from 'node:fs';
 
 const PKG = new URL('..', import.meta.url).pathname;
@@ -63,11 +68,11 @@ function dumpRecipe(recipe) {
   );
 }
 
-for (const name of ['turkish-pizza']) {
-  const md = readFileSync(`${PKG}/../../apps/site/src/content/recipes/${name}.md`, 'utf8');
-  const { blocks, meta, title } = extractRecipe(md);
-  console.log(`\n========== ${name}  (title=${JSON.stringify(title)} meta=${JSON.stringify(meta)}) ==========`);
-  const ast = parse(blocks[0]);
-  const recipe = compile(ast, meta);
-  console.log(dumpRecipe(recipe));
-}
+const target =
+  process.argv[2] ?? `${PKG}/../../apps/site/src/content/recipes/turkish-pizza.md`;
+const md = readFileSync(target, 'utf8');
+const { blocks, meta, title } = extractRecipe(md);
+console.log(`\n========== ${target}  (title=${JSON.stringify(title)} meta=${JSON.stringify(meta)}) ==========`);
+const ast = parse(blocks[0]);
+const recipe = compile(ast, meta);
+console.log(dumpRecipe(recipe));
