@@ -89,6 +89,9 @@ importers:
       marked:
         specifier: ^18.0.6
         version: 18.0.6
+      parse-ingredient:
+        specifier: ^2.2.0
+        version: 2.2.0
       peggy:
         specifier: ^5.1.0
         version: 5.1.0
@@ -2162,6 +2165,10 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
+  numeric-quantity@3.2.2:
+    resolution: {integrity: sha512-qHc6mhIySaoqFYCM+foWY0DYYIT0ick1fI+MB9530gJ8XAPDExwXT8eyl3J+PWLIlZy0MCxSLobBjrggN9Z8EQ==}
+    engines: {node: '>=16'}
+
   nwsapi@2.2.24:
     resolution: {integrity: sha512-7YRhZ3jS45LwmSCT4b2sVFHt/WuovaktDU07QrtOBY2PXskss5a9jfmR9jptyumwXST+rFjrmppMY1KT/yn35A==}
 
@@ -2197,6 +2204,10 @@ packages:
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
+
+  parse-ingredient@2.2.0:
+    resolution: {integrity: sha512-0nC1B3AJxZHAXM4zu/57XlZbaXuK6vpZDQcHpwBALU7KRxw5f1O/Tr0x0Srz3vxpn4+AP0NqCLKqnNdkIx9GVQ==}
+    engines: {node: '>=10'}
 
   parse5-htmlparser2-tree-adapter@7.1.0:
     resolution: {integrity: sha512-ruw5xyKs6lrpo9x9rCZqZZnIUntICjQAd0Wsmp396Ul9lN/h+ifgVV1x1gZHi8euej6wTfpqX8j+BFQxF0NS/g==}
@@ -4867,6 +4878,8 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
+  numeric-quantity@3.2.2: {}
+
   nwsapi@2.2.24: {}
 
   obug@2.1.3: {}
@@ -4913,6 +4926,10 @@ snapshots:
   package-json-from-dist@1.0.1: {}
 
   pako@1.0.11: {}
+
+  parse-ingredient@2.2.0:
+    dependencies:
+      numeric-quantity: 3.2.2
 
   parse5-htmlparser2-tree-adapter@7.1.0:
     dependencies:
