@@ -19,3 +19,17 @@ Three node kinds appear as entries in a recipe's ingredient list. They read alik
 **A link to another recipe** is an `externalReference`. Its `name`, `targetSlug`, and `title` are plain strings rather than `string` nodes. It has no `label`, since the link text is the name. `title` is absent when the link has none.
 
 An `externalReference` can be a step's input, the same way a `reference` can.
+
+A `reference`'s `name` is a `string`: a list of `substring` parts and `interpolatedValue` parts. An `interpolatedValue` is a number that scales with the recipe. A quoted name is a literal — its content is not parsed for quantity or unit, so parens, commas, and `%` inside it stay in the name. A `{N}` in a name becomes an `interpolatedValue` among that name's substrings and produces no amount.
+
+A `quantity` carries `value`, `unit`, `valueUnitSpacing`, and `preposition`. `value` holds what was authored: a whole number and a decimal are both JS numbers, and an exact fraction is `numerator`/`denominator` rather than a decimal. `unit` is a `string` as authored, or `null` when the line has none. `valueUnitSpacing` is the whitespace between value and unit, empty when the unit abuts the value. `preposition` is what trailed the quantity, captured as authored, leading space and all.
+
+### SubRecipe
+
+`:=` marks a statement named: `named` is true and `outputs` holds the declared name. The statement's `expr` is the `step` it wraps, and the arguments in that step's parens are its `inputs`, in the order authored.
+
+A step's input may itself be a step, so steps nest recursively.
+
+### Recipe
+
+A `reference`'s `amount` is a `quantity` or a `remainder`. An ingredient list entry never carries a remainder; a `remainder` appears on a `reference` inside a step. Its `wording` is preserved as authored.

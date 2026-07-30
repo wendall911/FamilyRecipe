@@ -204,11 +204,11 @@ test('`:=` produces a single named output and marks the statement named', () => 
     assert.equal(stmt.named, true);
 });
 
-test('a region wraps a step, and the arguments in its parens are the step inputs', () => {
+test('a subrecipe wraps a step, and the arguments in its parens are the step inputs', () => {
     const stmt = outputStmt('Dough', 'kitchen-sink.md');
     const step = stmt.expr as StepNode;
 
-    // `Dough := knead(...)` — the region's expression is the step it wraps.
+    // `Dough := knead(...)` - the subrecipe's expression is the step it wraps.
     assert.equal(step.kind, 'step');
     assert.equal(nameText(step), 'knead');
 
@@ -238,7 +238,7 @@ test('a step input may itself be a step (steps nest recursively)', () => {
  *
  * An ingredient list entry never carries a remainder. `Amount` is a `quantity`
  * or a `remainder`, and a remainder only appears on a reference inside a step -
- * whether that step is the recipe's entry point or a child of a region.
+ * whether that step is the recipe's entry point or a child.
  */
 
 test('`Remaining` on a reference inside a step is a remainder amount', () => {
