@@ -8,9 +8,9 @@ Audience: tooling and downstream implementors.
 
 ## Node types
 
-### Ingredient list entries
+### Ingredients
 
-Three node kinds appear as entries in a recipe's ingredient list. They read alike on a card and are different in the AST.
+Three node kinds appear as ingredient entries. They read alike on a card and are different in the AST.
 
 **An ingredient** is a `reference`. Its `name` is a `string`; its `amount` is a `quantity`, a `remainder`, or `null`.
 

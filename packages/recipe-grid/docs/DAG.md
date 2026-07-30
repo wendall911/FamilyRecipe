@@ -20,8 +20,6 @@ An entry with a trailing action compiles to a `step` wrapping the node the actio
 
 A `label` sits on the node the author bound it to -- the step, when the entry has a trailing action. It is the handle later lines resolve against, and the text drawn where a reference to that node appears. It does not replace the description: the node under a labelled step keeps its own and takes no label of its own.
 
-### Quantities
-
 A `Quantity` carries `value`, `unitOfMeasure`, `unitOfMeasureID`, `valueUnitSpacing`, and `preposition`.
 
 `value` is a `RecipeNumber`: a JS number for a whole number or a decimal, or a `Fraction` (`numerator`/`denominator`) for an exact fraction. The authored form is what is kept -- `1/2` stays a fraction and `0.5` stays a decimal, though both resolve to the same magnitude.
@@ -30,4 +28,18 @@ A `Quantity` carries `value`, `unitOfMeasure`, `unitOfMeasureID`, `valueUnitSpac
 
 ### SubRecipe
 
+A `:=` heading compiles to a `subRecipe`. Its `outputNames` holds the declared names, each a `ScaledValueString`; its `subTree` is the single child tree the heading bound, typically the step whose arguments are the region's inputs. Output names are matched as text, trimmed and lowercased, so a later line reaches an output whatever case it was authored in.
+
+A later line that resolves a name compiles to a `reference`. Its `resolvedNode` is the node that name was bound to -- the object itself, not a copy. The target is any node the author labelled: a `:=` sub-recipe, or an `=`-labelled ingredient or step. `outputIndex` names which output of a multi-output sub-recipe is meant, and is absent when the target is not a sub-recipe, since an ingredient or a step has a single result.
+
+A reference's `amount` is what that line drew, carried on the edge rather than the node it targets: a `Quantity` when the line restated a measure, a `Remainder` when it asked for what is left, and absent when the line named the output with no amount at all. A shared node is reached from more than one place and each use draws its own, so the amount cannot live on the node.
+
 ### Recipe
+
+The container the rest hangs from. `recipeTrees` holds the roots the body declared -- every top-level line, including the ones nothing goes on to reference. A node that no later line reaches is a root like any other; whether that is an authoring mistake is a question for a validator, not something the compiler decides.
+
+`slug` is the recipe's own identity: the authored frontmatter value, or one derived from the title when none was authored. It is always a concrete string, since a cross-file `recipeReference` resolves against it.
+
+The recipe carries its scaling as authored: `scalingType` is `servings` or `fixed`, and `base` is the value to scale from. A recipe with no frontmatter is `fixed`, base 1.
+
+A `Remainder` is the last draw on an ingredient, and appears on a `reference` inside a step rather than on the ingredient node itself. It carries `wording` -- the text as authored, which is what the card draws -- and a `preposition` when the line trailed one. It holds no value: the ingredient node carries the amount that exists, and what is left of it after earlier draws is a validation question. The reference exists so the graph has the edge; the wording exists so the card reads as written.
