@@ -9,7 +9,7 @@ import {
     remainderRef,
     stepStmt,
     substringsText,
-} from './helpers.ts';
+} from './libs/ast-helpers.ts';
 import type {
     ExternalReference as ExternalRefNode,
     Quantity as QuantityNode,
