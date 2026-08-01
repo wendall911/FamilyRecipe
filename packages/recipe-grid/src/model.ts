@@ -11,11 +11,8 @@
  *   [G2] - faithful to Recipe Grid 2.
  *   [EXT] - a recipe-grid extension, not present in Recipe Grid 2.
  *
- * NOTE ON TYPES: TypeScript here is *decorative* - erased at compile time.
- * These types describe the shape of plain JS objects and enforce nothing at
- * runtime. Grid 2's invariants (a Reference may only target a prior SubRecipe
- * root; multi-output SubRecipes may only be tree roots) are NOT enforced —
- * validation is deferred to the future editor (an invalid recipe may break).
+ * NOTE ON TYPES: types are erased at compile time and check nothing at
+ * runtime. An invalid recipe breaks; validation is a validation compiler's job.
  *
  * NOTE ON REFERENCES: a reference is a pointer, not a guarantee; a reference
  * to a non-existent target is still valid (like a hyperlink to a 404).
@@ -150,14 +147,16 @@ export type Step = {
 
 /**
  * [G2] A named logical division of a recipe (e.g. "Filling", "Pastry").
- * Exactly one child tree; one or more named outputs. A SubRecipe with more
- * than one output must be the root of a recipe tree (runtime invariant).
+ * Exactly one child tree, exactly one output name.
  */
 export type SubRecipe = {
     kind: "subRecipe";
     // [G2] The steps describing this sub-recipe.
     subTree: RecipeTreeNode;
-    // [G2] One or more output names (scale-aware). >1 ⇒ must be a tree root.
+    /**
+     * [G2] The output name (scale-aware) later lines resolve against. Always
+     * [0]; the array shape is Grid 2's, and nothing writes past it.
+     */
     outputNames: ScaledValueString[];
 };
 
@@ -180,9 +179,8 @@ export type Reference = {
      */
     resolvedNode: RecipeTreeNode;
     /**
-     * [G2] Which named output of a multi-output {@link SubRecipe} target (default
-     * 0). Absent when the target is not a SubRecipe (an Ingredient/Step has a
-     * single result).
+     * [G2] Present when the target is a {@link SubRecipe}, absent otherwise. A
+     * sub-recipe has one output, so it is always 0.
      */
     outputIndex?: number;
     // [G2] How much of the output to use; absent means all of it.
