@@ -23,12 +23,21 @@ const COMPONENT = 'recipe-grid';
  * - `root`              the recipe container (one per recipe).
  * - `grid`              the region that lays out the recipe trees.
  * - `title`             the recipe title.
- * - `step`              a Step node: a combining action over its inputs.
+ * - `step`              a Step node: a combining action over its inputs. The
+ *                       bracket itself, holding the inputs column and the
+ *                       action beside it.
  * - `inputs`            a step's input column (its children), laid out left of
  *                       the step's action; the left side of the bracket.
+ * - `action`            a step's own action, to the right of what feeds it; the
+ *                       right side of the bracket. Render structure, not a
+ *                       model node: the step it belongs to is the `step` part
+ *                       above it.
  * - `ingredient`        an Ingredient leaf.
- * - `sub-recipe`        a SubRecipe grouping.
+ * - `sub-recipe`        a SubRecipe grouping: the header band and the body
+ *                       beneath it, together.
  * - `sub-recipe-header` the heading label of a `:=` sub-recipe.
+ * - `sub-recipe-body`   everything under that band. Render structure, not a
+ *                       model node: the region's tree lives here.
  * - `reference`         an intra-document reference to a sub-recipe output.
  * - `remainder`         a "use the rest" note at a reference (the remainder
  *                       wording, e.g. "Remaining"); carries no value.
@@ -42,9 +51,11 @@ export const RECIPE_GRID_PARTS = [
     'title',
     'step',
     'inputs',
+    'action',
     'ingredient',
     'sub-recipe',
     'sub-recipe-header',
+    'sub-recipe-body',
     'reference',
     'remainder',
     'recipe-reference',
@@ -114,9 +125,11 @@ export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
     [part('title')]: 'h1',
     [part('step')]: 'div',
     [part('inputs')]: 'div',
+    [part('action')]: 'div',
     [part('ingredient')]: 'div',
     [part('sub-recipe')]: 'div',
     [part('sub-recipe-header')]: 'h2',
+    [part('sub-recipe-body')]: 'div',
     [part('reference')]: 'div',
     [part('remainder')]: 'div',
     [part('recipe-reference')]: 'a',
@@ -165,3 +178,50 @@ export const DATA_KEYS = {
 } as const;
 
 export type DataKey = keyof typeof DATA_KEYS;
+
+/**
+ * The flexbox facts a box carries into the DOM.
+ *
+ * A part marker says what a node is; {@link DATA_KEYS} carries the model data a
+ * consumer computes with. These say where a box sits in the card -- the facts
+ * the shape pass resolved, written onto the element so a consumer is not left
+ * deriving them from the markup.
+ *
+ * - `side`   what the box is to its parent: `inputs`, `action`, `header`,
+ *            `body`, or `root`. The inputs column and a region's body have no
+ *            part of their own, so this is what a rule targets them by.
+ *
+ * The shape pass also resolves adjacency and region containment. Neither is
+ * here yet: a `BoxId` is stable only within one shape, so the ids themselves
+ * are meaningless downstream, and what a rule needs instead -- a boundary flag,
+ * a region depth -- is a question the dump answers.
+ */
+export const STRUCTURE_KEYS = {
+    side: `data-${COMPONENT}-side`,
+} as const;
+
+export type StructureKey = keyof typeof STRUCTURE_KEYS;
+
+/**
+ * Markers for pure styling: the surfaces a theme decorates.
+ *
+ * A third layer, distinct from the two above it. A part marker says what a node
+ * *is*; {@link DATA_KEYS} carries the model data a consumer computes with. These
+ * name the surfaces a border or a background is drawn on -- a right edge is a
+ * right edge, and which edges a box presents is a fact about the card, not a
+ * look.
+ *
+ * The card is flexbox, so none of this comes free. A table gives a consumer
+ * `td:first-child` and `border-collapse`; CSS grid gives line numbers and named
+ * areas. Nested divs give a rule the tag, the attributes, and sibling position,
+ * and nothing else -- which group a box bounds is not derivable from the DOM.
+ * Left unmarked, a consumer wanting correct borders would have to reconstruct
+ * the card's graph from its markup.
+ *
+ * Empty until the structural layer lands and a stylesheet is written against a
+ * real dump. What a theme actually needs to select on is a question the dump
+ * answers; naming keys before then would be a guess.
+ */
+export const STYLE_KEYS = {} as const;
+
+export type StyleKey = keyof typeof STYLE_KEYS;
