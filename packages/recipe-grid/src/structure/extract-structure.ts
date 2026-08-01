@@ -54,6 +54,7 @@ import type {
 import {
     DATA_KEYS,
     STRUCTURE_KEYS,
+    STYLE_KEYS,
     part,
     tagForPart,
     type RecipeGridPart,
@@ -172,6 +173,11 @@ function inlineContent(text: ScaledValueString): StructureNode[] {
 /**
  * A quantity as a `quantity` span: its value (scalable) plus unit/preposition
  * text as a trailing plain span when present.
+ *
+ * The canonical unit identity rides on the span as a binding. The authored unit
+ * is what renders; the identity is the handle a consumer converts with, so both
+ * are carried and neither replaces the other. A unit-less count has no identity
+ * to emit, so the binding is absent exactly when the authored unit is.
  */
 function quantityNode(quantity: Quantity): StructureNode {
     const children: StructureNode[] = [scaledValueSpan(quantity.value)];
@@ -180,12 +186,17 @@ function quantityNode(quantity: Quantity): StructureNode {
             ? `${quantity.valueUnitSpacing}${quantity.unitOfMeasure}`
             : '';
     const trailing = `${unitText}${quantity.preposition}`;
+    const dataAttrs: Record<string, string> = {};
+
+    if (quantity.unitOfMeasureID !== null) {
+        dataAttrs[DATA_KEYS.uomID] = quantity.unitOfMeasureID;
+    }
 
     if (trailing !== '') {
         children.push(textSpan(trailing));
     }
 
-    return partNode('quantity', { children });
+    return partNode('quantity', { dataAttrs, children });
 }
 
 /**
@@ -240,23 +251,60 @@ function contentChildren(
  * Every emitted node gets these, whether or not it is a part. They are what a
  * rule targets a box by when the part marker is not enough -- the inputs column
  * and a region's body have no part of their own.
+ *
+ * `edge` rides along: which of the box's own edges are its container's rather
+ * than a line between it and a neighbour. It is a styling marker rather than a
+ * layout fact, and it is emitted here because this is where a box's own
+ * position is read.
  */
 function structureAttrs(box: Box): Record<string, string> {
-    return { [STRUCTURE_KEYS.side]: box.side };
+    const attrs: Record<string, string> = { [STRUCTURE_KEYS.side]: box.side };
+    const edge = edgeOf(box);
+
+    if (edge !== undefined) {
+        attrs[STYLE_KEYS.edge] = edge;
+    }
+
+    return attrs;
+}
+
+/**
+ * Which of a box's own edges are its container's, along its parent's flow.
+ *
+ * A box with nothing before it presents the container's leading edge; nothing
+ * after it, the trailing one; a box alone in its parent presents both. A box
+ * with a neighbour on each side presents neither, and carries no marker --
+ * every edge it has is a line between two members of the group.
+ */
+function edgeOf(box: Box): string | undefined {
+    const start = box.touches.before === null;
+    const end = box.touches.after === null;
+
+    if (start && end) return 'both';
+    if (start) return 'start';
+    if (end) return 'end';
+
+    return undefined;
 }
 
 /**
  * An ingredient leaf: its quantity and description, in a content `<p>`.
  *
- * The quantity's base value also rides on the ingredient itself, so a consumer
- * reading the ingredient does not have to descend into the inline spans to find
- * what scales.
+ * The quantity's base value and unit identity also ride on the ingredient
+ * itself, so a consumer reading the ingredient does not have to descend into
+ * the inline spans to find what scales and what it converts with. Converting
+ * before scaling needs both together, and this is where an ingredient is
+ * reached.
  */
 function ingredientNode(box: Box, node: Ingredient): StructureNode {
     const dataAttrs: Record<string, string> = structureAttrs(box);
 
     if (node.quantity !== null) {
         dataAttrs[DATA_KEYS.value] = JSON.stringify(node.quantity.value);
+
+        if (node.quantity.unitOfMeasureID !== null) {
+            dataAttrs[DATA_KEYS.uomID] = node.quantity.unitOfMeasureID;
+        }
     }
 
     return partNode('ingredient', {

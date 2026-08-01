@@ -154,6 +154,12 @@ export function tagForPart(partAttr: string): string {
  * - `value`       on a `scaled-value` element: its base `RecipeNumber`,
  *                 serialised (e.g. JSON), for a consumer to multiply by a
  *                 scale factor.
+ * - `uomID`       on a `quantity` element: the canonical unit-of-measure key
+ *                 the authored unit resolved to ("cloves" -> "clove", "g" ->
+ *                 "gram"), the handle a consumer converts with. Emitted
+ *                 alongside the authored unit, which renders as text, never
+ *                 instead of it. Absent on a unit-less count, where the model
+ *                 carries no identity to emit.
  * - `scalingType` on the root: 'servings' | 'fixed'.
  * - `base`        on the root: the as-authored base to scale from.
  *
@@ -172,6 +178,7 @@ export function tagForPart(partAttr: string): string {
  */
 export const DATA_KEYS = {
     value: `data-${COMPONENT}-value`,
+    uomID: `data-${COMPONENT}-uom-id`,
     scalingType: `data-${COMPONENT}-scaling-type`,
     base: `data-${COMPONENT}-base`,
     targetSlug: `data-${COMPONENT}-target-slug`,
@@ -191,13 +198,18 @@ export type DataKey = keyof typeof DATA_KEYS;
  *            `body`, or `root`. The inputs column and a region's body have no
  *            part of their own, so this is what a rule targets them by.
  *
- * The shape pass also resolves adjacency and region containment. Neither is
- * here yet: a `BoxId` is stable only within one shape, so the ids themselves
- * are meaningless downstream, and what a rule needs instead -- a boundary flag,
- * a region depth -- is a question the dump answers.
+ * No `data-` prefix, unlike {@link DATA_KEYS}. That prefix says "read this" --
+ * a value a consumer computes with. Nothing reads these: a rule matches on them
+ * and takes nothing away. The prefix's absence is the distinction, so a theme
+ * author can tell a selector hook from a binding by looking at it.
+ *
+ * The shape pass also resolves region containment. It is not here: a `RegionId`
+ * is stable only within one shape, so the ids themselves are meaningless
+ * downstream, and what a rule needs instead -- a region depth, a membership
+ * flag -- is a question the dump answers.
  */
 export const STRUCTURE_KEYS = {
-    side: `data-${COMPONENT}-side`,
+    side: `${COMPONENT}-side`,
 } as const;
 
 export type StructureKey = keyof typeof STRUCTURE_KEYS;
@@ -218,10 +230,27 @@ export type StructureKey = keyof typeof STRUCTURE_KEYS;
  * Left unmarked, a consumer wanting correct borders would have to reconstruct
  * the card's graph from its markup.
  *
- * Empty until the structural layer lands and a stylesheet is written against a
- * real dump. What a theme actually needs to select on is a question the dump
- * answers; naming keys before then would be a guess.
+ * - `edge`  which of a box's own edges are its container's rather than a line
+ *           between it and a neighbour: `start`, `end`, `both`, or absent when
+ *           the box has a neighbour on each side. The shape pass resolved this
+ *           as adjacency; a `BoxId` is meaningless downstream, so what crosses
+ *           is the fact a rule needs, not the ids it came from.
+ *
+ *           The edges named are along the parent's flow: in a row, start is
+ *           left and end is right; in a column, start is top and end is
+ *           bottom. Which way the parent flows is what its part marker says,
+ *           so a rule that cares selects on both.
+ *
+ *           This is what a theme draws a group's boundary with. A card's
+ *           outermost row, a region's body, the last input in a column -- each
+ *           has an edge that is the container's, and a border there bounds the
+ *           group rather than dividing two of its members.
+ *
+ * No `data-` prefix, for the same reason {@link STRUCTURE_KEYS} has none: these
+ * are matched, not read.
  */
-export const STYLE_KEYS = {} as const;
+export const STYLE_KEYS = {
+    edge: `${COMPONENT}-edge`,
+} as const;
 
 export type StyleKey = keyof typeof STYLE_KEYS;
