@@ -440,10 +440,30 @@ function build(
         case 'reference': {
             /*
              * A reference transcludes its target: the target's structure is
-             * built here, in this position. The reference contributes no box of
-             * its own -- it is a pointer, and what the reader sees is the target.
+             * built here, in this position, and what the reader sees is the
+             * target.
+             *
+             * The reference still gets a box of its own, wrapping that. It is
+             * where the draw the use site made lives -- a quantity when the line
+             * restated a measure, a remainder when it asked for the rest. The
+             * amount rides the edge, not the node, because a shared node is
+             * reached from more than one place and each use draws its own. A box
+             * for the target alone has nowhere to carry it, and the draw would
+             * not survive into the DOM.
              */
-            return build(state, node.resolvedNode, side, parent, within);
+            const box = addBox(state, {
+                node,
+                flow: 'column',
+                side,
+                parent,
+                within,
+            });
+
+            state.boxes[box].children.push(
+                build(state, node.resolvedNode, side, box, within),
+            );
+
+            return box;
         }
 
         case 'subRecipe': {
