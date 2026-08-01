@@ -25,3 +25,4 @@ node utils/probe-compile.mjs
 - `probe-walk-vs-dag.mjs` - early walk/DAG comparison scratch.
 - `probe-extract-shape.mjs` - the `CardShape` from `extract-shape.ts`'s first pass: regions, cells in row/column order with their spans and neighbours, and an occupancy map. Takes an optional path argument (defaults to turkish-pizza);
   `tests/fixtures/hot-hamburger.md`, so its geometry can be read against a known-correct one. Read the occupancy map as a grid — holes and overlaps show there, not in the numbers.
+- `probe-extract-structure.mjs` - the `StructureNode` tree from `extract-structure.ts`'s second pass: tag, part marker, `data-*` bindings, and leaf text per node, indented as it nests. Takes an optional path argument (defaults to turkish-pizza).
