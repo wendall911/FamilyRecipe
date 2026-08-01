@@ -1,7 +1,12 @@
 import { parse as parseGrammar } from './generated/grammar.generated.js';
 import { extractRecipe, type RecipeMeta } from './markdown.ts';
 import { compile } from './compiler.ts';
-import { walkRecipe, type StructureNode } from './structure/walk.ts';
+import { walkRecipe } from './structure/walk.ts';
+import { extractShape } from './structure/extract-shape.ts';
+import {
+    extractStructure,
+    type StructureNode,
+} from './structure/extract-structure.ts';
 import { build, type ElementNode } from './structure/build.ts';
 
 /*
@@ -13,7 +18,7 @@ import { build, type ElementNode } from './structure/build.ts';
  *   - ElementNode           the built element tree: a frameworkless DOM chunk.
  */
 export type { RecipeMeta } from './markdown.ts';
-export type { StructureNode, Extent } from './structure/walk.ts';
+export type { StructureNode } from './structure/extract-structure.ts';
 export type { ElementNode } from './structure/build.ts';
 
 /**
@@ -44,8 +49,8 @@ export interface RecipeModel {
 export function parse(md: string): RecipeModel {
     const { title, description, blocks, meta } = extractRecipe(md);
     const recipe = compile(parseGrammar(blocks[0]), meta);
-    const structure = walkRecipe(recipe);
-    const root = build(structure);
+    const structure = extractStructure(extractShape(recipe));
+    const root = build(walkRecipe(recipe));
     return {
         title: title ?? '',
         description: description ?? '',
