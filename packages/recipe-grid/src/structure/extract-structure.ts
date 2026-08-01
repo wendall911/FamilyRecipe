@@ -31,7 +31,6 @@
  * each one should be reached by a function in this file.
  */
 import type {
-    Fraction,
     Ingredient,
     Quantity,
     RecipeNumber,
@@ -319,46 +318,55 @@ function subRecipeHeaderNode(box: Box, node: SubRecipe): StructureNode {
 }
 
 /**
- * An exact fraction as the card draws it.
+ * A reference's draw: the amount a use site asked for, wrapping the target it
+ * transcludes.
  *
- * Not yet reached: {@link numberText} handles both {@link RecipeNumber} arms by
- * structural check rather than naming this one. Splitting it out is what a
- * fraction-aware rendering (a proper vulgar fraction, a `<sup>`/`<sub>` pair)
- * would hang off.
+ * The reference's own box carries the draw; its child box is the target, whose
+ * structure stands here. The amount is a {@link Quantity} when the line restated
+ * a measure, a {@link Remainder} when it asked for the rest, and absent when the
+ * line named the output with no amount at all.
+ *
+ * The amount rides the edge because a shared node is reached from more than one
+ * place and each use draws its own, so it is emitted here rather than on the
+ * target. It is emitted as authored -- the value in the form it was written, the
+ * unit and preposition with their spacing -- because the DOM has to carry back
+ * to the markdown it came from.
  */
-function fractionText(value: Fraction): string {
-    return `${value.numerator}/${value.denominator}`;
-}
+function referenceNode(
+    box: Box,
+    node: Reference,
+    children: StructureNode[],
+): StructureNode {
+    const amount = node.amount;
+    const draw =
+        amount === undefined
+            ? []
+            : amount.kind === 'quantity'
+              ? [quantityNode(amount)]
+              : [remainderNode(amount)];
 
-/**
- * A reference's draw: the amount a use site asked for.
- *
- * Not yet reached. The shape pass gives a reference no box -- it transcludes its
- * target, so what stands at the use site is the target's own boxes. The amount
- * the reference carried has nowhere to attach, and vanishes.
- *
- * A reference's amount is a {@link Quantity} when the line restated a measure,
- * a {@link Remainder} when it asked for the rest, and absent when the line named
- * the output with no amount at all. Where each lands in the DOM is the open
- * question: it wants a dump, not a decision made here.
- */
-function referenceNode(_node: Reference): StructureNode {
-    throw new Error('referenceNode: not implemented');
+    return partNode('reference', {
+        dataAttrs: structureAttrs(box),
+        children: [...draw, ...children],
+    });
 }
 
 /**
  * A "use the rest" note: the remainder wording, as authored.
  *
- * Not yet reached, for the same reason as {@link referenceNode} -- a remainder
- * lives on a reference's amount, and a reference has no box.
- *
  * It carries no value: the ingredient list is the definitive amount, and what is
  * left after earlier draws is a validation question the compiler does not
  * answer. The wording is what the card reads; `preposition` survives as
  * authored, leading space and all.
+ *
+ * Both are literal text, so neither is a `scaled-value` -- there is nothing here
+ * that rescales. The two run together as one string, the way the line was
+ * written.
  */
-function remainderNode(_amount: Remainder): StructureNode {
-    throw new Error('remainderNode: not implemented');
+function remainderNode(amount: Remainder): StructureNode {
+    return partNode('remainder', {
+        text: `${amount.wording}${amount.preposition}`,
+    });
 }
 
 /**
@@ -424,13 +432,10 @@ function nodeForBox(shape: CardShape, id: BoxId): StructureNode {
             });
         case 'reference':
             /*
-             * The shape pass gives a reference no box of its own: it transcludes
-             * its target, so what stands here is the target. Unreachable.
+             * The reference's box wraps the target it transcludes: the draw the
+             * use site made, then the target's own structure beneath it.
              */
-            return partNode('reference', {
-                dataAttrs: structureAttrs(box),
-                children: children(),
-            });
+            return referenceNode(box, box.node, children());
     }
 }
 
