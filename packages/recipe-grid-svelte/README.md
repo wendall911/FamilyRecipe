@@ -20,19 +20,29 @@ pnpm add @wendall911/recipe-grid-svelte @wendall911/recipe-grid
     import { Recipe } from '@wendall911/recipe-grid-svelte';
     import '@wendall911/recipe-grid-svelte/styles.css';
 
-    // Your recipe markdown, loaded however you like (import, fetch, db...).
-    // This package does not provide a loader.
+    /*
+     * Your recipe markdown, loaded however you like (import, fetch, db...).
+     * This package does not provide a loader.
+     */
     const md = await getRecipeMarkdown();
 </script>
 
-<Recipe.Root {md}>
-    <Recipe.Title />
-    <Recipe.Description />
-    <Recipe.Grid />
-</Recipe.Root>
+<svelte:boundary>
+    <Recipe.Root {md}>
+        <Recipe.Title />
+        <Recipe.Description />
+        <Recipe.Grid />
+    </Recipe.Root>
+
+    {#snippet failed()}
+        <p>This recipe could not be loaded.</p>
+    {/snippet}
+</svelte:boundary>
 ```
 
 Every part reads from `Recipe.Root` via context, so each one requires a `Recipe.Root` ancestor.
+
+A recipe whose body the grammar cannot read has no card to draw: `Recipe.Root` throws while it initialises, and the boundary is what catches it. Frontmatter and the title/description header do not throw -- absent or unreadable, they fall back to their defaults and the card still draws.
 
 ## Components
 
@@ -71,7 +81,7 @@ Renders the recipe card. Takes no props; it wraps the core's structure as DOM, o
 
 The parsed model carries the recipe's frontmatter as `meta`: `scalingType`, `base`, and `slug` (the recipe's identifier). Read it two ways.
 
-Without rendering -- parse once and read `meta`, e.g. to map a `slug` to a route:
+Without rendering -- parse once and read `meta`, e.g. to map a `slug` to a route. This parses, so it throws on a recipe that will not parse:
 
 ```ts
 import { Recipe } from '@wendall911/recipe-grid-svelte';
@@ -108,6 +118,7 @@ The format is defined by the core, `recipe-grid`. See its canonical documentatio
 
 - `StructureNode` - re-exported from the core; the render structure a binding walks.
 - `RecipeContext` - the driver Root places in context; its `parsed` holds `{ title, description, meta, structure, root }`.
+- `RecipeParseError` - re-exported from the core; what `Recipe.Root` throws on a recipe that will not parse. A boundary catches everything beneath it, so test for this to tell a broken recipe from anything else and rethrow the rest.
 
 ## License
 
