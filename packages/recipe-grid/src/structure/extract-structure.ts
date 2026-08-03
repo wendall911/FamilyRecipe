@@ -33,6 +33,7 @@
 import type {
     Ingredient,
     Quantity,
+    RecipeMeta,
     RecipeNumber,
     RecipeReference,
     Reference,
@@ -233,8 +234,29 @@ function contentParagraph(children: StructureNode[]): StructureNode {
 }
 
 /**
+ * The lone literal text run a node's content amounts to, when it is nothing
+ * else.
+ *
+ * A single unmarked run needs no element of its own: the node it sits in is
+ * already the element, and a span around it marks nothing a rule can reach.
+ * Anything else -- a marked span, a run beside a sibling -- stands as it is.
+ */
+function loneText(inline: StructureNode[]): string | undefined {
+    const only = inline.length === 1 ? inline[0] : undefined;
+
+    return only !== undefined &&
+        only.part === undefined &&
+        only.children.length === 0
+        ? only.text
+        : undefined;
+}
+
+/**
  * The content of a box that carries text and, optionally, a quantity: a single
  * content `<p>`, or nothing when the node carries neither.
+ *
+ * A paragraph whose whole content is one literal run carries that text itself,
+ * with no span between the two.
  */
 function contentChildren(
     text?: ScaledValueString,
@@ -242,15 +264,51 @@ function contentChildren(
 ): StructureNode[] {
     const inline = contentNodes(text, quantity);
 
-    return inline.length > 0 ? [contentParagraph(inline)] : [];
+    if (inline.length === 0) {
+        return [];
+    }
+
+    const lone = loneText(inline);
+
+    return lone !== undefined
+        ? [{ tag: 'p', dataAttrs: {}, text: lone, children: [] }]
+        : [contentParagraph(inline)];
 }
 
 /**
- * The flexbox facts a box carries into the DOM: where it sits in the card.
+ * The recipe's scaling, as bindings on the root.
  *
- * Every emitted node gets these, whether or not it is a part. They are what a
- * rule targets a box by when the part marker is not enough -- the inputs column
- * and a region's body have no part of their own.
+ * Recipe-level rather than box-level: the whole card scales together, so this
+ * rides the root above it rather than any box within it. A consumer reads it
+ * there, before descending into the card it describes. `base` is a
+ * {@link RecipeNumber} and is serialised whole, the way a scalable value is --
+ * an exact fraction stays exact. Absent when the recipe authored none.
+ */
+function scalingAttrs(meta: RecipeMeta): Record<string, string> {
+    const attrs: Record<string, string> = {
+        [DATA_KEYS.scalingType]: meta.scalingType,
+    };
+
+    if (meta.base !== undefined) {
+        attrs[DATA_KEYS.base] = JSON.stringify(meta.base);
+    }
+
+    return attrs;
+}
+
+/**
+ * The flexbox facts a box carries into the DOM: where it sits, and which way it
+ * lays its own children out.
+ *
+ * Every node that is a box gets these -- not the inline pieces a box expands
+ * into, which have no position in the card to describe. They are what a rule
+ * targets a box by when the part marker is not enough: the inputs column and a
+ * region's body have no part of their own.
+ *
+ * `side` is what the box is to its parent; `flow` is what it is to its
+ * children. A rule needing both -- which axis a line lies on, and which end of
+ * it -- reads `flow` from the parent and `edge` from the child, so neither has
+ * to be recovered from the part marker.
  *
  * `edge` rides along: which of the box's own edges are its container's rather
  * than a line between it and a neighbour. It is a styling marker rather than a
@@ -258,7 +316,10 @@ function contentChildren(
  * position is read.
  */
 function structureAttrs(box: Box): Record<string, string> {
-    const attrs: Record<string, string> = { [STRUCTURE_KEYS.side]: box.side };
+    const attrs: Record<string, string> = {
+        [STRUCTURE_KEYS.side]: box.side,
+        [STRUCTURE_KEYS.flow]: box.flow,
+    };
     const edge = edgeOf(box);
 
     if (edge !== undefined) {
@@ -356,12 +417,17 @@ function actionNode(box: Box, node: Step): StructureNode {
 /**
  * A sub-recipe's header band: the declared output name, inline on the `<h2>`.
  *
- * The heading carries its text directly, with no wrapping `<p>`.
+ * The heading carries its text directly, with no wrapping `<p>`. A name that is
+ * one literal run sits on the heading itself; a name with a scalable number in
+ * it keeps the inline spans that mark it.
  */
 function subRecipeHeaderNode(box: Box, node: SubRecipe): StructureNode {
+    const inline = inlineContent(node.outputNames[0]);
+    const lone = loneText(inline);
+
     return partNode('sub-recipe-header', {
         dataAttrs: structureAttrs(box),
-        children: inlineContent(node.outputNames[0]),
+        ...(lone !== undefined ? { text: lone } : { children: inline }),
     });
 }
 
@@ -425,10 +491,10 @@ function remainderNode(amount: Remainder): StructureNode {
  * its header. Children are always the box's children -- the model is never
  * recursed into, because the shape pass already did that.
  */
-function nodeForBox(shape: CardShape, id: BoxId): StructureNode {
+function nodeForBox(shape: CardShape, meta: RecipeMeta, id: BoxId): StructureNode {
     const box = shape.boxes[id];
     const children = (): StructureNode[] =>
-        box.children.map((child) => nodeForBox(shape, child));
+        box.children.map((child) => nodeForBox(shape, meta, child));
 
     /*
      * A grouping box the model has no node for. Which one it is comes from
@@ -437,7 +503,7 @@ function nodeForBox(shape: CardShape, id: BoxId): StructureNode {
     if (box.node === null) {
         switch (box.side) {
             case 'root':
-                return partNode('root', {
+                return partNode('card', {
                     dataAttrs: structureAttrs(box),
                     children: children(),
                 });
@@ -488,8 +554,20 @@ function nodeForBox(shape: CardShape, id: BoxId): StructureNode {
 }
 
 /**
- * The card's render structure: every box filled with what it renders as.
+ * The recipe's render structure: the root container holding the filled card.
+ *
+ * The root is not a box. The shape pass resolved boxes -- what nests inside what
+ * and on which side -- and the card is the outermost of them. The root sits
+ * above that: the container a consumer mounts, hangs the recipe's metadata on,
+ * and decides the element for. It carries no structural attributes because it
+ * has no position in the card to describe.
  */
-export function extractStructure(shape: CardShape): StructureNode {
-    return nodeForBox(shape, shape.root);
+export function extractStructure(
+    shape: CardShape,
+    meta: RecipeMeta,
+): StructureNode {
+    return partNode('root', {
+        dataAttrs: scalingAttrs(meta),
+        children: [nodeForBox(shape, meta, shape.root)],
+    });
 }
