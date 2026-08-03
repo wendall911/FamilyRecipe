@@ -20,6 +20,18 @@
  *
  * Both are emitted by the extract passes. Nothing here reaches for structure
  * the DOM does not carry.
+ *
+ * Both are attributes, and the prefix tells them apart. A part marker is
+ * `data-recipe-grid-<part>`: `data-` means a consumer reads it, and the
+ * machine-readable bindings (a scaled value, a unit key, a target slug) use it
+ * too. `recipe-grid-side` has no prefix, and neither does `recipe-grid-edge` --
+ * a rule matches on those and takes nothing away.
+ *
+ * `recipe-grid-edge` is a theme's, not this file's: it says which of a box's
+ * own edges are its container's rather than a line between it and a neighbour
+ * -- `start`, `end`, `both`, or absent when the box has a neighbour on each
+ * side. That is what a border bounds a group with instead of dividing two of
+ * its members.
  */
 
 /* A step is a row: what feeds it on the left, its own action on the right. */
@@ -32,13 +44,13 @@
 /*
  * The boxes that stack.
  *
- * - root             the card's trees, one under another.
+ * - card             the recipe's trees, one under another.
  * - inputs           what feeds one step.
  * - reference        a use site wrapping the target it transcludes.
  * - sub-recipe       a region: its header band, then its body.
  * - sub-recipe-body  everything under that band.
  */
-[data-recipe-grid-root],
+[data-recipe-grid-card],
 [data-recipe-grid-inputs],
 [data-recipe-grid-reference],
 [data-recipe-grid-sub-recipe],
@@ -50,16 +62,29 @@
 /*
  * How a box takes space from its parent.
  *
- * An inputs column is as wide as its contents need and no more; the action
- * beside it takes what is left. That is the whole of the sizing question -- a
- * box is as wide as its contents and the space its parent gives it.
+ * An inputs column asks for what its contents need; the action beside it takes
+ * what is left. Both yield when the space is not there -- an inputs column
+ * asks first and gives back last, which is what `flex-shrink: 1` against the
+ * action's `1 1` amounts to.
+ *
+ * `min-width: 0` is the other half. A flex item's own minimum is `auto`, which
+ * resolves to its min-content width -- for text, the longest word that cannot
+ * break. A card is steps inside inputs columns inside steps, so each level's
+ * floor is built from the level below and the whole chain refuses to narrow.
+ *
+ * Both together are what mobile-first means here: a box yields before the card
+ * runs off the screen. A minimum width is a real decision about a particular
+ * card at a particular size, and it is the consumer's -- one rule on the boxes
+ * they choose. Shipping one here would be a floor they could not reach past.
  */
 [recipe-grid-side='inputs'] {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 [recipe-grid-side='action'] {
     flex: 1 1 auto;
+    min-width: 0;
 }
 
 /*
@@ -72,4 +97,18 @@
 [data-recipe-grid-sub-recipe-header] {
     display: flex;
     align-items: center;
+}
+
+/*
+ * The content inside one of those boxes -- the paragraph a leaf carries.
+ *
+ * Flex, so the paragraph is a flex item and carries the same `min-width: auto`
+ * a box does. Letting the box narrow is only half of it: the paragraph inside
+ * it holds the same floor, and the text wraps only once both can yield.
+ *
+ * `flow=leaf` names exactly the boxes above: the ones whose children are
+ * content rather than more boxes.
+ */
+[recipe-grid-flow='leaf'] > * {
+    min-width: 0;
 }
