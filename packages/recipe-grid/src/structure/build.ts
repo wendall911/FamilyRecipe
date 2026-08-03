@@ -1,12 +1,13 @@
 /**
  * Build an element tree from a walked recipe structure.
  *
- * The second structure pass, and a pure transport: each {@link StructureNode}
- * from `walk.ts` becomes an {@link ElementNode} one-for-one. The structure is
- * already the complete element tree (walk emits every element the DOM needs, a
- * step's `inputs` column, a content `<p>`, a `quantity` span, the inline text /
- * `scaled-value` spans), so this pass makes no structural decisions of its own:
- * it copies the tag, the attributes, and the leaf text, then recurses.
+ * A pure transport over the render structure: each {@link StructureNode} from
+ * `extract-structure.ts` becomes an {@link ElementNode} one-for-one. The
+ * structure is already the complete element tree (every element the DOM needs
+ * is there: a step's `inputs` column, a content `<p>`, a `quantity` span, the
+ * inline text / `scaled-value` spans), so this pass makes no structural
+ * decisions of its own: it copies the tag, the attributes, and the leaf text,
+ * then recurses.
  *
  * The raw output stands on its own: a `<div>` tree, walkable by a screen reader,
  * that reads as a recipe with no styling applied. The `data-recipe-grid-*` part
@@ -14,7 +15,7 @@
  * later CSS pass and a runtime binding.
  */
 
-import type { StructureNode } from './walk.ts';
+import type { StructureNode } from './extract-structure.ts';
 
 /**
  * A plain, serialisable element description.
