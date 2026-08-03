@@ -2,16 +2,24 @@
  * Part vocabulary and attribute conventions for the framework-neutral render
  * structure.
  *
- * The single source of truth for how a rendered recipe grid is named. Every
- * element the core emits carries a stable `data-recipe-grid-<part>` marker (a
- * class-free styling/query hook). Scalable values and the recipe's scaling
- * metadata are surfaced as machine-readable `data-*` attributes so any consumer
- * (a runtime binding that rescales reactively, or a static renderer that emits
- * each scale ahead of time) can compute scaled output from the same markup.
+ * The single source of truth for how a rendered recipe grid is named. Three
+ * layers of attribute, and the `data-` prefix is what tells them apart:
  *
- * This module names things only: the part markers, the machine-readable data
- * attributes, and the semantic HTML tag each part renders as. It emits no DOM
- * and computes no values.
+ *   {@link PART_ATTRS}       `data-recipe-grid-<part>` -- what a node is. Every
+ *                            element the core emits carries one, as a
+ *                            class-free styling/query hook.
+ *   {@link DATA_KEYS}        `data-recipe-grid-*` -- the model data a consumer
+ *                            computes with: a scalable value, a unit key, a
+ *                            target slug, the recipe's scaling. A runtime
+ *                            binding that rescales reactively and a static
+ *                            renderer that emits each scale ahead of time read
+ *                            the same markup.
+ *   {@link STRUCTURE_KEYS},  `recipe-grid-*`, no prefix -- where a box sits and
+ *   {@link STYLE_KEYS}       which edges it presents. A rule matches on these
+ *                            and takes nothing away, so they carry no `data-`.
+ *
+ * This module names things only: the attributes above, and the semantic HTML
+ * tag each part renders as. It emits no DOM and computes no values.
  */
 
 const COMPONENT = 'recipe-grid';
@@ -21,7 +29,7 @@ const COMPONENT = 'recipe-grid';
  * marker attribute.
  *
  * - `root`              the recipe container (one per recipe).
- * - `grid`              the region that lays out the recipe trees.
+ * - `card`              the region that lays out the recipe trees.
  * - `title`             the recipe title.
  * - `step`              a Step node: a combining action over its inputs. The
  *                       bracket itself, holding the inputs column and the
@@ -47,7 +55,7 @@ const COMPONENT = 'recipe-grid';
  */
 export const RECIPE_GRID_PARTS = [
     'root',
-    'grid',
+    'card',
     'title',
     'step',
     'inputs',
@@ -121,7 +129,7 @@ export const PART_COMPONENT_NAMES = Object.fromEntries(
  */
 export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
     [part('root')]: 'div',
-    [part('grid')]: 'div',
+    [part('card')]: 'div',
     [part('title')]: 'h1',
     [part('step')]: 'div',
     [part('inputs')]: 'div',
@@ -198,6 +206,20 @@ export type DataKey = keyof typeof DATA_KEYS;
  *            `body`, or `root`. The inputs column and a region's body have no
  *            part of their own, so this is what a rule targets them by.
  *
+ * - `flow`   which way this box lays its children out: `row`, `column`, or
+ *            `leaf` when it has none. What `side` is to a box's parent, this is
+ *            to its children.
+ *
+ *            A rule that cares which way a box flows selects on this rather
+ *            than on the part marker. Without it, a consumer has to carry the
+ *            part-to-flow mapping themselves -- `card`, `inputs`,
+ *            `sub-recipe`, `sub-recipe-body` and `reference` are columns,
+ *            `step` is a row -- and re-check it whenever a part is added. That
+ *            is a table to memorise where the markup could just say it, and it
+ *            is the fact {@link STYLE_KEYS}'s `edge` is read against: a rule
+ *            pairs the parent's flow with the child's edge to know which side
+ *            a line belongs on.
+ *
  * No `data-` prefix, unlike {@link DATA_KEYS}. That prefix says "read this" --
  * a value a consumer computes with. Nothing reads these: a rule matches on them
  * and takes nothing away. The prefix's absence is the distinction, so a theme
@@ -210,6 +232,7 @@ export type DataKey = keyof typeof DATA_KEYS;
  */
 export const STRUCTURE_KEYS = {
     side: `${COMPONENT}-side`,
+    flow: `${COMPONENT}-flow`,
 } as const;
 
 export type StructureKey = keyof typeof STRUCTURE_KEYS;
@@ -238,8 +261,9 @@ export type StructureKey = keyof typeof STRUCTURE_KEYS;
  *
  *           The edges named are along the parent's flow: in a row, start is
  *           left and end is right; in a column, start is top and end is
- *           bottom. Which way the parent flows is what its part marker says,
- *           so a rule that cares selects on both.
+ *           bottom. The parent carries its own flow (see
+ *           {@link STRUCTURE_KEYS}), so a rule pairs the two: the parent's
+ *           flow says which axis, this says which end of it.
  *
  *           This is what a theme draws a group's boundary with. A card's
  *           outermost row, a region's body, the last input in a column -- each
