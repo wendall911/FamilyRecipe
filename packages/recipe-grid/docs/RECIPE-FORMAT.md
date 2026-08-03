@@ -1,21 +1,14 @@
 # Recipe Markdown Format - Quick Reference
 
-A recipe `.md` in this project is a **human-readable file that also encodes a
-Directed Acyclic Graph (DAG)**. It reads as a plain recipe and is also source
-that the `recipe-grid` parser compiles: `markdown -> AST (PEG/Peggy) -> DAG
-model`. The readable form and the DAG are the same thing; the DAG is what the
-compiler extracts from the readable form.
+A recipe `.md` in this project is a **human-readable file that also encodes a Directed Acyclic Graph (DAG)**. It reads as a plain recipe and is also source the `recipe-grid` parser reads. The readable form and the DAG are the same thing: the `.md` does not describe a graph, it is one, written so a person can read it.
 
-The one property that makes it a DAG (not a tree): a name declared once can be
-**referenced** by later lines, so a single node has more than one parent. That
-shared-node back-edge is the whole distinction.
+The one property that makes it a DAG (not a tree): a name declared once can be **referenced** by later lines, so a single node has more than one parent. That shared-node back-edge is the whole distinction.
 
 ---
 
 ## YAML frontmatter (recipe-level metadata)
 
-A `---`-fenced YAML block at the top of the file, split off before the body is
-lexed. Declares how the recipe scales; applied at runtime.
+A `---`-fenced YAML block at the top of the file, split off before the body is lexed. Declares how the recipe scales; applied at runtime.
 
 | key           | values                     | note                                  |
 |---------------|----------------------------|---------------------------------------|
@@ -23,9 +16,7 @@ lexed. Declares how the recipe scales; applied at runtime.
 | `base`        | number                     | base to scale from; default `1`       |
 | `slug`        | string                     | recipe id; defaults to a slug of the title  |
 
-Absent frontmatter defaults to `{ scalingType: 'fixed', base: 1 }`, so a recipe
-with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`;
-`fixed` does not scale.
+Absent frontmatter defaults to `{ scalingType: 'fixed', base: 1 }`, so a recipe with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`; `fixed` does not scale.
 
 ---
 
@@ -56,9 +47,7 @@ The body is an indented block. Each construct maps to a model node:
 | bare later use of a label     | `Reference` {resolvedNode ->}      | **the back-edge that makes it a DAG**                    |
 | `{N}`                         | `InterpolatedValue`                | scalable number inside a description                     |
 
-The load-bearing row is **`Reference -> resolvedNode`**: it points at an
-already-declared node, giving that node a second parent, a graph edge rather
-than a tree branch. That single mechanism is why the file is a DAG.
+The load-bearing row is **`Reference -> resolvedNode`**: it points at an already-declared node, giving that node a second parent, a graph edge rather than a tree branch. That single mechanism is why the file is a DAG.
 
 ### String handling
 
@@ -76,12 +65,20 @@ so `12%` stays description; it is never read as a value.
 
 ---
 
-## Pipeline
+## Encodings
 
-```
-markdown -> AST (PEG/Peggy) -> DAG model -> walk -> render structure (DOM + headless CSS)
-```
+The same graph, in several forms. Each step **adds**; none rewrites or discards, which is why a `.md` could be generated from a DOM.
 
-The `.md` is fed to the compiler in `recipe-grid`; the DAG is the internal model;
-the render structure is walked out of it. Validation is a separate concern (a
-distinct pass), not part of the render path.
+| form              | is                        | the step into it adds                                                  |
+|-------------------|---------------------------|------------------------------------------------------------------------|
+| `.md`             | the graph, human-readable | --                                                                     |
+| AST (PEG/Peggy)   | the graph, parsed         | nothing; the grammar is the gate -- it reads or the recipe is broken   |
+| DAG model         | the graph, typed          | node types, pre-shaped for the walk                                    |
+| `structure`       | the graph, bound          | data / structure / styling targets (+ headless CSS)                    |
+| `root`            | `structure`, mountable    | nothing; a DOM chunk derived from `structure`                          |
+
+`structure` is the one API surface -- what a framework binding renders against.  `root` comes off it directly, a mountable DOM chunk for consumers without a framework; there is no second surface to drift from the first.
+
+There is no tree at any point, and no stage where the graph is built -- it is present from the `.md` on.
+
+Validation is a separate pass, off the render path. It asks whether a *recipe* is sensible -- not whether the graph is well-formed, which the grammar already settled.
