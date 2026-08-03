@@ -9,10 +9,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./parts": {
-      "types": "./dist/structure/parts.d.ts",
-      "default": "./dist/structure/parts.js"
-    },
     "./styles/recipe-grid.css": "./src/styles/recipe-grid.css"
   },
   "types": "./dist/index.d.ts",
@@ -27,12 +23,12 @@
     "test": "node --test tests/*.test.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "typescript": "^6.0.3"
   },
   "dependencies": {
     "fraction.js": "^5.3.4",
-    "marked": "^18.0.6",
+    "marked": "^18.0.7",
     "parse-ingredient": "^2.2.0",
     "peggy": "^5.1.0",
     "yaml": "^2.9.0"
