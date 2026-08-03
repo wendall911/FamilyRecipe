@@ -26,7 +26,7 @@ const target =
 const md = readFileSync(target, 'utf8');
 const { blocks, meta } = extractRecipe(md);
 const recipe = compile(parse(blocks[0]), meta);
-const structure = extractStructure(extractShape(recipe));
+const structure = extractStructure(extractShape(recipe), meta);
 
 // Attribute names shorn of the data-recipe-grid- prefix, so a line is readable.
 function shortAttr(name) {
