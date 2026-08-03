@@ -1,7 +1,6 @@
 import { parse as parseGrammar } from './generated/grammar.generated.js';
 import { extractRecipe, type RecipeMeta } from './markdown.ts';
 import { compile } from './compiler.ts';
-import { walkRecipe } from './structure/walk.ts';
 import { extractShape } from './structure/extract-shape.ts';
 import {
     extractStructure,
@@ -22,11 +21,23 @@ export type { StructureNode } from './structure/extract-structure.ts';
 export type { ElementNode } from './structure/build.ts';
 
 /**
+ * Thrown when a recipe `.md` cannot be compiled: the body is not parseable, so
+ * there is no DAG and no card to draw. The originating error rides on `cause`
+ * for anyone debugging; the parser it came from is not part of this surface.
+ */
+export class RecipeParseError extends Error {
+    constructor(message: string, options?: { cause?: unknown }) {
+        super(message, options);
+        this.name = 'RecipeParseError';
+    }
+}
+
+/**
  * The public result of parsing a recipe: its title, its recipe-level metadata,
  * and both render trees. `structure` is the framework-neutral render structure a
- * binding maps to components; `root` is the built element tree, a frameworkless
- * DOM chunk to mount directly. Both come from one walk, so exposing both is
- * cheap; a consumer takes whichever it needs.
+ * binding maps to components; `root` is that same structure transported to a
+ * built element tree, a frameworkless DOM chunk to mount directly. Both come
+ * from one pass, so exposing both is cheap; a consumer takes whichever it needs.
  */
 export interface RecipeModel {
     // The recipe title (the `# ...` heading), or '' when the source has none.
@@ -43,19 +54,27 @@ export interface RecipeModel {
 
 /**
  * Parse a recipe `.md` source into the public {@link RecipeModel}: extract the
- * frontmatter + body, compile the body to the DAG, walk it to render structure,
- * and build the element tree.
+ * frontmatter + body, compile the body to the DAG, extract its shape and fill
+ * that to render structure, then transport the structure to the element tree.
  */
 export function parse(md: string): RecipeModel {
-    const { title, description, blocks, meta } = extractRecipe(md);
-    const recipe = compile(parseGrammar(blocks[0]), meta);
-    const structure = extractStructure(extractShape(recipe));
-    const root = build(walkRecipe(recipe));
-    return {
-        title: title ?? '',
-        description: description ?? '',
-        meta,
-        structure,
-        root,
-    };
+    try {
+        const { title, description, blocks, meta } = extractRecipe(md);
+        const recipe = compile(parseGrammar(blocks[0]), meta);
+        const structure = extractStructure(extractShape(recipe), meta);
+        const root = build(structure);
+
+        return {
+            title: title ?? '',
+            description: description ?? '',
+            meta,
+            structure,
+            root,
+        };
+    }
+    catch (err) {
+        throw new RecipeParseError('recipe body is not parseable', {
+            cause: err,
+        });
+    }
 }
