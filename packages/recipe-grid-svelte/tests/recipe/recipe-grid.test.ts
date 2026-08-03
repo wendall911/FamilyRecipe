@@ -22,7 +22,7 @@ describe('Recipe.Grid faithful wrap', () => {
 
     it('wraps the grid container inside the root', () => {
         const { container } = render(GridHarness, { md });
-        const grid = container.querySelector('[data-recipe-grid-root] [data-recipe-grid-grid]');
+        const grid = container.querySelector('[data-recipe-grid-root] [data-recipe-grid-card]');
 
         expect(grid).not.toBeNull();
     });

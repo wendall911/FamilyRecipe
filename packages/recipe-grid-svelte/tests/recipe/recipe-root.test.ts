@@ -37,4 +37,18 @@ describe('Recipe.Root', () => {
         expect(wrapper?.getAttribute('data-x')).toBe('y');
         expect(wrapper?.hasAttribute('md')).toBe(false);
     });
+
+    it('throws RecipeParseError out of Root when the body will not parse', () => {
+        /*
+         * The binding decides nothing about a broken recipe: the core throws
+         * during Root's init, the error leaves the component, and a consumer's
+         * boundary is what catches it. Assert the harness boundary's `failed`
+         * output, not an absence: a card that simply did not render would pass
+         * an emptiness check on any bug.
+         */
+        const { container } = render(RootHarness, { md: 'mix(' });
+        const failed = container.querySelector('[data-test-error]');
+
+        expect(failed?.textContent).toBe('RecipeParseError');
+    });
 });
