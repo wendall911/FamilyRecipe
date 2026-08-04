@@ -5,7 +5,7 @@
  * pnpm exec tsx utils/dom-dump.ts /recipe/tiffin
  *
  * This is NOT a debugging script. This is for analysis of DOM structures
- * ONLY. [object Object] on plain objects is expected behavior.
+ * ONLY.
  */
 
 import { remote } from 'webdriverio';
