@@ -1,8 +1,14 @@
 ## Project identity & naming
 
-**What this is / isn't.** **FamilyRecipe** is just a monorepo for the greenfield project. A human reviewable browser consumable (`apps/site`) that serves as way for verification of the fully rendered output: ingredients on the left flowing into steps, the "Cooking for Engineers" layout, from a human-readable markdown format that *is* the data. **`recipe-grid-svelte`** is the Svelte 5 binding used by `apps-site`, and is a thin wrapper on **`recipe-grid`** headless component API. This project is **not** a content/SEO recipe site: no schema-spam, no story-blog padding, no keyword surface. Treat the model and the card as the product; make no assumptions about "what a recipe site is." The overall goal is a suite of tooling that can be used for archival of valuable recipes stored in human readable cards. The spirit of this holds. If a end-user wants to actually use the recipe, they can view it and use it in a similar way on a mobile device for actually cooking in a real kitchen.
+**What this is.** **FamilyRecipe** is just a monorepo for the greenfield project. A human reviewable browser consumable (`apps/site`) that serves as way for verification of the fully rendered output: ingredients on the left flowing into steps, the "Cooking for Engineers" layout, from a human-readable markdown format that *is* the data. **`recipe-grid-svelte`** is the Svelte 5 binding used by `apps-site`, and is a thin wrapper on **`recipe-grid`** headless component API.
 
-**Lineage & naming (open).** The core is a clean-room TypeScript reimplementation in the Recipe Grid lineage. Its relationship to Recipe Grid 2 mirrors Grid 2's own relationship to its predecessor: largely a superset, not strictly backward-compatible — a G2 recipe with title-derived scaling needs a conversion pass to YAML frontmatter, and the recipe-in-recipe named-output construct is unsupported. Upgrading is light, not arduous. This is not "Recipe Grid 3" — not a successor version but a parallel reimplementation. Formal project name: TBD (package: @wendall911/recipe-grid).
+A recipe is a graph, and the markdown is that graph written down. A name declared once and used again is one node reached twice, not two copies -- that shared node is the whole distinction between this and a list of ingredients followed by a list of steps. Every card is one such graph, complete on its own; edges reach out to other cards and may point at nothing yet. Nothing is inferred: what the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote rather than as a tool's reading of it.
+
+The overall goal is a suite of tooling that can be used for archival of valuable recipes stored in human readable cards. The spirit of this holds. If a end-user wants to actually use the recipe, they can view it and use it in a similar way on a mobile device for actually cooking in a real kitchen.
+
+**Lineage & naming (open).** The core is a clean-room TypeScript reimplementation in the Recipe Grid lineage. Its relationship to Recipe Grid 2 mirrors Grid 2's own relationship to its predecessor: largely a superset, not strictly backward-compatible -- a G2 recipe with title-derived scaling needs a conversion pass to YAML frontmatter, and the recipe-in-recipe named-output construct is unsupported. Upgrading is light, not arduous. This is not "Recipe Grid 3" -- not a successor version but a parallel reimplementation. Formal project name: TBD (package: @wendall911/recipe-grid).
+
+**Why it forked.** Grid 2 is a real graph, but every edge terminates inside its own page. Here an edge points anywhere -- another card, off-site, or nothing yet -- so a dough shared by nine recipes is one card the nine link to, not nine copies that drift apart. A reference resolving to nothing is a legitimate state; forcing it to resolve is what makes an author bend the recipe to satisfy the tool. The compiler builds and decides nothing for the same reason: whether a recipe is well-formed is a separate question, asked when a consumer wants it.
 
 ## Examples That Inspired This Project
  - https://cookbook.cstebbins.com/
@@ -64,7 +70,7 @@ Kraft Dinner
 
 ## Two packages, two apps, one monorepo
 
-The novel piece is the core: parser + framework-neutral grid (layout, base CSS, ARIA), publishable on its own. A separate Svelte binding renders that core's structure for Svelte consumers; a future `-react` binding would do the same. Structure/a11y/layout live once in the core, so all bindings and both apps share one implementation.
+The novel piece is the core: parser + framework-neutral grid (layout, base CSS, ARIA), publishable on its own. A separate Svelte binding wraps the core's structure for Svelte consumers; a future `-react` binding would do the same. Structure/a11y/layout live once in the core, so all bindings and both apps share one implementation.
 
 **Package naming:** local package names are `@wendall911/recipe-grid` and `@wendall911/recipe-grid-svelte`. Directory names match the package names (`packages/recipe-grid`, `packages/recipe-grid-svelte`). All four candidate npm names (scoped and unscoped) were verified available (registry 404) as of this writing. Scoped chosen to pair the two packages and match the account being secured; unscoped `recipe-grid` / `recipe-grid-svelte` remain the recorded alternative. `workspace:*` needs no npm account; publishing is a later, optional step.
 
@@ -89,44 +95,17 @@ Provenance is tagged per declaration in the model file:
 - **[G2]** -- faithful to Recipe Grid 2 (documented reference for "what is canon").
 - **[EXT]** -- FamilyRecipe extension, not present in Recipe Grid 2.
 
+**Nothing is derived.** Every value in the model has a preimage in the markdown. Nothing is computed from something else's text, inferred from position, or normalised into a canonical form. An exact fraction stays exact; a decimal stays a decimal; the whitespace between a value and its unit survives, as does a trailing preposition. Where a canonical handle is useful it rides *alongside* the authored form and never replaces it. That is what lets the rendered DOM compile back to the markdown it came from.
+
+Converting units, rescaling, reformatting -- a consumer does that with the handles the model provides. The core declines to, because those decisions are not recoverable once made.
+
 **Core surface: `parse(md) -> RecipeModel`** -- `{ title, description, meta, structure, root }`. `structure` (part-tagged nodes) is what a framework binding wraps; `root`, a mount-directly DOM chunk for raw consumers and analysis. A binding consumes the first four; `root` is not needed by `-svelte`.
-
-### Recipe Grid 2 model (a DAG)
-
-A recipe is a **Directed Acyclic Graph** (not merely a tree): later trees may reference the outputs of earlier trees. Node and value types, carried verbatim into our model:
-
-- **`Ingredient`** -- leaf: `description` (scale-aware string) + optional `quantity`.
-- **`Step`** -- `description` + `inputs` (the children being combined). The combiner.
-- **`SubRecipe`** -- a named logical division: `subTree`, one or more `outputNames`, `showOutputNames`. A SubRecipe with more than one output must be a tree root.
-- **`Reference`** -- an **intra-document** reference to a named output of a `SubRecipe` (Grid 2's own reuse mechanism): `subRecipe`, `outputIndex`, `amount`.
-- **`Quantity`** -- absolute amount: `kind: 'quantity'`, `value`, `unitOfMeasure` (as authored), `unitOfMeasureID` (canonical key), `valueUnitSpacing`, `preposition`. Unit *names* and *identity* come from parse-ingredient's `unitsOfMeasure`: `units.ts` feeds the grammar's alternation, `recipe-model.ts` resolves an authored name to its canonical key. Unit conversion doesn't happen in the compiler, the identity is the handle a consumer converts with. Scaling and unit conversions are a runtime concern, the recipe displays correctly, and the values have correct bindings for external use.
-- **`Remainder`** [DIVERGENCE from Grid 2] -- replaces Grid 2's numeric `Proportion`.  Only the "use the rest" case: `kind: 'remainder'`, `wording`, `preposition`. Grid 2's numeric proportions (`%`, `*`, fractional value) are **dropped** -- the published Grid 2 corpus never uses them and real recipes only ever say "use the rest". `Amount = Quantity | Remainder`, both discriminated by `kind`.
-- **`ScaledValueString`** -- a string as an ordered list of `Substring` (literal text) and `InterpolatedValue` (embedded scalable number) parts. In the `.md`, `{N}` braces mark a number as scalable (Grid 2's ScaledValueExpression); the number becomes an `InterpolatedValue`, surrounding text stays literal, braces are stripped. The grammar only *marks* what is scalable; the runtime does the actual scaling. Every description / step name / output name is this type.
-- **`Recipe`** -- container: `recipeTrees` + `follows` (multi-section chain; references may resolve backward across it).
-
-### Scaling [EXT / DIVERGENCE from Grid 2]
-
-Grid 2 inferred a serving count from the title ("Spam for 2") and pre-generated static `/serves1/`, `/serves2/`, ... files. We reject both. Scaling is declared explicitly in the recipe's **YAML frontmatter** and applied at **runtime** (no static-file generation):
-
-- `RecipeScaling` (single source of truth in `model.ts`, aliased by `markdown.ts`'s `RecipeMeta`): `scalingType: 'servings' | 'fixed'` (required), `base?: RecipeNumber` (default 1). `Recipe` includes it via `& RecipeScaling`.
-- Absent frontmatter -> `{ scalingType: 'fixed', base: 1 }`, so bare Grid 2 recipes remain valid. `'servings'` scales at ½x / 1x / 2x of `base` (per-recipe, not uniform); `'fixed'` does not scale. No free-form multiplier, no unit conversion (both out of scope).
-- Frontmatter is parsed by `markdown.ts` using the `yaml` package (eemeli/yaml), split off before `marked` lexes the body (marked does not handle frontmatter).
-
-### FamilyRecipe extensions [EXT]
-
-- **`RecipeReference`** -- a **cross-file** reference to another recipe by identity (`targetSlug`), for base recipes (e.g. a roux) shared across many recipe files. Grid 2's `Reference` targets a SubRecipe object *within* a document; this targets another recipe file. A reference is a pointer, not a guarantee: the target may not exist (a dangling reference is still valid, like a hyperlink to a 404). Resolution/lookup is a site/index-layer concern, not the model's.
-- **`IngredientIdentity`** -- optional structured/canonical ingredient identity (`canonicalName`, room to grow toward schema.org / allergens / categories). Grid 2's `Ingredient` carries only a description string.
-
-### Numeric values and constraints
-
-- Grid 2 uses exact fractions (¼ tsp stays ¼). JS `number` cannot represent these, so exact values are held as a `Fraction` (`{ numerator, denominator }`) and arithmetic / formatting is delegated to a dedicated value handler (a fraction library).
-- TypeScript here is **decorative** -- erased at compile time, enforcing nothing at runtime. Grid 2's structural invariants (a Reference may only target a prior SubRecipe root; multi-output SubRecipes may only be tree roots) are **not** enforced. Decision: a bad reference is just a bad reference (like a hyperlink to a 404); invalid recipes are allowed to break. Validation is **deferred to a future parallel compiler that composes a DAG with validation**, not the parser. Currently a bad recipe just throws, no catch, an actual error handler path with an API surface for downstream wrappers is deferred until the model is firmly settled and considered stable.
-
-- **AST stage is not a separate transformer file.** PLANNING originally described porting `ast.py`'s transformer into its own pass. In practice the Peggy grammar's semantic actions emit AST nodes **directly** (`ast.ts` is the type seam). Stages 1+2 are fused in the grammar; stage 3 (compiler) is still separate. This is a deliberate divergence, not a gap.
 
 ### Layout
 
-The rendered layout is **flexbox**, not `<table>` and not CSS grid. It is a defined structure for content: large content simply makes a cell/column taller. Recipes are shallow by design -- where a step needs its own breakdown it becomes a separate recipe-grid (a sub-recipe, typically a link-out rather than an embed), which is what `RecipeReference` models.
+The rendered layout is **flexbox**, not `<table>` and not CSS grid. Flexbox was chosen because it carries the semantics as well as the arrangement: a step is a row holding what feeds it beside its own action, and that nesting *is* the layout. A table would say the recipe is tabular, which it is not.
+
+It is a defined structure for content: large content simply makes a cell/column taller. Recipes are shallow by design. A named region within a card groups part of it under a heading; a step that deserves its own card becomes one, reached by a cross-file reference. Nothing caps how large a card may grow -- what bounds it is whether it still reads on a screen, which is the author's judgement while looking at the rendered thing.
 
 **Card and forest.** Each recipe is one **card** -- a single DAG, laid out in flexbox. A collection isn't a container of cards; the **cross-file `RecipeReference` edges between cards form the forest.** The card is whole and complete on its own; references tie the edges.
 
@@ -148,6 +127,7 @@ Ask the user what is next. Let them guide you through the process. But reading t
 ## Working notes for a resuming session
 
 - **Verify by reading the actual output and matching shapes -- do NOT do math against data.** Counting nodes and comparing to an expected number is how bugs slip through. The `.md` is the source of truth for what ingredients exist; the DAG output either looks like the right shape or it does not. Probe the pipeline (it is the oracle); read the structures. The Grid 2 table got us TO our shape and is largely spent now -- we render our own DAG; compare against our own dumps, not Grid 2's `<table>`.
-- **Probe scripts live in `packages/recipe-grid/utils/`** (see its README). Read-only dumps of each stage (AST, DAG, walk-structure, built elements, full render). Run e.g.  `node utils/probe-compile.mjs`. Useful only if a session re-enters AST/DAG internals; the likelier next work (real recipes + metadata) won't need them.
+- **Probe scripts live in `packages/recipe-grid/utils/`** (see its README). Read-only dumps of each stage, and the site has one for the rendered DOM with computed styles. They are the only check on whether the card is right -- there is no end-to-end test. Read a script before running it; the README says which stage each points at, and the script says what it prints.
+- **The pipeline is wired end to end and a card renders.** Markdown to graph to shape to structure to DOM, themed in the site. What is written here is history and direction; The code may be ahead of it, but the author, the user here is the one who holds this. Ask rather than assume a section is current.
 - The Peggy string model is NOT the Python one. Build AST from raw `$()`-captured text; do not translate Python `str`-class ops 1:1. Numbers: JS has one `number`; exact fractions use `fraction.js` (in the graph via parse-ingredient).
 - The generated parser (`generated/grammar.generated.{js,d.ts}`) is committed and shipped. `generate` is a maintainer-only step; after any `grammar.peggy` change it must be regenerated. Consumers/CI never run generate.
