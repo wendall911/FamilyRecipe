@@ -11,19 +11,21 @@ import { build, type ElementNode } from './structure/build.ts';
 /*
  * Re-export the public vocabulary so a binding author (or any consumer) has the
  * whole surface from one entry point, without spelunking the internals:
- *   - RecipeMeta            recipe-level metadata (slug, scaling).
- *   - StructureNode, Extent the render-structure tree: a complete element tree a
- *                           framework binding renders one node at a time.
- *   - ElementNode           the built element tree: a frameworkless DOM chunk.
+ *   - RecipeMeta     recipe-level metadata (slug, scaling).
+ *   - StructureNode  the render structure: a complete element tree a framework
+ *                    binding renders one node at a time.
+ *   - ElementNode    the built element tree: a frameworkless DOM chunk.
  */
 export type { RecipeMeta } from './markdown.ts';
 export type { StructureNode } from './structure/extract-structure.ts';
 export type { ElementNode } from './structure/build.ts';
 
 /**
- * Thrown when a recipe `.md` cannot be compiled: the body is not parseable, so
- * there is no DAG and no card to draw. The originating error rides on `cause`
- * for anyone debugging; the parser it came from is not part of this surface.
+ * Thrown when a recipe `.md` does not compile to a card. The grammar is the
+ * gate: a body either reads as a valid DAG or the document is broken, so there
+ * is one failure to report and one place to report it. The originating error
+ * rides on `cause` for anyone debugging; the parser it came from is not part of
+ * this surface.
  */
 export class RecipeParseError extends Error {
     constructor(message: string, options?: { cause?: unknown }) {
