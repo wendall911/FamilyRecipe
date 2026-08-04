@@ -34,3 +34,49 @@
         @apply pb-1 sm:pb-2;
     }
 }
+
+/*
+ * Recipe card: table-looking borders over a flexbox card.
+ *
+ * A line is drawn between two boxes, not around each one -- border every box
+ * and the nesting draws itself as concentric outlines. So: one line per
+ * division, on the leading side only, and the card's own outer boundary once.
+ *
+ * `recipe-grid-edge` is what makes that possible. A box with nothing before it
+ * along its parent's flow carries `start`, so its leading side is the
+ * container's edge and gets no line. Absent means neighbours on both sides --
+ * an interior division, which is exactly where a line belongs.
+ *
+ * The edges named are along the parent's flow, so a rule pairs the two: the
+ * parent's `recipe-grid-flow` says which axis, the child's edge says which end
+ * of it. `start`/`end` is left/right under a row, top/bottom under a column.
+ */
+@layer components {
+    [data-recipe-grid-card] {
+        --recipe-grid-line: var(--color-zinc-700);
+
+        border: 1px solid var(--recipe-grid-line);
+    }
+
+    .light [data-recipe-grid-card] {
+        --recipe-grid-line: var(--color-zinc-300);
+    }
+
+    /* Column flow: a line above every box that has one before it. */
+    [recipe-grid-flow='column'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+        border-top: 1px solid var(--recipe-grid-line);
+    }
+
+    /* Row flow: a line left of every box that has one before it. */
+    [recipe-grid-flow='row'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+        border-left: 1px solid var(--recipe-grid-line);
+    }
+
+    /* Content boxes get room to breathe; grouping boxes stay tight. */
+    [data-recipe-grid-ingredient],
+    [data-recipe-grid-action],
+    [data-recipe-grid-recipe-reference],
+    [data-recipe-grid-sub-recipe-header] {
+        @apply px-2 py-1;
+    }
+}
