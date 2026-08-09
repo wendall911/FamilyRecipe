@@ -1,18 +1,16 @@
 # Architecture
 
-A recipe card is a thing you lay on the counter and cook from. It holds one recipe, whole: everything that recipe needs, readable at a glance. If a piece of it is used by other recipes too, that piece is its own card, and the ones that need it point at it. A box of cards is a collection tied together by which cards point at which.
+A recipe card is typically a card you lay on the counter and cook from. It holds one recipe, whole: everything that recipe needs, readable at a glance. Complex ingredients that are shared by multiple other recipe cards have their own card so there is no duplication, only a reference from the consuming recipe to the shared recipe card. A box of cards is a collection.
 
-Cards outlast the people who wrote them because they are paper -- no format, no application, nothing between the writing and the reading. `recipe-grid` carries that forward: the recipe is a markdown file a person writes and edits, the card is drawn from it, and the card is faithful to the file. Archival is the requirement, and the rest of the architecture follows from it.
+Cards outlast the people who wrote them because they are paper -- no format, no application, nothing between the writing and the reading. `recipe-grid` carries that forward: the recipe is a markdown file a person writes and edits, the card is drawn from it, and the card is faithful to the file. This is an archival format, and the rest of the architecture follows from it.
 
 ## Fidelity
 
-A recipe is not a list of ingredients followed by a list of steps. Things combine, and what they combine into gets combined again; a thing made once can be used in two places later. That is a directed acyclic graph, and it is what a recipe has always been.
+A recipe is not a list of ingredients followed by a list of steps. Ingredients combine, and what they combine into gets combined again; an ingredient made once can be used in two places later.
 
-For the writing to survive, the graph has to survive with it. A name declared once and used again is one thing used twice, and a format that copies it into two places has already lost what the author said. So the `.md` holds the graph literally: it does not describe one, it is one, written so a person can read it. That is the sense in which archival is a requirement rather than an aspiration -- it is measured on whether the graph and the words come back exactly.
+For the writing to survive, the graph has to survive with it. An ingredient name declared once and used again is one ingredient used twice, and a format that copies it into two places has already lost what the author said. So the `.md` holds the graph literally: it does not describe one, it is one, written so a person can read it. That is the sense in which archival is a requirement rather than an aspiration -- it is measured on whether the graph and the words come back exactly.
 
-Every value the core produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote.
-
-That contract is what the rest of this document describes.
+Every value the card produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote.
 
 ## Bindings
 
@@ -29,6 +27,14 @@ Where a canonical handle is useful it rides alongside the authored form:
 | `[Dough](pizza-dough)`  | `targetSlug: pizza-dough`           |
 
 Both are carried and neither replaces the other: one is what renders, the other is the handle a consumer looks up, converts with, or resolves. A consumer that converts a unit before scaling needs both together, so both ride the ingredient.
+
+**The unit vocabulary.** Unit names are adopted from `parse-ingredient`. They cross into the core twice, from that one source.
+
+At generate time the names become an ordered choice in the grammar: canonical key, short form, plural, and every alternate, longest first so a name matches maximally. A unit is a unit because the vocabulary knows the name.
+
+At compile time the authored name maps back to its canonical key. Both ride the quantity -- `cloves` as written, `clove` as the key -- so a consumer converts with the same vocabulary the grammar was built from.
+
+Names are read, never transcribed: the grammar is regenerated from whatever the package currently defines.
 
 Because nothing is replaced, the rendered DOM carries back to the markdown it came from. A compiler could be written to reconstruct the `.md` from the card. Nothing here does that; it is the shape of a card that discards nothing.
 
@@ -50,9 +56,9 @@ The cards and those edges are the forest. A collection is not a container of car
 
 The card is flexbox. A step is a row holding what feeds it on the left and its own action on the right; the things feeding it are a column, and the step sits beside the whole stack rather than beside any one of them. That nesting is the layout, and it is why there is no arithmetic anywhere in the build: a box is as wide as its contents and the space its parent gives it, and the browser resolves the rest.
 
-Two passes build it.
+The following two extraction passes build it into a consumable headless DOM structure:
 
-### Shape
+### Extract Shape
 
 The first pass answers what nests inside what, and on which side. It emits no tags, no text, no bindings -- only the boxes.
 
@@ -68,7 +74,7 @@ Three steps, two of which walk the DAG:
 
 Each box carries what it is to its parent (`side`: inputs, action, header, body, root), how it lays its own children out (`flow`: row, column, leaf), the regions containing it, and what it touches. There are no coordinates -- the nesting already places it.
 
-### Structure
+### Extract Structure
 
 The second pass fills those boxes with content: a tag, a part marker, the `data-*` bindings, the semantic HTML attributes a node sets, and the literal text of a leaf. It asks no structural question.
 
@@ -91,7 +97,7 @@ Two prefixes, and the prefix says who reads it:
 
 The headless stylesheet is flow only: which way a box lays its children out, and how it takes space from its parent. An inputs column asks for what its contents need and gives back last; the action beside it takes what is left. Both carry `min-width: 0`, and so does the content inside a leaf box -- a flex item's own minimum is its longest unbreakable word, and a card is steps inside inputs columns inside steps, so each level's floor is built from the level below. Both must yield for the text to wrap.
 
-A minimum width is a real decision about a particular card at a particular size, and it is the consumer's -- one rule on the boxes they choose. Colours, borders, spacing, and type are a theme's.
+A minimum width is a real decision about a particular card at a particular size, and it is the consumer's -- one rule on the boxes they choose. Colors, borders, spacing, and type are a theme's.
 
 ## API
 
@@ -99,7 +105,17 @@ A minimum width is a real decision about a particular card at a particular size,
 parse(md: string): RecipeModel
 ```
 
-Returns `{ title, description, meta, structure, root }`.
+Returns:
+
+```ts
+{
+    title,
+    description,
+    meta,
+    structure,
+    root
+}
+```
 
 - `structure` is the render structure: part-tagged nodes a framework binding renders one node at a time.
 - `root` is that same structure transported to elements: a serialisable DOM chunk to mount directly, for a consumer without a framework.
