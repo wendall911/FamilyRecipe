@@ -10,6 +10,7 @@ describe('Recipe metadata', () => {
 
         expect(meta.scalingType).toBe('servings');
         expect(meta.base).toBe(4);
+        expect(meta.unitSystem).toBe('us');
         expect(meta.slug).toBe('turkish-pizza');
     });
 

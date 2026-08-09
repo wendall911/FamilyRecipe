@@ -79,7 +79,7 @@ Renders the recipe card. Takes no props; it wraps the core's structure as DOM, o
 
 ## Metadata
 
-The parsed model carries the recipe's frontmatter as `meta`: `scalingType`, `base`, and `slug` (the recipe's identifier). Read it two ways.
+The parsed model carries the recipe's frontmatter as `meta`: `scalingType`, `base`, `unitSystem`, and `slug` (the recipe's identifier). Read it two ways.
 
 Without rendering -- parse once and read `meta`, e.g. to map a `slug` to a route. This parses, so it throws on a recipe that will not parse:
 
