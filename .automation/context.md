@@ -2,7 +2,7 @@
 
 FamilyRecipe is a monorepo for a greenfield tabular flexbox layout for recipes. This is a novel approach to recipes that uses the Cooking for Engineers approach of a single card for recipes, not a list of recipes followed by instructions. It is a novel project that should make no assumptions about how recipes work or what they mean.
 
-The DAG is the only representation that can accurately describe the flexbox layout. The compiler produces a real DAG with edges that extend to other recipes. There is no tree, only a DAG.
+A DAG is the only representation that can accurately describe the flexbox layout. A markdown file contains a human readable DAG recipe with edges that extend to other recipes. The parse produces an AST that represents the DAG. The compiler produces a DAG. A DOM chunk is extracted that also is a DAG. There is no tree, only a DAG.
 
 Developed agile, not waterfall.
 
@@ -22,5 +22,5 @@ FamilyRecipe/
 │   └── recipe-grid-svelte/   # Svelte binding. wired and consumed by the site.
 └── apps/
     ├── site/                 # static consumer; consumes via the binding, not the core directly
-    └── editor/               # planned, not present: authenticated editor + live preview; validation lives here
+    └── editor/               # planned, not present: authenticated editor + live preview; validation/linting
 ```
