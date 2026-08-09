@@ -73,10 +73,7 @@
     }
 
     /* Content boxes get room to breathe; grouping boxes stay tight. */
-    [data-recipe-grid-ingredient],
-    [data-recipe-grid-action],
-    [data-recipe-grid-recipe-reference],
-    [data-recipe-grid-sub-recipe-header] {
+    [recipe-grid-flow='leaf'] {
         @apply px-2 py-1;
     }
 }
