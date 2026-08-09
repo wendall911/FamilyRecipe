@@ -92,8 +92,8 @@ The object model lives in `packages/recipe-grid/src/model.ts` and is the interfa
 
 Provenance is tagged per declaration in the model file:
 
-- **[G2]** -- faithful to Recipe Grid 2 (documented reference for "what is canon").
-- **[EXT]** -- FamilyRecipe extension, not present in Recipe Grid 2.
+- **[G2]** -- faithful to Recipe Grid 2.
+- **[EXT]** -- FamilyRecipe divergence, not present in Recipe Grid 2.
 
 **Nothing is derived.** Every value in the model has a preimage in the markdown. Nothing is computed from something else's text, inferred from position, or normalised into a canonical form. An exact fraction stays exact; a decimal stays a decimal; the whitespace between a value and its unit survives, as does a trailing preposition. Where a canonical handle is useful it rides *alongside* the authored form and never replaces it. That is what lets the rendered DOM compile back to the markdown it came from.
 
@@ -112,22 +112,3 @@ It is a defined structure for content: large content simply makes a cell/column 
 ## Future
 
 Each package will migrate to it's own repository once a 1.0 milestone can be identified. These will be published to npm. `apps/site` and `apps/editor` may host documentation and a "live demo" of the concept. That is yet to be determined, and is out of scope.
-
----
-
-## Next steps
-
-Ask the user what is next. Let them guide you through the process. But reading this doc this far and scanning for a TODO list, or a cargo-cult runbook isn't what you'll find here. You'll need to actually reason about the contents here and ask.
-
----
-
-## Known gaps / deferred (do not treat as done)
-
-
-## Working notes for a resuming session
-
-- **Verify by reading the actual output and matching shapes -- do NOT do math against data.** Counting nodes and comparing to an expected number is how bugs slip through. The `.md` is the source of truth for what ingredients exist; the DAG output either looks like the right shape or it does not. Probe the pipeline (it is the oracle); read the structures. The Grid 2 table got us TO our shape and is largely spent now -- we render our own DAG; compare against our own dumps, not Grid 2's `<table>`.
-- **Probe scripts live in `packages/recipe-grid/utils/`** (see its README). Read-only dumps of each stage, and the site has one for the rendered DOM with computed styles. They are the only check on whether the card is right -- there is no end-to-end test. Read a script before running it; the README says which stage each points at, and the script says what it prints.
-- **The pipeline is wired end to end and a card renders.** Markdown to graph to shape to structure to DOM, themed in the site. What is written here is history and direction; The code may be ahead of it, but the author, the user here is the one who holds this. Ask rather than assume a section is current.
-- The Peggy string model is NOT the Python one. Build AST from raw `$()`-captured text; do not translate Python `str`-class ops 1:1. Numbers: JS has one `number`; exact fractions use `fraction.js` (in the graph via parse-ingredient).
-- The generated parser (`generated/grammar.generated.{js,d.ts}`) is committed and shipped. `generate` is a maintainer-only step; after any `grammar.peggy` change it must be regenerated. Consumers/CI never run generate.
