@@ -202,6 +202,11 @@ export type RecipeScaling = {
      * serving count (e.g. 2). Absent frontmatter defaults to 1.
      */
     base?: RecipeNumber;
+    /**
+     * [EXT] The measurement system the authored quantities are read in -- a
+     * `parse-ingredient` UnitSystem value. Absent frontmatter defaults to 'us'.
+     */
+    unitSystem: "us" | "imperial" | "metric";
 };
 
 /**

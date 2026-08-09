@@ -90,6 +90,7 @@ class RecipeCompiler {
             slug: meta.slug,
             scalingType: meta.scalingType,
             base: meta.base,
+            unitSystem: meta.unitSystem,
         };
     }
 

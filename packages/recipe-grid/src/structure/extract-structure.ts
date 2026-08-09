@@ -47,9 +47,6 @@ import type {
     Box,
     BoxId,
     CardShape,
-    Flow,
-    Region,
-    Side,
 } from './extract-shape.ts';
 
 import {
@@ -287,6 +284,7 @@ function contentChildren(
 function scalingAttrs(meta: RecipeMeta): Record<string, string> {
     const attrs: Record<string, string> = {
         [DATA_KEYS.scalingType]: meta.scalingType,
+        [DATA_KEYS.unitSystem]: meta.unitSystem,
     };
 
     if (meta.base !== undefined) {

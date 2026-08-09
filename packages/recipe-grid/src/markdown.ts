@@ -18,6 +18,7 @@ export interface ExtractedRecipe {
 
 const RECIPE_LANGS = new Set(['', 'recipe', 'new-recipe']);
 const SCALING_TYPES = new Set(['servings', 'fixed']);
+const UNIT_SYSTEMS = new Set(['us', 'imperial', 'metric']);
 
 /*
  * [EXT] Derive a URL-safe slug from a plain string (the recipe title). A boring,
@@ -81,6 +82,11 @@ function toMeta(data: unknown, title: string): RecipeMeta {
             ? (rawType as 'servings' | 'fixed')
             : 'fixed';
     const base = typeof record.base === 'number' ? record.base : 1;
+    const rawSystem = record.unitSystem;
+    const unitSystem =
+        typeof rawSystem === 'string' && UNIT_SYSTEMS.has(rawSystem)
+            ? (rawSystem as 'us' | 'imperial' | 'metric')
+            : 'us';
     // slug is the recipe id: the authored frontmatter value if present, else a
     // slug derived from the title. Always resolved to a concrete string here.
     const slug = typeof record.slug === 'string' && record.slug !== '' ? record.slug : slugify(title);
@@ -88,6 +94,7 @@ function toMeta(data: unknown, title: string): RecipeMeta {
     return {
         scalingType,
         base,
+        unitSystem,
         slug
     };
 }

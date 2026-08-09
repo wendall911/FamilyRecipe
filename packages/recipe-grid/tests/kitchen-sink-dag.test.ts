@@ -404,6 +404,13 @@ test('the compiler stamps the resolved frontmatter onto the recipe', () => {
     assert.equal(recipe.base, 4);
 
     /*
+     * `unitSystem: imperial` as authored -- a value the fixture declares rather
+     * than the 'us' default, so the assertion pins the frontmatter being read
+     * rather than passing on a value nothing had to produce.
+     */
+    assert.equal(recipe.unitSystem, 'imperial');
+
+    /*
      * The fixture authors no slug, so the recipe takes one derived from its
      * title -- always a concrete string, since a cross-file reference resolves
      * against it.

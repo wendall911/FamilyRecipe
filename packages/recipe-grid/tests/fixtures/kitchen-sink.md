@@ -1,6 +1,7 @@
 ---
 scalingType: servings
 base: 4
+unitSystem: imperial
 ---
 Kitchen Sink Test
 =================

@@ -170,6 +170,8 @@ export function tagForPart(partAttr: string): string {
  *                 carries no identity to emit.
  * - `scalingType` on the root: 'servings' | 'fixed'.
  * - `base`        on the root: the as-authored base to scale from.
+ * - `unitSystem`  on the root: the measurement system the authored quantities
+ *                 are read in, 'us' | 'imperial' | 'metric'.
  *
  * The cross-file link binding attribute, on a `recipe-reference` element. The
  * core stays framework-neutral: it does not know how the consumer resolves the
@@ -189,6 +191,7 @@ export const DATA_KEYS = {
     uomID: `data-${COMPONENT}-uom-id`,
     scalingType: `data-${COMPONENT}-scaling-type`,
     base: `data-${COMPONENT}-base`,
+    unitSystem: `data-${COMPONENT}-unit-system`,
     targetSlug: `data-${COMPONENT}-target-slug`,
 } as const;
 

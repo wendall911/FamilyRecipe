@@ -40,6 +40,6 @@ The container the rest hangs from. `recipeTrees` holds the roots the body declar
 
 `slug` is the recipe's own identity: the authored frontmatter value, or one derived from the title when none was authored. It is always a concrete string, since a cross-file `recipeReference` resolves against it.
 
-The recipe carries its scaling as authored: `scalingType` is `servings` or `fixed`, and `base` is the value to scale from. A recipe with no frontmatter is `fixed`, base 1.
+The recipe carries its scaling as authored: `scalingType` is `servings` or `fixed`, `base` is the value to scale from, and `unitSystem` is the measurement system the quantities are read in -- `us`, `imperial`, or `metric`. A recipe with no frontmatter is `fixed`, base 1, `us`.
 
 A `Remainder` is the last draw on an ingredient, and appears on a `reference` inside a step rather than on the ingredient node itself. It carries `wording` -- the text as authored, which is what the card draws -- and a `preposition` when the line trailed one. It holds no value: the ingredient node carries the amount that exists, and what is left of it after earlier draws is a validation question. The reference exists so the graph has the edge; the wording exists so the card reads as written.

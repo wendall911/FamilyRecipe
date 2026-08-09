@@ -14,9 +14,10 @@ A `---`-fenced YAML block at the top of the file, split off before the body is l
 |---------------|----------------------------|---------------------------------------|
 | `scalingType` | `servings` \| `fixed`      | required when frontmatter is present  |
 | `base`        | number                     | base to scale from; default `1`       |
+| `unitSystem`  | `us` \| `imperial` \| `metric` | measurement system; default `us`  |
 | `slug`        | string                     | recipe id; defaults to a slug of the title  |
 
-Absent frontmatter defaults to `{ scalingType: 'fixed', base: 1 }`, so a recipe with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`; `fixed` does not scale.
+Absent frontmatter defaults to `{ scalingType: 'fixed', base: 1, unitSystem: 'us' }`, so a recipe with no metadata is still valid. `servings` scales at 1/2x / 1x / 2x of `base`; `fixed` does not scale.
 
 ---
 
