@@ -37,6 +37,35 @@ describe('Recipe.Grid faithful wrap', () => {
         expect(ref?.textContent).toContain('dough');
     });
 
+    it('resolves a cross-file reference href from the path the consumer supplied', () => {
+        const { container } = render(GridHarness, { md, path: '/recipe/{slug}' });
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+
+        expect(ref?.getAttribute('href')).toBe('/recipe/pizza-dough');
+        expect(ref?.getAttribute('data-recipe-grid-target-slug')).toBe('pizza-dough');
+    });
+
+    it('substitutes the slug wherever it sits in the path', () => {
+        const { container } = render(GridHarness, { md, path: '/recipe/{slug}/print' });
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+
+        expect(ref?.getAttribute('href')).toBe('/recipe/pizza-dough/print');
+    });
+
+    it('falls back to an inert but valid href when no path is supplied', () => {
+        const { container } = render(GridHarness, { md });
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+
+        expect(ref?.getAttribute('href')).toBe('#pizza-dough');
+    });
+
+    it('hands a cross-file reference to the browser rather than a client router', () => {
+        const { container } = render(GridHarness, { md, path: '/recipe/{slug}' });
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+
+        expect(ref?.getAttribute('rel')).toBe('external');
+    });
+
     it('wraps a deeply nested ingredient preserving its quantity and quoted literal', () => {
         const { container } = render(GridHarness, { md });
         const ingredient = container.querySelector(

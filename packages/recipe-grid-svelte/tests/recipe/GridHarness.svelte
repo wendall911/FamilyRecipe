@@ -1,9 +1,9 @@
 <script lang="ts">
     import { Recipe } from '../../src/index.js';
 
-    let { md }: { md: string } = $props();
+    let { md, path }: { md: string; path?: string } = $props();
 </script>
 
-<Recipe.Root {md}>
+<Recipe.Root {md} {path}>
     <Recipe.Grid />
 </Recipe.Root>
