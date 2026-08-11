@@ -54,8 +54,16 @@ Parses `md` and provides the parsed model to descendant parts. Renders its child
 |------------|-------------------|---------|-----------------------------------------------------------------------|
 | `md`       | `string`          | -       | required; the recipe-grid markdown                                    |
 | `as`       | `string`          | -       | wrapper element tag; omitted -> no wrapper, children render directly  |
+| `path`     | `string`          | `#{slug}` | where a cross-file recipe reference points; `{slug}` is replaced with the target |
 | `children` | `Snippet`         | -       | the parts to render inside                                            |
-| ...rest    | `Record<string, unknown>` | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `children` are not forwarded) |
+| ...rest    | `Record<string, unknown>` | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `path` / `children` are not forwarded) |
+
+A recipe references another recipe by slug; `path` is where that resolves for your app. `{slug}` is substituted wherever it appears:
+
+```svelte
+<Recipe.Root {md} path={'/recipe/{slug}'}>
+<Recipe.Root {md} path={'/recipe/{slug}/print'}>
+```
 
 ### `Recipe.Title`
 
