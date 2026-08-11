@@ -17,15 +17,23 @@
      * rendered at all (svelte:element with a nullish `this` renders nothing) --
      * the consumer's own placed markup is the markup, with no semantic layer
      * forced on them. Pass e.g. `as="article"` to opt into a wrapper element.
+     *
+     * `path` is where a cross-file recipe reference points. The core emits the
+     * raw slug and nothing else -- it cannot know how a consumer resolves an
+     * edge -- so the template is the consumer's answer, `{slug}` substituted
+     * for the target. `/recipe/{slug}` and `/recipe/{slug}/print` both work,
+     * as does any absolute URL. It defaults to `#{slug}`: an anchor with a
+     * valid href is focusable and announced as a link, one without is neither.
      */
-    let { md, as, children, ...rest }: {
+    let { md, as, path = '#{slug}', children, ...rest }: {
         md: string;
         as?: string;
+        path?: string;
         children?: import('svelte').Snippet;
     } & Record<string, unknown> = $props();
 
     // svelte-ignore state_referenced_locally
-    const recipe = new RecipeContext(md);
+    const recipe = new RecipeContext(md, path);
     setContext('recipe', recipe);
 
     const mergedProps = $derived({ ...rest });
