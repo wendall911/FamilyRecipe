@@ -4,14 +4,12 @@
  * Structure and rule set follow the canonical grammar.peg (mossblaser's
  * recipe_grid, consumed there by the `peggie` PEG engine). Peggy notation
  * differs from peggie: `=` instead of `<-`, character classes / regex literals
- * instead of peggie's `r"..."` regex terminals. Semantics are intentionally
- * absent — this is Stage 1: the grammar produces Peggy's raw parse tree only.
- * The AST transform (ast.py port) and compiler (compiler.py port) are later
- * stages.
+ * instead of peggie's `r"..."` regex terminals. The rule actions build the AST
+ * directly; `compiler.ts` compiles that AST to the DAG model.
  *
- * @KNOWN_UNITS@ in the canonical grammar is substituted at compile time with a
- * regex of all known units. That substitution is not wired yet; `known_unit`
- * is a placeholder that matches nothing until the units list is ported.
+ * @KNOWN_UNITS@ is substituted at generate time with an ordered choice of every
+ * known unit name, built by `units.ts` from parse-ingredient's vocabulary,
+ * longest-first so a name matches maximally.
  */
 
 {{
