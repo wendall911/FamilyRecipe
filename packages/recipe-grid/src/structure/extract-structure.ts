@@ -109,16 +109,22 @@ function partNode(
 }
 
 /**
- * A plain `<span>` text leaf: a bare span carrying a run of literal text, no
- * part marker.
+ * A `<span>` text leaf: a span carrying a run of literal text.
+ *
+ * Marked when the caller knows which part the run is -- an ingredient's name,
+ * a quantity's unit -- and bare when nothing names it. A bare span is a run
+ * the pass had no part for, which is a legitimate emission: nothing here
+ * validates that every piece is named.
  */
-function textSpan(text: string): StructureNode {
-    return {
-        tag: 'span',
-        dataAttrs: {},
-        text,
-        children: [],
-    };
+function textSpan(text: string, name?: RecipeGridPart): StructureNode {
+    return name === undefined
+        ? {
+              tag: 'span',
+              dataAttrs: {},
+              text,
+              children: [],
+          }
+        : partNode(name, { text });
 }
 
 /**
@@ -162,9 +168,12 @@ function isNumberPiece(
  * The inline children of a scale-aware string: each literal run becomes a plain
  * `<span>` text leaf, each scalable number a marked `scaled-value` span.
  */
-function inlineContent(text: ScaledValueString): StructureNode[] {
+function inlineContent(
+    text: ScaledValueString,
+    name?: RecipeGridPart,
+): StructureNode[] {
     return text.map((piece) =>
-        isNumberPiece(piece) ? scaledValueSpan(piece) : textSpan(piece),
+        isNumberPiece(piece) ? scaledValueSpan(piece) : textSpan(piece, name),
     );
 }
 
@@ -191,7 +200,7 @@ function quantityNode(quantity: Quantity): StructureNode {
     }
 
     if (trailing !== '') {
-        children.push(textSpan(trailing));
+        children.push(textSpan(trailing, 'uom-name'));
     }
 
     return partNode('quantity', { dataAttrs, children });
@@ -204,6 +213,7 @@ function quantityNode(quantity: Quantity): StructureNode {
 function contentNodes(
     text?: ScaledValueString,
     quantity?: Quantity,
+    name?: RecipeGridPart,
 ): StructureNode[] {
     const out: StructureNode[] = [];
 
@@ -212,7 +222,7 @@ function contentNodes(
     }
 
     if (text !== undefined) {
-        out.push(...inlineContent(text));
+        out.push(...inlineContent(text, name));
     }
 
     return out;
@@ -258,8 +268,9 @@ function loneText(inline: StructureNode[]): string | undefined {
 function contentChildren(
     text?: ScaledValueString,
     quantity?: Quantity,
+    name?: RecipeGridPart,
 ): StructureNode[] {
-    const inline = contentNodes(text, quantity);
+    const inline = contentNodes(text, quantity, name);
 
     if (inline.length === 0) {
         return [];
@@ -368,7 +379,11 @@ function ingredientNode(box: Box, node: Ingredient): StructureNode {
 
     return partNode('ingredient', {
         dataAttrs,
-        children: contentChildren(node.description, node.quantity ?? undefined),
+        children: contentChildren(
+            node.description,
+            node.quantity ?? undefined,
+            'ingredient-description',
+        ),
     });
 }
 

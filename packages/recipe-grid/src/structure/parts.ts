@@ -51,7 +51,13 @@ const COMPONENT = 'recipe-grid';
  *                       wording, e.g. "Remaining"); carries no value.
  * - `recipe-reference`  a cross-file link to another recipe by slug.
  * - `quantity`          an amount rendered inline with an ingredient or reference.
+ * - `ingredient-description`
+ *                       an ingredient's own authored text, e.g. "flour" or
+ *                       "handful fresh coriander or parsley".
  * - `scaled-value`      a value that rescales with the recipe.
+ * - `uom-name`          the authored unit name within a quantity, e.g.
+ *                       "cloves"; the text a consumer converting the amount
+ *                       rewrites.
  */
 export const RECIPE_GRID_PARTS = [
     'root',
@@ -68,7 +74,9 @@ export const RECIPE_GRID_PARTS = [
     'remainder',
     'recipe-reference',
     'quantity',
+    'ingredient-description',
     'scaled-value',
+    'uom-name',
 ] as const;
 
 export type RecipeGridPart = (typeof RECIPE_GRID_PARTS)[number];
@@ -142,7 +150,9 @@ export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
     [part('remainder')]: 'div',
     [part('recipe-reference')]: 'a',
     [part('quantity')]: 'span',
+    [part('ingredient-description')]: 'span',
     [part('scaled-value')]: 'span',
+    [part('uom-name')]: 'span',
 } as { readonly [P in RecipeGridPart]: string };
 
 /**
