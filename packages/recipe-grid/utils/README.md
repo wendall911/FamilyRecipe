@@ -20,7 +20,7 @@ node utils/probe-compile.mjs
 - `probe-ast.mjs` — the grammar's AST.
 - `probe-compile.mjs` — the compiled DAG, as cycle-safe JSON (`<<circular>>` where a shared node is reached again).
 - `probe-extract-shape.mjs` — the `CardShape` from `extract-shape.ts`.
-- `probe-extract-structure.mjs` — the `StructureNode` tree from `extract-structure.ts`.
+- `probe-extract-structure.mjs` — the `StructureNode` representation from `extract-structure.ts`.
 - `probe-build.mjs` — `build()`.
 
 ## Older — answered a question during development; read before trusting
