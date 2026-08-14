@@ -55,6 +55,7 @@ Parses `md` and provides the parsed model to descendant parts. Renders its child
 | `md`       | `string`          | -       | required; the recipe-grid markdown                                    |
 | `as`       | `string`          | -       | wrapper element tag; omitted -> no wrapper, children render directly  |
 | `path`     | `string`          | `#{slug}` | where a cross-file recipe reference points; `{slug}` is replaced with the target |
+| `rel`      | `string`          | - | optional rel that can added as a prop |
 | `children` | `Snippet`         | -       | the parts to render inside                                            |
 | ...rest    | `Record<string, unknown>` | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `path` / `children` are not forwarded) |
 

@@ -14,16 +14,15 @@ export class RecipeContext {
 
     /*
      * Where a cross-file recipe reference points, `{slug}` substituted for the
-     * target. The core emits the raw slug because it cannot know how an edge
-     * resolves; this is the consumer's answer, carried alongside the model. A
-     * route, an in-page anchor, another site -- the reference is rendered
-     * `rel="external"`, so nothing here is resolved against a router.
+     * target.
      */
     path: string;
+    rel: string;
 
-    constructor(md: string, path = '#{slug}') {
+    constructor(md: string, path = '#{slug}', rel: string) {
         this.parsed = this.parse(md);
         this.path = path;
+        this.rel = rel;
     }
 
     parse(md: string): RecipeModel {
