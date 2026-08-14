@@ -145,11 +145,17 @@ function markedSpan(text: string, name: RecipeGridPart): StructureNode {
  * A `RecipeNumber` is a JS number for a whole number or a decimal, or a
  * `Fraction` for an exact fraction. The authored form is what renders: `1/2`
  * stays a fraction and `0.5` stays a decimal, though both are the same
- * magnitude.
+ * magnitude. Alternatively if an author wants conversions to always be
+ * a fractional value, they can author 3/1 and initial display will be 3
+ * while it remains a fraction in the data binding.
  */
 function numberText(value: RecipeNumber): string {
-    return typeof value === 'number'
-        ? String(value)
+    if (typeof value === 'number') {
+        return String(value);
+    }
+
+    return value.denominator === 1
+        ? String(value.numerator)
         : `${value.numerator}/${value.denominator}`;
 }
 
