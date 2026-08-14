@@ -50,29 +50,54 @@ export type ScaledValueStringPart = string | RecipeNumber;
 export type ScaledValueString = ScaledValueStringPart[];
 
 /**
- * [EXT] An absolute quantity, e.g. "50g of", "3 apples". Diverges from Grid 2,
- * which carried only the authored unit text: a quantity here also carries the
- * canonical unit identity, so a consumer can convert without re-matching a
- * string the grammar already matched.
+ * [EXT] A piece of an amount as authored, with the content that preceded it.
+ *
+ * Every piece of an ingredient is drawn as its own element, so nothing sits
+ * between two of them: each carries what led it. `leading` is what the grammar
+ * matched before this piece, empty when the piece abuts what came before.
+ * Nothing trailing -- the next part carries its own.
+ */
+export type QuantityPart = {
+    kind: "quantityPart";
+    // [EXT] What preceded this piece, or "" when it abuts what came before.
+    leading: string;
+    // [EXT] The piece as authored, e.g. "cloves", "of the".
+    text: string;
+    /**
+     * [EXT] Present when this piece is a unit name -- the vocabulary claimed
+     * its text. The canonical key it resolves to rides on the
+     * {@link Quantity}; this says only which piece carries the name.
+     */
+    isUnitName?: boolean;
+};
+
+/**
+ * [EXT] An absolute quantity, e.g. "50g of", "3 apples": its value, then the
+ * pieces that followed it, in order. Diverges from Grid 2, which carried only
+ * the authored unit text: a quantity here also carries the canonical unit
+ * identity, so a consumer can convert without re-matching a string the grammar
+ * already matched.
  */
 export type Quantity = {
     kind: "quantity";
     // [G2] The amount.
     value: RecipeNumber;
-    // [G2] Unit name as authored, or null for a unit-less count (e.g. 3 apples).
-    unitOfMeasure: string | null;
     /**
-     * [EXT] The canonical unit key `unitOfMeasure` resolves to -- the
+     * [EXT] The pieces that followed the value -- the unit and the preposition
+     * when the author wrote them, in order, each with what preceded it. Empty
+     * for a unit-less count (e.g. 3 apples).
+     */
+    parts: QuantityPart[];
+    /**
+     * [EXT] The canonical unit key the authored unit resolves to -- the
      * parse-ingredient `unitsOfMeasure` record key ("cloves" -> "clove",
-     * "g" -> "gram"). Carried alongside `unitOfMeasure`, never instead of it:
+     * "g" -> "gram"). Carried alongside the authored unit, never instead of it:
      * one is what the author wrote and what renders, the other is the handle a
-     * consumer looks up. Null exactly when `unitOfMeasure` is null.
+     * consumer looks up. Null when no piece is a unit name. A quantity whose
+     * author wrote more than one unit carries the last -- which is what they
+     * wrote; whether it is a sensible recipe is a validator's question.
      */
     unitOfMeasureID: string | null;
-    // [G2] Whitespace between value and unit; "" when there is no unit.
-    valueUnitSpacing: string;
-    // [G2] Trailing preposition incl. leading space, e.g. " of" in "50g of".
-    preposition: string;
 };
 
 /**

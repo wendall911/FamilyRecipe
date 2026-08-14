@@ -4,8 +4,8 @@
  * A pure transport over the render structure: each {@link StructureNode} from
  * `extract-structure.ts` becomes an {@link ElementNode} one-for-one. The
  * structure is already the complete element tree (every element the DOM needs
- * is there: a step's `inputs` column, a content `<p>`, a `quantity` span, the
- * inline text / `scaled-value` spans), so this pass makes no structural
+ * is there: a step's `inputs` column, a content `<p>`, the marked spans inside
+ * it and the runs of text between them), so this pass makes no structural
  * decisions of its own: it copies the tag, the attributes, and the leaf text,
  * then recurses.
  *
@@ -19,10 +19,16 @@ import type { StructureNode } from './extract-structure.ts';
 
 /**
  * A plain, serialisable element description.
+ *
+ * A node with no `tag` is a run of text rather than an element: it carries
+ * `text` and nothing around it, and a consumer mounts it as a text node.
  */
 export interface ElementNode {
-    // The HTML tag name, e.g. 'div', 'p', 'h1', 'span'.
-    tag: string;
+    /*
+     * The HTML tag name, e.g. 'div', 'p', 'h1', 'span'; absent on a run of
+     * text, which has no element around it.
+     */
+    tag?: string;
     // Attributes, keyed by attribute name (part marker, data-*).
     attrs: Record<string, string>;
     // Literal text content, when this element is a leaf of text.
@@ -34,8 +40,8 @@ export interface ElementNode {
 /**
  * The attributes carried by an element: its part marker (when the node is a
  * part), the core's data-* bindings, and any semantic HTML attributes the node
- * sets (e.g. an <a>'s title). A plain element node (a `<p>` or `<span>`) has no
- * marker.
+ * sets (e.g. an <a>'s title). A plain element node (a `<p>`) has no marker, and
+ * neither does a run of text.
  */
 function markerAttrs(node: StructureNode): Record<string, string> {
     return {
@@ -52,12 +58,17 @@ function markerAttrs(node: StructureNode): Record<string, string> {
  */
 export function build(node: StructureNode): ElementNode {
     const element: ElementNode = {
-        tag: node.tag,
         attrs: markerAttrs(node),
         children: node.children.map(build),
     };
+
+    if (node.tag !== undefined) {
+        element.tag = node.tag;
+    }
+
     if (node.text !== undefined) {
         element.text = node.text;
     }
+
     return element;
 }

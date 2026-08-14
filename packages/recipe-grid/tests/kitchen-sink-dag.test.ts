@@ -26,7 +26,7 @@ import type {
 
 /*
  * The kitchen-sink fixture compiled to the DAG. The AST tests pin what the
- * grammar emits; these pin what the compiler builds from it -- resolved
+ * grammar emits; these pin what the compiler builds from it, the resolved
  * references, unit identity, and the shapes a binding consumes.
  *
  * Every type imported above is a piece the DAG carries. The import list is the
@@ -46,7 +46,7 @@ test('an ingredient line compiles to an ingredient carrying its description', ()
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `200g "plain flour (12% protein)"` -- found by what it is, not where it
+     * `200g "plain flour (12% protein)"` - found by what it is, not where it
      * sits, so adding to the fixture does not move it out from under the test.
      */
     const flour = recipe.recipeTrees.find(
@@ -58,7 +58,7 @@ test('an ingredient line compiles to an ingredient carrying its description', ()
     assert.ok(flour, 'expected a plain flour ingredient');
 });
 
-test('a quantity carries the authored unit and the canonical key it resolves to', () => {
+test('a quantity carries its parts, each with the canonical key it resolves to', () => {
     const recipe = compileFixture('kitchen-sink.md');
     const quantityOf = (description: string): Quantity => {
         const node = recipe.recipeTrees.find(
@@ -73,29 +73,51 @@ test('a quantity carries the authored unit and the canonical key it resolves to'
     };
 
     /*
-     * `3 cloves garlic` -- the plural as authored, resolved to the singular
+     * `3 cloves garlic` - the plural as authored, resolved to the singular
      * `unitsOfMeasure` key. Both are carried; neither replaces the other.
      */
     const garlic = quantityOf('garlic');
 
-    assert.equal(garlic.unitOfMeasure, 'cloves');
-    assert.equal(garlic.unitOfMeasureID, 'clove');
+    assert.equal(garlic.parts[0].text, 'cloves');
+    assert.equal(garlic.parts[0].isUnitName, true);
+
+    // A space preceded the unit, and rides the part rather than sitting between.
+    assert.equal(garlic.parts[0].leading, ' ');
 
     /*
-     * `1 'mixed veg (...)'` -- a count with no unit. The identity is null
-     * exactly when the authored unit is.
+     * `200g "plain flour (12% protein)"` - the unit abuts the value, so it led
+     * with nothing. The absence is as authored, not a missing separator.
+     */
+    const flour = quantityOf('plain flour (12% protein)');
+
+    assert.equal(flour.parts[0].text, 'g');
+    assert.equal(flour.parts[0].leading, '');
+
+    /*
+     * `3 liters of cat memes` - every part is asked. `liters` is a unit name
+     * and resolves; `of` is not and carries null.
+     */
+    const memes = quantityOf('cat memes');
+
+    assert.equal(memes.parts[0].text, 'liters');
+    assert.equal(memes.parts[0].isUnitName, true);
+    assert.equal(memes.parts[1].text, 'of');
+    assert.equal(memes.parts[1].isUnitName, false);
+
+    /*
+     * `1 'mixed veg (...)'` - the quoted name takes everything after the
+     * value, so the amount is the bare count and there is no part.
      */
     const veg = quantityOf('mixed veg (e.g. carrots, peas)');
 
-    assert.equal(veg.unitOfMeasure, null);
-    assert.equal(veg.unitOfMeasureID, null);
+    assert.equal(veg.parts.length, 0);
 });
 
 test('an ingredient line becomes an ingredient, a step, or a recipeReference', () => {
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `{1 handful} fresh parsley, chopped` -- the trailing action makes the
+     * `{1 handful} fresh parsley, chopped` - the trailing action makes the
      * entry a step, and the ingredient becomes its input. One input: the step
      * wraps the ingredient the action followed, and nothing else.
      */
@@ -108,7 +130,7 @@ test('an ingredient line becomes an ingredient, a step, or a recipeReference', (
     assert.equal(chopped.inputs[0].kind, 'ingredient');
 
     /*
-     * `[Roux](roux "Dad's basic roux")` -- a link is a cross-file pointer,
+     * `[Roux](roux "Dad's basic roux")` - a link is a cross-file pointer,
      * carrying the slug it targets and the authored title.
      */
     const roux = recipe.recipeTrees.find(
@@ -124,7 +146,7 @@ test('a label rides the step and does not displace the ingredient description', 
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `red peppers = 150g roasted red peppers from jar, finely chopped` -- the
+     * `red peppers = 150g roasted red peppers from jar, finely chopped` - the
      * label is the handle a later line resolves against. The step carries it;
      * the ingredient under it keeps its own description and takes no label.
      */
@@ -148,7 +170,7 @@ test('a braced value stays a number in the description, not text', () => {
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `{1 handful} fresh parsley, chopped` -- the braces mark the number
+     * `{1 handful} fresh parsley, chopped` - the braces mark the number
      * scalable, so it arrives as a number part among the literal text. Compared
      * structurally: svsToString would flatten it back to a string and lose the
      * distinction the braces made.
@@ -163,7 +185,7 @@ test('a braced value stays a number in the description, not text', () => {
 
     assert.ok(parsley, 'expected an ingredient under the chopped step');
     assert.ok(
-        svsEqual(parsley.description, svsNormalize([1, ' handful fresh parsley'])),
+        svsEqual(parsley.description, svsNormalize([1, 'handful fresh parsley'])),
         'expected the braced value to stay a number part',
     );
 
@@ -186,7 +208,7 @@ test('a quantity value keeps the kind it was authored in', () => {
     };
 
     /*
-     * `1/2 cup butter` and `0.5 tsp salt` -- the same magnitude authored two
+     * `1/2 cup butter` and `0.5 tsp salt` - the same magnitude authored two
      * ways. The fraction stays exact and the decimal stays a JS number; the
      * compiler represents what was written and converts neither.
      */
@@ -211,7 +233,7 @@ test('a quantity value keeps the kind it was authored in', () => {
 /* --- SubRecipe -----------------------------------------------------------
  *
  * A named region composing ingredients, steps, and whatever else. Its output
- * is what a later line reaches by name -- a `reference` holding `resolvedNode`,
+ * is what a later line reaches by name - a `reference` holding `resolvedNode`,
  * a pointer to the node it targets. That back-edge is what makes the compiled
  * recipe a DAG rather than a tree.
  */
@@ -220,7 +242,7 @@ test('a := heading compiles to a subRecipe wrapping the step it names', () => {
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `Dough := knead(...)` -- the heading names a region; the node carries the
+     * `Dough := knead(...)` - the heading names a region; the node carries the
      * declared output name and wraps the step the `:=` bound. Found by its
      * output name rather than position, so the fixture can grow around it.
      */
@@ -236,7 +258,7 @@ test('a := heading compiles to a subRecipe wrapping the step it names', () => {
     assert.equal(dough.outputNames.length, 1);
 
     /*
-     * The `:=` wraps exactly one child tree -- here the `knead` step whose
+     * The `:=` wraps exactly one child tree - here the `knead` step whose
      * arguments are the region's inputs. The guard is the assertion, so a
      * subTree that stops being a step fails here rather than reading undefined
      * off a cast.
@@ -253,7 +275,7 @@ test('a later line reaching a := output resolves to that node, not a copy', () =
     /*
      * `Dough := knead(...)` declared above; `bake(mix(dough, ...))` reaches it
      * by name. The reference holds the subRecipe object itself, so the node has
-     * a second parent -- the back-edge that makes this a DAG rather than a tree.
+     * a second parent - the back-edge that makes this a DAG rather than a tree.
      */
     const dough = recipe.recipeTrees.find(
         (node): node is SubRecipe =>
@@ -292,7 +314,7 @@ test('a reference carries an amount only when the line draws a measured portion'
 
     /*
      * `Dough := knead(200g "plain flour (12% protein)", 1/2 cup butter, milk)`
-     * -- two of the three inputs restate a quantity and the third does not. The
+     * - two of the three inputs restate a quantity and the third does not. The
      * amount is what the line asked for, not a property of the node it targets.
      */
     const dough = recipe.recipeTrees.find(
@@ -346,7 +368,7 @@ test('a reference resolves to a labelled step, not only a := output', () => {
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `Filling := fold(whip(...), mix(red peppers, ...))` -- the region nests
+     * `Filling := fold(whip(...), mix(red peppers, ...))` - the region nests
      * steps rather than holding a flat list, and `red peppers` names an
      * `=`-labelled step declared above. A reference targets any node, so the
      * handle a later line resolves need not be a `:=` output.
@@ -380,7 +402,7 @@ test('a reference resolves to a labelled step, not only a := output', () => {
     assert.ok(toPeppers, 'expected a reference resolving to the labelled step');
 
     /*
-     * A step has one result, so there is no output to index -- the field is
+     * A step has one result, so there is no output to index and the field is
      * absent rather than defaulted.
      */
     assert.equal(toPeppers.outputIndex, undefined);
@@ -404,7 +426,7 @@ test('the compiler stamps the resolved frontmatter onto the recipe', () => {
     assert.equal(recipe.base, 4);
 
     /*
-     * `unitSystem: imperial` as authored -- a value the fixture declares rather
+     * `unitSystem: imperial` as authored where a value the fixture declares rather
      * than the 'us' default, so the assertion pins the frontmatter being read
      * rather than passing on a value nothing had to produce.
      */
@@ -412,7 +434,7 @@ test('the compiler stamps the resolved frontmatter onto the recipe', () => {
 
     /*
      * The fixture authors no slug, so the recipe takes one derived from its
-     * title -- always a concrete string, since a cross-file reference resolves
+     * title and always a concrete string, since a cross-file reference resolves
      * against it.
      */
     assert.equal(recipe.slug, 'kitchen-sink-test');
@@ -429,7 +451,7 @@ test('a remainder marks the last draw on an ingredient, carrying no value', () =
     const recipe = compileFixture('kitchen-sink.md');
 
     /*
-     * `bake(mix(..., Remaining milk), 0.5 tsp of the salt)` -- the main step is
+     * `bake(mix(..., Remaining milk), 0.5 tsp of the salt)` - the main step is
      * where the chain ends, so the final draw lands here. `Dough := knead(...)`
      * already took milk without an amount; this use says what is left of it.
      */
@@ -461,7 +483,7 @@ test('a remainder marks the last draw on an ingredient, carrying no value', () =
     assert.equal(toMilk.amount.kind, 'remainder');
 
     /*
-     * The wording as authored, kept for display. A remainder holds no value --
+     * The wording as authored, kept for display. A remainder holds no value so
      * the ingredient list is the definitive amount, and what is left of it is a
      * validation question, not one the compiler answers.
      */
@@ -471,8 +493,8 @@ test('a remainder marks the last draw on an ingredient, carrying no value', () =
     assert.equal(remainder.preposition, '');
 
     /*
-     * `0.5 tsp of the salt` -- a measured draw alongside the remainder, and the
-     * preposition survives with its leading space, as authored.
+     * `0.5 tsp of the salt` - a measured draw alongside the remainder. The
+     * preposition is a part following the unit, in the order authored.
      */
     const salt = recipe.recipeTrees.find(
         (node): node is Ingredient =>
@@ -488,5 +510,16 @@ test('a remainder marks the last draw on an ingredient, carrying no value', () =
     assert.ok(toSalt, 'expected a reference resolving to the salt ingredient');
     assert.ok(toSalt.amount, 'expected the salt reference to carry an amount');
     assert.equal(toSalt.amount.kind, 'quantity');
-    assert.equal(toSalt.amount.preposition, ' of the');
+
+    const [unit, preposition] = toSalt.amount.parts;
+
+    assert.equal(unit.text, 'tsp');
+    assert.equal(unit.leading, ' ');
+
+    /*
+     * The preposition holds its own words; the space before it is what preceded
+     * the part, not text the part carries.
+     */
+    assert.equal(preposition.text, 'of the');
+    assert.equal(preposition.leading, ' ');
 });

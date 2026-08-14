@@ -20,11 +20,11 @@ An entry with a trailing action compiles to a `step` wrapping the node the actio
 
 A `label` sits on the node the author bound it to -- the step, when the entry has a trailing action. It is the handle later lines resolve against, and the text drawn where a reference to that node appears. It does not replace the description: the node under a labelled step keeps its own and takes no label of its own.
 
-A `Quantity` carries `value`, `unitOfMeasure`, `unitOfMeasureID`, `valueUnitSpacing`, and `preposition`.
+A `Quantity` carries `value`, `parts`, and `unitOfMeasureID`.
 
 `value` is a `RecipeNumber`: a JS number for a whole number or a decimal, or a `Fraction` (`numerator`/`denominator`) for an exact fraction. The authored form is what is kept -- `1/2` stays a fraction and `0.5` stays a decimal, though both resolve to the same magnitude.
 
-`unitOfMeasure` is the unit name as authored, or `null` for a unit-less count.  `unitOfMeasureID` is the canonical `unitsOfMeasure` key that name resolves to (`cloves` -> `clove`, `g` -> `gram`), or `null` when the authored unit is. Both are carried: one is what renders, the other is the handle a consumer looks up with. Neither replaces the other.
+`parts` holds the pieces that followed the value, in order — the unit and the preposition when the author wrote them, each a `quantityPart` with the `leading` content that preceded it and its `text` as authored. `leading` is empty when a piece abuts what came before, and `parts` is empty on a bare count. `unitOfMeasureID` is the canonical `unitsOfMeasure` key the authored unit resolves to (`cloves` -> `clove`, `g` -> `gram`), or `null` when there is no unit to resolve. Both are carried: one is what renders, the other is the handle a consumer looks up with. Neither replaces the other.
 
 ### SubRecipe
 

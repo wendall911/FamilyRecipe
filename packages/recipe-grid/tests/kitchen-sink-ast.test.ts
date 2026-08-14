@@ -55,7 +55,11 @@ test('{N} is an interpolated (scalable) value inside the name, not an amount', (
     assert.deepEqual(interp.number, 1);
     // The braces did not produce a reference amount.
     assert.equal(parsley.amount, null);
-    assert.equal(nameText(parsley), '1 handful fresh parsley');
+
+    const [value, text] = parsley.name.substrings;
+
+    assert.equal(value.kind, 'interpolatedValue');
+    assert.equal(substringsText([text]), 'handful');
 });
 
 test('a quantity value carries its authored kind: integer, decimal, or exact fraction', () => {
@@ -68,17 +72,17 @@ test('a quantity value carries its authored kind: integer, decimal, or exact fra
         return ref.amount as QuantityNode;
     };
 
-    // `200g` — a whole number stays a JS number.
+    // `200g` - a whole number stays a JS number.
     assert.equal(amountOf('plain flour (12% protein)').value, 200);
 
-    // `0.5 tsp` — a decimal stays a JS number; it is not converted to a fraction.
+    // `0.5 tsp` - a decimal stays a JS number; it is not converted to a fraction.
     assert.equal(amountOf('salt').value, 0.5);
 
-    // `1/2 cup` — an exact fraction is held as numerator/denominator, not 0.5.
+    // `1/2 cup` - an exact fraction is held as numerator/denominator, not 0.5.
     assert.deepEqual(amountOf('butter').value, { numerator: 1, denominator: 2 });
 });
 
-test('a quantity carries its unit as authored, or null when the line has none', () => {
+test('a quantity carries its unit as a part with what preceded it', () => {
     const refs = referencesOf('kitchen-sink.md');
     const amountOf = (name: string): QuantityNode => {
         const ref = refs.find((r) => nameText(r) === name);
@@ -88,27 +92,38 @@ test('a quantity carries its unit as authored, or null when the line has none', 
         return ref.amount as QuantityNode;
     };
 
-    // `200g` — the unit abuts the value, and the absent space is preserved.
+    // `200g` - the unit abuts the value, so it led with nothing.
     const flour = amountOf('plain flour (12% protein)');
 
-    assert.equal(substringsText(flour.unit!.substrings), 'g');
-    assert.equal(flour.valueUnitSpacing, '');
+    assert.equal(substringsText(flour.parts[0].text.substrings), 'g');
+    assert.equal(flour.parts[0].leading, '');
 
-    // `2 large eggs` — the unit is a word, and `eggs` is the name.
+    /* 
+     * `2 large eggs` - the unit is a word, and the space before it rides the
+     * part rather than sitting between the value and the unit.
+     */
     const eggs = amountOf('eggs');
 
-    assert.equal(substringsText(eggs.unit!.substrings), 'large');
-    assert.equal(eggs.valueUnitSpacing, ' ');
+    assert.equal(substringsText(eggs.parts[0].text.substrings), 'large');
+    assert.equal(eggs.parts[0].leading, ' ');
 
-    // `1 'mixed veg (...)'` — a count with no unit at all.
-    assert.equal(amountOf('mixed veg (e.g. carrots, peas)').unit, null);
+    /*
+     * `1 'mixed veg (...)'` - the quoted name takes everything after the
+     * value, so the amount is the bare count.
+     */
+    const veg = amountOf('mixed veg (e.g. carrots, peas)');
+
+    assert.equal(veg.value, 1);
+    assert.equal(veg.parts.length, 0);
 });
 
-test('a quantity carries a trailing preposition', () => {
+test('a preposition is a part of its own, following the unit', () => {
     const refs = referencesOf('kitchen-sink.md');
 
-    // `3 liters of cat memes` — two `cat memes` references exist; this is the
-    // one carrying the quantity, not the bare use inside `mix`.
+    /*
+     * `3 liters of cat memes` - two `cat memes` references exist; this is the
+     * one carrying the quantity, not the bare use inside `mix`.
+     */
     const declared = refs.find((r) => nameText(r) === 'cat memes' && r.amount !== null);
 
     assert.ok(declared, 'expected a cat memes reference with an amount');
@@ -116,11 +131,22 @@ test('a quantity carries a trailing preposition', () => {
     const amount = declared.amount as QuantityNode;
 
     assert.equal(amount.value, 3);
-    assert.equal(substringsText(amount.unit!.substrings), 'liters');
-    assert.equal(amount.valueUnitSpacing, ' ');
 
-    // The preposition is captured as authored, leading space and all.
-    assert.equal(amount.preposition, ' of');
+    // The unit and the preposition are parts in the order authored.
+    assert.equal(amount.parts.length, 2);
+
+    const [unit, preposition] = amount.parts;
+
+    assert.equal(substringsText(unit.text.substrings), 'liters');
+    assert.equal(unit.leading, ' ');
+
+    /*
+     * The preposition holds only its own word; the space before it is what
+     * preceded the part, not part of the text.
+     */
+    assert.equal(substringsText(preposition.text.substrings), 'of');
+    assert.equal(preposition.leading, ' ');
+
     assert.equal(nameText(declared), 'cat memes');
 });
 
@@ -128,7 +154,7 @@ test('an ingredient with a trailing action is a step wrapping that ingredient', 
     const stmt = stepStmt('chopped', 'kitchen-sink.md');
     const step = stmt.expr as StepNode;
 
-    // `{1 handful} fresh parsley, chopped` — the action names the step.
+    // `{1 handful} fresh parsley, chopped` - the action names the step.
     assert.equal(step.kind, 'step');
     assert.equal(nameText(step), 'chopped');
 
@@ -138,7 +164,6 @@ test('an ingredient with a trailing action is a step wrapping that ingredient', 
     const parsley = step.inputs[0] as ReferenceNode;
 
     assert.equal(parsley.kind, 'reference');
-    assert.equal(nameText(parsley), '1 handful fresh parsley');
 });
 
 test('a label on an ingredient with an action rides the step, and the amount stays on the ingredient', () => {
@@ -157,24 +182,24 @@ test('a label on an ingredient with an action rides the step, and the amount sta
     const amount = peppers.amount as QuantityNode;
 
     assert.equal(amount.value, 150);
-    assert.equal(substringsText(amount.unit!.substrings), 'g');
+    assert.equal(substringsText(amount.parts[0].text.substrings), 'g');
 });
 
 test('an external reference carries link text and slug, and a title when authored', () => {
-    // `[Pizza Dough](pizza-dough)` — no title in the link.
+    // `[Pizza Dough](pizza-dough)` - no title in the link.
     const bare = externalRef('Pizza Dough', 'kitchen-sink.md');
 
     assert.equal(bare.kind, 'externalReference');
     assert.equal(bare.targetSlug, 'pizza-dough');
     assert.equal(bare.title, undefined);
 
-    // `[Roux](roux "Dad's basic roux")` — a double-quoted title, apostrophe intact.
+    // `[Roux](roux "Dad's basic roux")` - a double-quoted title, apostrophe intact.
     const roux = externalRef('Roux', 'kitchen-sink.md');
 
     assert.equal(roux.targetSlug, 'roux');
     assert.equal(roux.title, "Dad's basic roux");
 
-    // `[Stock](vegetable-stock 'homemade stock')` — a single-quoted title.
+    // `[Stock](vegetable-stock 'homemade stock')` - a single-quoted title.
     const stock = externalRef('Stock', 'kitchen-sink.md');
 
     assert.equal(stock.targetSlug, 'vegetable-stock');
@@ -185,8 +210,10 @@ test('an external reference with a trailing action is a step wrapping that refer
     const stmt = stepStmt('rolled thin', 'kitchen-sink.md');
     const step = stmt.expr as StepNode;
 
-    // `[Pastry](sweet-pastry), rolled thin` — the same wrapping as an
-    // ingredient with an action, with an external reference as the input.
+    /*
+     * `[Pastry](sweet-pastry), rolled thin` - the same wrapping as an
+     * ingredient with an action, with an external reference as the input.
+     */
     assert.equal(step.kind, 'step');
     assert.equal(step.inputs.length, 1);
 
@@ -242,8 +269,10 @@ test('a step input may itself be a step (steps nest recursively)', () => {
  */
 
 test('`Remaining` on a reference inside a step is a remainder amount', () => {
-    // `Remaining butter` — found by what it is, since a remainder sits at no
-    // fixed position among a step's inputs.
+    /*
+     * `Remaining butter` - found by what it is, since a remainder sits at no
+     * fixed position among a step's inputs.
+     */
     const butter = remainderRef('butter', 'kitchen-sink.md');
     const rem = butter.amount as RemainderNode;
 

@@ -265,9 +265,15 @@ s_quoted_string
  * are coalesced back into a single substring here (raw-string discipline —
  * never store per-char). Grid 2's ScaledValueExpression; the grammar only marks
  * what is scalable, the runtime does the scaling.
+ *
+ * The gap after an interpolated number is a separator, not content: the braces
+ * are how an author declares a unit the vocabulary has no name for, and the
+ * space between the value and that name is the same separator
+ * `implicit_quantity` drops from "4 cloves". It is matched and discarded, so
+ * the name is stored as itself.
  */
 bracketed_string
-  = "{" parts:(interpolated_number / esc:("\\" c:. { return c; }) / c:[^0-9{}\r\n] { return c; })* "}" {
+  = "{" parts:(n:interpolated_number hsp? { return n; } / esc:("\\" c:. { return c; }) / c:[^0-9{}\r\n] { return c; })* "}" {
       const out = [];
       let run = null;
       for (const part of parts) {

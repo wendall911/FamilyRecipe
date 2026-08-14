@@ -10,6 +10,14 @@
 // The indented tree is the DOM: what nests inside what, in what order, with the
 // tag it renders as and the attributes it carries. Read the part markers as the
 // styling handles and the data-* as what the node knows about itself.
+//
+// A line reading `text "..."` is a run of text with no element around it. A <p>
+// prints the line it renders as (`=> "..."`), which is what the browser shows
+// for that paragraph -- check it against the recipe, character for character.
+//
+// Every string is JSON-quoted, so a leading or trailing space is visible rather
+// than lost against the quote. This is an archival format: "cloves" and
+// "cloves " are different values and the dump has to say which one it is.
 import { readFileSync } from 'node:fs';
 
 const PKG = new URL('..', import.meta.url).pathname;
@@ -37,13 +45,22 @@ function shortAttr(name) {
 function attrs(node) {
     const marker = node.part !== undefined ? `[${shortAttr(node.part)}]` : '';
     const data = Object.entries(node.dataAttrs)
-        .map(([k, v]) => `${shortAttr(k)}=${v}`)
+        .map(([k, v]) => `${shortAttr(k)}=${JSON.stringify(v)}`)
         .join(' ');
     const semantic = Object.entries(node.attrs ?? {})
-        .map(([k, v]) => `${k}="${v}"`)
+        .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
         .join(' ');
 
     return [marker, data, semantic].filter((s) => s !== '').join(' ');
+}
+
+// The line a node renders as: its own text, then its children's, in order.
+// What the browser shows for that subtree, so a <p>'s line can be read back
+// against the recipe it came from.
+function line(node) {
+    return (
+        (node.text ?? '') + node.children.map(line).join('')
+    );
 }
 
 let count = 0;
@@ -52,9 +69,19 @@ function show(node, depth) {
     count += 1;
 
     const pad = '  '.repeat(depth);
-    const text = node.text !== undefined ? ` "${node.text}"` : '';
+    const text =
+        node.text !== undefined ? ` ${JSON.stringify(node.text)}` : '';
 
-    console.log(`${pad}<${node.tag}> ${attrs(node)}${text}`);
+    // A node with no tag is a run of text: no element, just the run.
+    if (node.tag === undefined) {
+        console.log(`${pad}text ${JSON.stringify(node.text)}`);
+    } else {
+        // A <p> also prints the line it renders as, for reading back.
+        const rendered =
+            node.tag === 'p' ? `  => ${JSON.stringify(line(node))}` : '';
+
+        console.log(`${pad}<${node.tag}> ${attrs(node)}${text}${rendered}`);
+    }
 
     for (const child of node.children) show(child, depth + 1);
 }

@@ -46,22 +46,33 @@ export interface String {
 }
 
 /**
- * An absolute quantity, e.g. "300g of".
+ * A piece of an amount as authored, with the whitespace that preceded it.
+ *
+ * `leading` is what the grammar matched before this piece; empty when nothing
+ * did. Nothing trailing — the next part carries its own.
+ */
+export interface QuantityPart {
+    kind: 'quantityPart';
+    // Source offset (in chars): the offset of `leading` when non-empty, else
+    // of `text`.
+    offset: number;
+    leading: string;
+    text: String;
+}
+
+/**
+ * An absolute quantity, e.g. "300g of": its value, then the pieces that
+ * followed it, in order.
+ *
+ * `parts` holds the unit and the preposition when the author wrote them, each
+ * with the whitespace that preceded it. Empty when the author wrote neither.
  */
 export interface Quantity {
     kind: 'quantity';
     // Source offset (in chars).
     offset: number;
     value: RecipeNumber;
-    // The unit name, or null for a unitless quantity.
-    unit: String | null;
-    // The whitespace, if any, between value and unit.
-    valueUnitSpacing: string;
-    /**
-     * An unquoted preposition following the quantity (e.g. " of" in "50g of
-     * butter"), or empty string.
-     */
-    preposition: string;
+    parts: QuantityPart[];
 }
 
 /**

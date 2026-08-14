@@ -22,7 +22,7 @@ An `externalReference` can be a step's input, the same way a `reference` can.
 
 A `reference`'s `name` is a `string`: a list of `substring` parts and `interpolatedValue` parts. An `interpolatedValue` is a number that scales with the recipe. A quoted name is a literal — its content is not parsed for quantity or unit, so parens, commas, and `%` inside it stay in the name. A `{N}` in a name becomes an `interpolatedValue` among that name's substrings and produces no amount.
 
-A `quantity` carries `value`, `unit`, `valueUnitSpacing`, and `preposition`. `value` holds what was authored: a whole number and a decimal are both JS numbers, and an exact fraction is `numerator`/`denominator` rather than a decimal. `unit` is a `string` as authored, or `null` when the line has none. `valueUnitSpacing` is the whitespace between value and unit, empty when the unit abuts the value. `preposition` is what trailed the quantity, captured as authored, leading space and all.
+A `quantity` carries `value` and `parts`. `value` holds what was authored: a whole number and a decimal are both JS numbers, and an exact fraction is `numerator`/`denominator` rather than a decimal. `parts` holds the pieces that followed the value, in order — the unit and the preposition when the author wrote them, each a `quantityPart` with the `leading` content that preceded it and its `text` as a `string`. `leading` is empty when a piece abuts what came before it, and `parts` is empty on a bare count.
 
 ### SubRecipe
 

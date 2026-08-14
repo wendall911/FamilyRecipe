@@ -61,18 +61,26 @@ import {
 /**
  * A node's render structure: the element to emit and its subtree.
  *
- * A node is either a part node (it carries a `data-recipe-grid-<part>` marker
- * and renders as the semantic tag for that part) or a plain element node (a
- * bare `<p>` or `<span>` with no marker, used for a content paragraph or a
- * literal text run). `tag` is the element to emit; for a part node it is the
- * semantic tag of the part, for a plain node it is set directly.
+ * A node is one of three things. A part node carries a
+ * `data-recipe-grid-<part>` marker and renders as the semantic tag for that
+ * part. A plain element node is a bare `<p>` with no marker. A text node has no
+ * `tag` at all: it is a run of literal text, emitted as text and nothing more.
+ *
+ * A text node is what a run nothing names amounts to. Wrapping it in a span
+ * would mark nothing a rule can reach, and would put the run's characters
+ * inside an element a consumer has to look past -- the whitespace beside a unit
+ * name belongs to the paragraph, not to the unit. So an element's children are
+ * text nodes and marked spans interleaved, in the order the author wrote them.
  *
  * The render structure: part-tagged nodes for a binding to render as
  * components.
  */
 export interface StructureNode {
-    // The HTML tag to emit, e.g. 'div', 'p', 'h1', 'span', 'a'.
-    tag: string;
+    /*
+     * The HTML tag to emit, e.g. 'div', 'p', 'h1', 'span', 'a'; absent on a
+     * text node, which is a run of text with no element around it.
+     */
+    tag?: string;
     /*
      * The part marker attribute name (e.g. `data-recipe-grid-step`), when the
      * node is a part; absent on a plain `<p>` / `<span>` element node.
@@ -109,22 +117,26 @@ function partNode(
 }
 
 /**
- * A `<span>` text leaf: a span carrying a run of literal text.
- *
- * Marked when the caller knows which part the run is -- an ingredient's name,
- * a quantity's unit -- and bare when nothing names it. A bare span is a run
- * the pass had no part for, which is a legitimate emission: nothing here
- * validates that every piece is named.
+ * A text node: a run of literal text, with no element around it.
  */
-function textSpan(text: string, name?: RecipeGridPart): StructureNode {
-    return name === undefined
-        ? {
-              tag: 'span',
-              dataAttrs: {},
-              text,
-              children: [],
-          }
-        : partNode(name, { text });
+function textNode(text: string): StructureNode {
+    return {
+        dataAttrs: {},
+        text,
+        children: [],
+    };
+}
+
+/**
+ * A marked span: a run the caller knows the part of -- an ingredient's
+ * description, a quantity's unit name.
+ *
+ * The span exists to carry the marker, and holds the run and nothing else.
+ * What led the run is the paragraph's, so a consumer replacing the run's text
+ * -- swapping a unit for another -- touches only what it named.
+ */
+function markedSpan(text: string, name: RecipeGridPart): StructureNode {
+    return partNode(name, { text });
 }
 
 /**
@@ -167,120 +179,163 @@ function isNumberPiece(
 /**
  * The inline children of a scale-aware string: each literal run becomes a plain
  * `<span>` text leaf, each scalable number a marked `scaled-value` span.
+ *
+ * The sub-recipe header's own path. A header's whole content is one output
+ * name, so it has no run of unnamed text to place and needs no accumulator.
  */
 function inlineContent(
     text: ScaledValueString,
     name?: RecipeGridPart,
 ): StructureNode[] {
     return text.map((piece) =>
-        isNumberPiece(piece) ? scaledValueSpan(piece) : textSpan(piece, name),
+        isNumberPiece(piece)
+            ? scaledValueSpan(piece)
+            : name === undefined
+              ? textNode(piece)
+              : markedSpan(piece, name),
     );
 }
 
 /**
- * A quantity as a `quantity` span: its value (scalable) plus unit/preposition
- * text as a trailing plain span when present.
+ * The children of an element, gathered in the order the author wrote them.
  *
- * The canonical unit identity rides on the span as a binding. The authored unit
- * is what renders; the identity is the handle a consumer converts with, so both
- * are carried and neither replaces the other. A unit-less count has no identity
- * to emit, so the binding is absent exactly when the authored unit is.
+ * A run of text takes its place in line as it arrives, as its own child. What
+ * led a piece is handed in before that piece and stands there -- between what
+ * came before and the piece it leads -- rather than inside either of them. A
+ * consumer replacing a piece's text touches only what it named; the spacing
+ * beside it belongs to the paragraph and is untouched.
+ *
+ * An empty run is nothing to place, so it adds no child.
+ *
+ * This is why the pass cannot emit as it walks: a run has no element of its
+ * own, so it has nowhere to go until the element holding it is assembled. What
+ * comes out is the element's children -- text and spans interleaved, reading as
+ * the line was written.
  */
-function quantityNode(quantity: Quantity): StructureNode {
-    const children: StructureNode[] = [scaledValueSpan(quantity.value)];
-    const unitText =
-        quantity.unitOfMeasure !== null
-            ? `${quantity.valueUnitSpacing}${quantity.unitOfMeasure}`
-            : '';
-    const trailing = `${unitText}${quantity.preposition}`;
-    const dataAttrs: Record<string, string> = {};
-
-    if (quantity.unitOfMeasureID !== null) {
-        dataAttrs[DATA_KEYS.uomID] = quantity.unitOfMeasureID;
-    }
-
-    if (trailing !== '') {
-        children.push(textSpan(trailing, 'uom-name'));
-    }
-
-    return partNode('quantity', { dataAttrs, children });
+interface Bag {
+    // Add a run of literal text, as a child of its own.
+    text: (run: string) => void;
+    // Add an element.
+    node: (node: StructureNode) => void;
+    // The children gathered, in order.
+    done: () => StructureNode[];
 }
 
-/**
- * The inline nodes rendering a node's carried quantity and text, if any: the
- * quantity span first, then the text runs.
- */
-function contentNodes(
-    text?: ScaledValueString,
-    quantity?: Quantity,
-    name?: RecipeGridPart,
-): StructureNode[] {
+function bag(): Bag {
     const out: StructureNode[] = [];
 
-    if (quantity !== undefined) {
-        out.push(quantityNode(quantity));
-    }
-
-    if (text !== undefined) {
-        out.push(...inlineContent(text, name));
-    }
-
-    return out;
-}
-
-/**
- * A content `<p>`: the paragraph wrapping a node's carried text/quantity. Only
- * emitted when the content produces inline nodes.
- */
-function contentParagraph(children: StructureNode[]): StructureNode {
     return {
-        tag: 'p',
-        dataAttrs: {},
-        children,
+        text: (run) => {
+            if (run !== '') {
+                out.push(textNode(run));
+            }
+        },
+        node: (node) => {
+            out.push(node);
+        },
+        done: () => out,
     };
 }
 
 /**
- * The lone literal text run a node's content amounts to, when it is nothing
- * else.
+ * A quantity, into the bag its paragraph is gathering: the value as a
+ * `scaled-value` span, then the pieces the author wrote after it, in order.
  *
- * A single unmarked run needs no element of its own: the node it sits in is
- * already the element, and a span around it marks nothing a rule can reach.
- * Anything else -- a marked span, a run beside a sibling -- stands as it is.
+ * Each piece is preceded by what led it -- text, placed before the piece rather
+ * than inside it, since the model holds the two apart and putting them together
+ * would bury the spacing inside whatever the piece is.
+ *
+ * A piece the vocabulary claimed is a `uom-name` span; a piece it did not is
+ * text, since whether a piece is a unit name is the only thing this pass knows
+ * about it. The canonical key rides on the ingredient, where a consumer reading
+ * the ingredient finds it.
  */
-function loneText(inline: StructureNode[]): string | undefined {
-    const only = inline.length === 1 ? inline[0] : undefined;
+function quantityInto(into: Bag, quantity: Quantity): void {
+    into.node(scaledValueSpan(quantity.value));
 
-    return only !== undefined &&
-        only.part === undefined &&
-        only.children.length === 0
-        ? only.text
-        : undefined;
+    for (const piece of quantity.parts) {
+        into.text(piece.leading);
+
+        if (piece.isUnitName === true) {
+            into.node(markedSpan(piece.text, 'uom-name'));
+        } else {
+            into.text(piece.text);
+        }
+    }
+}
+
+/**
+ * A scale-aware string, into the bag its paragraph is gathering: each scalable
+ * number a `scaled-value` span, each literal run a marked span when the caller
+ * names it and text when nothing does.
+ *
+ * A scalable number and the run after it meet at a seam the model does not
+ * hold: braces are how an author names a unit the vocabulary has no word for,
+ * and the grammar drops the space between the value and that name the way it
+ * drops the one in `4 cloves`. It is a single space every time, and it is
+ * placed here, where the two meet. A number ending the string has nothing
+ * after it and gets none.
+ */
+function inlineInto(
+    into: Bag,
+    text: ScaledValueString,
+    name?: RecipeGridPart,
+): void {
+    text.forEach((piece, i) => {
+        if (isNumberPiece(piece)) {
+            into.node(scaledValueSpan(piece));
+
+            const next = text[i + 1];
+
+            if (next !== undefined && !isNumberPiece(next)) {
+                into.text(' ');
+            }
+        } else if (name !== undefined) {
+            into.node(markedSpan(piece, name));
+        } else {
+            into.text(piece);
+        }
+    });
 }
 
 /**
  * The content of a box that carries text and, optionally, a quantity: a single
  * content `<p>`, or nothing when the node carries neither.
  *
- * A paragraph whose whole content is one literal run carries that text itself,
- * with no span between the two.
+ * The paragraph is where the pieces meet: a quantity's value, unit and
+ * prepositions and a description are all runs of one line, so they are
+ * siblings in one `<p>` rather than each sealed in a wrapper of its own.
+ *
+ * A quantity and a description meet at a seam the model does not hold: the
+ * grammar reaches the description only after the quantity, so the run between
+ * them is a space every time and there is nothing else it could be. It is
+ * placed here, where the two meet, rather than stored on every node. A line
+ * with no quantity has no seam, and nothing is placed.
  */
 function contentChildren(
     text?: ScaledValueString,
     quantity?: Quantity,
     name?: RecipeGridPart,
 ): StructureNode[] {
-    const inline = contentNodes(text, quantity, name);
+    const into = bag();
 
-    if (inline.length === 0) {
-        return [];
+    if (quantity !== undefined) {
+        quantityInto(into, quantity);
     }
 
-    const lone = loneText(inline);
+    if (text !== undefined) {
+        if (quantity !== undefined) {
+            into.text(' ');
+        }
 
-    return lone !== undefined
-        ? [{ tag: 'p', dataAttrs: {}, text: lone, children: [] }]
-        : [contentParagraph(inline)];
+        inlineInto(into, text, name);
+    }
+
+    const children = into.done();
+
+    return children.length === 0
+        ? []
+        : [{ tag: 'p', dataAttrs: {}, children }];
 }
 
 /**
@@ -360,21 +415,17 @@ function edgeOf(box: Box): string | undefined {
 /**
  * An ingredient leaf: its quantity and description, in a content `<p>`.
  *
- * The quantity's base value and unit identity also ride on the ingredient
- * itself, so a consumer reading the ingredient does not have to descend into
- * the inline spans to find what scales and what it converts with. Converting
- * before scaling needs both together, and this is where an ingredient is
- * reached.
+ * The unit identity rides on the ingredient: it is what the measure converts
+ * with, and the `uom-name` span carries only the name the author wrote. The
+ * base value does not -- it is on the `scaled-value` span, which is the element
+ * a scaler rewrites, so a second copy here would be a value nothing reads and
+ * nothing keeps in step.
  */
 function ingredientNode(box: Box, node: Ingredient): StructureNode {
     const dataAttrs: Record<string, string> = structureAttrs(box);
 
-    if (node.quantity !== null) {
-        dataAttrs[DATA_KEYS.value] = JSON.stringify(node.quantity.value);
-
-        if (node.quantity.unitOfMeasureID !== null) {
-            dataAttrs[DATA_KEYS.uomID] = node.quantity.unitOfMeasureID;
-        }
+    if (node.quantity !== null && node.quantity.unitOfMeasureID !== null) {
+        dataAttrs[DATA_KEYS.uomID] = node.quantity.unitOfMeasureID;
     }
 
     return partNode('ingredient', {
@@ -428,11 +479,29 @@ function actionNode(box: Box, node: Step): StructureNode {
 }
 
 /**
+ * The lone literal run a header's output name amounts to, when it is nothing
+ * else.
+ *
+ * A single run needs no node of its own: the heading is already the element it
+ * sits in. Anything else -- a marked span, a run beside a scalable number --
+ * stands as it is.
+ */
+function loneText(inline: StructureNode[]): string | undefined {
+    const only = inline.length === 1 ? inline[0] : undefined;
+
+    return only !== undefined &&
+        only.part === undefined &&
+        only.children.length === 0
+        ? only.text
+        : undefined;
+}
+
+/**
  * A sub-recipe's header band: the declared output name, inline on the `<h2>`.
  *
  * The heading carries its text directly, with no wrapping `<p>`. A name that is
  * one literal run sits on the heading itself; a name with a scalable number in
- * it keeps the inline spans that mark it.
+ * it keeps the inline nodes that mark it.
  */
 function subRecipeHeaderNode(box: Box, node: SubRecipe): StructureNode {
     const inline = inlineContent(node.outputNames[0]);
@@ -469,7 +538,7 @@ function referenceNode(
         amount === undefined
             ? []
             : amount.kind === 'quantity'
-              ? [quantityNode(amount)]
+              ? contentChildren(undefined, amount)
               : [remainderNode(amount)];
 
     return partNode('reference', {

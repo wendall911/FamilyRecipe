@@ -8,7 +8,7 @@
  * the AST. Two things are resolved here, not transcribed:
  *   - per named reference, whether it points at an earlier sub-recipe output
  *     (a Reference) or is a plain Ingredient;
- *   - per quantity, the canonical unit key its authored unit name resolves to
+ *   - per quantity part, the canonical unit key its authored text resolves to
  *     (`unitOfMeasureID`, via `recipe-model.ts`).
  */
 
@@ -16,6 +16,7 @@ import type {
     Amount,
     Ingredient,
     Quantity,
+    QuantityPart,
     Recipe,
     RecipeMeta,
     RecipeReference,
@@ -304,16 +305,37 @@ class RecipeCompiler {
         return this.compileQuantity(amount);
     }
 
+    /**
+     * A quantity's parts come straight across, each flattened to its authored
+     * text. Every part is asked whether the vocabulary claims it, which is the
+     * only thing known about a part here; the canonical key rides on the
+     * quantity. A quantity whose author wrote more than one unit carries the
+     * last -- what they wrote, not a choice made here.
+     *
+     */
     private compileQuantity(quantity: AstQuantity): Quantity {
-        const unit = quantity.unit !== null ? svsToString(compileString(quantity.unit)) : null;
+        let uomID: string | null = null;
+        const parts: QuantityPart[] = quantity.parts.map((part) => {
+            const text = svsToString(compileString(part.text));
+            const partUomID = unitOfMeasureID(text);
+
+            if (partUomID !== null) {
+                uomID = partUomID;
+            }
+
+            return {
+                kind: 'quantityPart',
+                leading: part.leading,
+                text,
+                isUnitName: partUomID !== null
+            };
+        });
 
         return {
             kind: 'quantity',
             value: quantity.value,
-            unitOfMeasure: unit,
-            unitOfMeasureID: unitOfMeasureID(unit),
-            valueUnitSpacing: quantity.valueUnitSpacing,
-            preposition: quantity.preposition,
+            parts,
+            unitOfMeasureID: uomID,
         };
     }
 }
