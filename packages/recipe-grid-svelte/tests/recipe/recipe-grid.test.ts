@@ -69,16 +69,37 @@ describe('Recipe.Grid faithful wrap', () => {
     it('wraps a deeply nested ingredient preserving its quantity and quoted literal', () => {
         const { container } = render(GridHarness, { md });
         const ingredient = container.querySelector(
-            '[data-recipe-grid-ingredient][data-recipe-grid-value="250"]',
+            '[data-recipe-grid-ingredient][data-recipe-grid-uom-id="gram"]',
         );
-        const scaled = ingredient?.querySelector(
-            '[data-recipe-grid-quantity] [data-recipe-grid-scaled-value]',
-        );
+        const scaled = ingredient?.querySelector('[data-recipe-grid-scaled-value]');
+        const description = ingredient?.querySelector('[data-recipe-grid-ingredient-description]');
 
         expect(ingredient).not.toBeNull();
         expect(scaled?.getAttribute('data-recipe-grid-value')).toBe('250');
         expect(scaled?.textContent).toContain('250');
-        expect(ingredient?.textContent).toContain('lamb mince (10% fat)');
+        expect(description?.textContent).toBe('lamb mince (10% fat)');
+    });
+
+    it('renders an ingredient line as the recipe authored it', () => {
+        const { container } = render(GridHarness, { md });
+        const ingredient = container.querySelector(
+            '[data-recipe-grid-ingredient][data-recipe-grid-uom-id="gram"]',
+        );
+
+        expect(ingredient?.querySelector('p')?.textContent).toBe(
+            '250g lamb mince (10% fat)',
+        );
+    });
+
+    it('renders a unit name with the spacing the author wrote around it', () => {
+        const { container } = render(GridHarness, { md });
+        const ingredient = container.querySelector(
+            '[data-recipe-grid-ingredient][data-recipe-grid-uom-id="clove"]',
+        );
+        const uom = ingredient?.querySelector('[data-recipe-grid-uom-name]');
+
+        expect(ingredient?.querySelector('p')?.textContent).toBe('4 cloves garlic');
+        expect(uom?.textContent).toBe('cloves');
     });
 
     it('wraps the sub-recipe header as the h2 tag the structure carries', () => {
