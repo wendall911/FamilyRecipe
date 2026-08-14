@@ -120,12 +120,21 @@ step
 action
   = string
 
+/*
+ * The gap between an amount and the name it measures is content, not a
+ * separator: it is what preceded the name. It rides the reference, because the
+ * name is the reference's own and lives in one place.
+ */
 reference
-  = amt:((proportion / implicit_quantity) hsp?)? name:ingredient {
-      const amount = amt !== null ? amt[0] : null;
+  = amt:(a:(proportion / implicit_quantity) gap:hsp? {
+        return { amount: a, gap: gap !== null ? gap : '' };
+    })? name:ingredient {
+      const amount = amt !== null ? amt.amount : null;
+
       return {
         kind: 'reference',
         offset: amount !== null ? amount.offset : name.offset,
+        leading: amt !== null ? amt.gap : '',
         name,
         amount,
       };
@@ -136,24 +145,32 @@ ingredient
 
 implicit_quantity
   = num:number
-    unitPart:(usp:hsp? u:known_unit prep:(psp:hsp p:preposition { return psp + p; })? {
-        return { usp, unit: u, prep };
+    unitPart:(usp:hsp? u:known_unit prep:(psp:hsp p:preposition_string {
+        return {
+          kind: 'quantityPart',
+          offset: location().start.offset,
+          leading: psp,
+          text: p,
+        };
     })? {
-      let unit = null;
-      let valueUnitSpacing = '';
-      let preposition = '';
+        const unit = {
+          kind: 'quantityPart',
+          offset: location().start.offset,
+          leading: usp !== null ? usp : '',
+          text: u,
+        };
+        return { unit, prep };
+    })? {
+      const parts = [];
       if (unitPart !== null) {
-        unit = unitPart.unit;
-        if (unitPart.usp !== null) { valueUnitSpacing = unitPart.usp; }
-        if (unitPart.prep !== null) { preposition = unitPart.prep; }
+        parts.push(unitPart.unit);
+        if (unitPart.prep !== null) { parts.push(unitPart.prep); }
       }
       return {
         kind: 'quantity',
         offset: num.offset,
         value: num.value,
-        unit,
-        valueUnitSpacing,
-        preposition,
+        parts,
       };
     }
 
@@ -181,6 +198,19 @@ remainder
 
 preposition
   = $([oO][fF] ([ \t]+ [tT][hH][eE])? ![A-Za-z0-9])
+
+preposition_string
+  = p:preposition {
+      return {
+        kind: 'string',
+        offset: location().start.offset,
+        substrings: [{
+          kind: 'substring',
+          offset: location().start.offset,
+          string: p,
+        }],
+      };
+    }
 
 known_unit
   = u:$(@KNOWN_UNITS@) ![A-Za-z0-9] {
