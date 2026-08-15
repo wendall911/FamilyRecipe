@@ -60,7 +60,7 @@ describe('Recipe.Grid faithful wrap', () => {
     });
 
     it('hands a cross-file reference to the browser rather than a client router', () => {
-        const { container } = render(GridHarness, { md, path: '/recipe/{slug}' });
+        const { container } = render(GridHarness, { md, path: '/recipe/{slug}', rel: 'external' });
         const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
 
         expect(ref?.getAttribute('rel')).toBe('external');
