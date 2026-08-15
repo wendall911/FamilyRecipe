@@ -25,12 +25,23 @@ pnpm add @wendall911/recipe-grid-svelte @wendall911/recipe-grid
      * This package does not provide a loader.
      */
     const md = await getRecipeMarkdown();
+
+    const title = 'Scale';
+    const options = [
+        { value: 0.5, label: '<sup>1</sup>/<sub>2</sub>X' },
+        { value: 1, label: '1X' },
+        { value: 2, label: '2X' },
+    ];
+
+    // Yours to apply; the control only reports the pick.
+    let scale = $state(1);
 </script>
 
 <svelte:boundary>
     <Recipe.Root {md}>
         <Recipe.Title />
         <Recipe.Description />
+        <Recipe.Scale {title} {options} onValueChange={(value) => (scale = value)} />
         <Recipe.Grid />
     </Recipe.Root>
 
@@ -55,7 +66,7 @@ Parses `md` and provides the parsed model to descendant parts. Renders its child
 | `md`       | `string`          | -       | required; the recipe-grid markdown                                    |
 | `as`       | `string`          | -       | wrapper element tag; omitted -> no wrapper, children render directly  |
 | `path`     | `string`          | `#{slug}` | where a cross-file recipe reference points; `{slug}` is replaced with the target |
-| `rel`      | `string`          | - | optional rel that can added as a prop |
+| `rel`      | `string`          | -       | optional; `rel` for a cross-file recipe reference                     |
 | `children` | `Snippet`         | -       | the parts to render inside                                            |
 | ...rest    | `Record<string, unknown>` | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `path` / `children` are not forwarded) |
 
@@ -81,6 +92,22 @@ Renders the recipe description.
 | prop | type     | default | notes                                                             |
 |------|----------|---------|-------------------------------------------------------------------|
 | `as` | `string` | `p`     | element tag; pass `''` to render the raw description text, no element |
+
+### `Recipe.Scale`
+
+Renders a `fieldset` and `legend` around one native radio per option. Renders nothing at all unless the recipe's `scalingType` is `servings`.
+
+| prop            | type                        | default | notes                                              |
+|-----------------|-----------------------------|---------|----------------------------------------------------|
+| `title`         | `string`                    | -       | required; the `legend`                             |
+| `options`       | `ScaleOption[]`             | -       | required; `{ value, label }`, in render order      |
+| `onValueChange` | `(value: number) => void`   | -       | optional; called with the picked option's `value`  |
+
+The radios share a `name` derived from the recipe's slug, so two cards on one page are separate groups. `label` is rendered as HTML -- markup works, and it is your string, so do not put untrusted input there. The option whose `value` is `1` starts selected; supply one if you want the card to return to its authored scale.
+
+The control holds no state and there is nothing to bind to. `onValueChange` hands you the picked value and the scaling is yours to apply.
+
+Props that cannot draw a labelled control throw `RecipeScaleError` while the component initialises: a blank `title`, empty `options`, an option with a non-numeric `value` or blank `label`, duplicate `value`s, or an `onValueChange` that is not a function.
 
 ### `Recipe.Grid`
 
@@ -125,9 +152,11 @@ The format is defined by the core, `recipe-grid`. See its canonical documentatio
 
 ## Exported types
 
-- `StructureNode` - re-exported from the core; the render structure a binding walks.
 - `RecipeContext` - the driver Root places in context; its `parsed` holds `{ title, description, meta, structure, root }`.
+- `ScaleOption` - one scale `Recipe.Scale` offers, and the text that labels it.
+- `OnScaleChangeFn` - the callback `Recipe.Scale` hands the picked scale to.
 - `RecipeParseError` - re-exported from the core; what `Recipe.Root` throws on a recipe that will not parse. A boundary catches everything beneath it, so test for this to tell a broken recipe from anything else and rethrow the rest.
+- `RecipeScaleError` - what `Recipe.Scale` throws when its props cannot draw a labelled control.
 
 ## License
 
