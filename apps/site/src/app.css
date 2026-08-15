@@ -1,4 +1,4 @@
-@import 'tailwindcss/index.css';
+@import 'tailwindcss';
 @import '@wendall911/recipe-grid-svelte/styles.css';
 
 @custom-variant light (&:where(.light, .light *));
