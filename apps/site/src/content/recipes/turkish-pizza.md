@@ -9,16 +9,16 @@ Red Pepper and Lamb Lahmacun (Turkish Pizza)
 Thin, crisp Turkish flatbreads under a spiced red pepper and lamb topping.
 
     lamb mince = 250g "lamb mince (10% fat)"
-    onion = 1 onion, grated
-    bell pepper = 1 red bell pepper, finely chopped
+    onion = 1/1 onion, grated
+    bell pepper = 1/1 red bell pepper, finely chopped
     4 cloves garlic, crushed
     2 tbsp olive oil
-    1 tbsp tomato paste
-    1 tbsp ground cumin
-    1 tsp red pepper flakes
-    1 tsp sumac
-    coriander = {1 handful} fresh coriander or parsley, roughly chopped
-    [dough](pizza-dough "Dad's pizza dough.")
+    1/1 tbsp tomato paste
+    1/1 tbsp ground cumin
+    1/1 tsp red pepper flakes
+    1/1 tsp sumac
+    coriander = {1/1 handful} fresh coriander or parsley, roughly chopped
+    [Dough](pizza-dough "Dad's pizza dough.")
 
     Topping := mix(
         lamb mince,
