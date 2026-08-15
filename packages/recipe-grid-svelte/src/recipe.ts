@@ -17,9 +17,9 @@ export class RecipeContext {
      * target.
      */
     path: string;
-    rel: string;
+    rel?: string;
 
-    constructor(md: string, path = '#{slug}', rel: string) {
+    constructor(md: string, path = '#{slug}', rel?: string) {
         this.parsed = this.parse(md);
         this.path = path;
         this.rel = rel;
