@@ -5,7 +5,9 @@
     import Head from '$comp/Head.svelte';
     import Nav from '$comp/header/Nav.svelte';
 
-    let { children } = $props();
+    let {
+        children
+    } = $props();
 
     $effect(() => {
         void page.url.pathname;

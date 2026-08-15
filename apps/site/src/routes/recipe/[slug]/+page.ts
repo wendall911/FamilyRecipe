@@ -12,7 +12,10 @@ export const load: PageLoad = ({ params }) => {
     const md = Object.values(files).find(
         (md) => new Recipe.RecipeContext(md).parsed.meta.slug === params.slug,
     );
-    if (md === undefined) error(404, 'Recipe not found');
+
+    if (md === undefined) {
+        error(404, 'Recipe not found');
+    }
 
     return { md };
 };

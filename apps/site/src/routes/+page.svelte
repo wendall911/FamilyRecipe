@@ -1,9 +1,11 @@
 <script lang="ts">
     import { Recipe } from '@wendall911/recipe-grid-svelte';
 
-    // Eager glob: filename -> raw md. One headless parse per file gives the
-    // title + slug for the link; the slug is the binding's own (meta.slug),
-    // so it matches whatever the recipe route resolves against.
+    /*
+     * Eager glob: filename -> raw md. One headless parse per file gives the
+     * title + slug for the link; the slug is the binding's own (meta.slug),
+     * so it matches whatever the recipe route resolves against.
+     */
     const files = import.meta.glob('$content/recipes/*.md', {
         eager: true,
         query: '?raw',
