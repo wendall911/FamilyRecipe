@@ -35,8 +35,46 @@ Every element the core emits carries one part marker, with an empty value, as a 
 | `data-recipe-grid-recipe-reference`    | a cross-file link to another recipe by slug                      | `a`    | content box                    |
 | `data-recipe-grid-quantity`            | an amount rendered inline with an ingredient or reference        | `span` | --                             |
 | `data-recipe-grid-scaled-value`        | a value that rescales with the recipe                            | `span` | --                             |
+| `data-recipe-grid-uom-name`            | the unit name as the author wrote it                             | `span` | --                             |
+| `data-recipe-grid-ingredient-description` | what the ingredient is                                        | `span` | --                             |
 
 A content box is `display: flex; align-items: center` -- its children are text rather than more boxes. A part with `--` in the last column carries no rule of its own.
+
+---
+
+## Inside a leaf
+
+A content box holds one `<p>`, and the paragraph's children are spans and text nodes interleaved, in the order the author wrote them.
+
+A span exists exactly where something is bound. Everything between -- the spacing, a preposition like `of` -- is a bare text node, because it belongs to the line rather than to either piece it sits between. Swapping a unit's text touches the `uom-name` span and leaves the space beside it alone.
+
+```html
+<div data-recipe-grid-ingredient recipe-grid-flow="leaf" data-recipe-grid-uom-id="cup">
+  <p>
+    <span data-recipe-grid-scaled-value data-recipe-grid-value='{"numerator":1,"denominator":2}'>1/2</span>
+    <span data-recipe-grid-uom-name>cup</span>
+    of
+    <span data-recipe-grid-ingredient-description>butter</span>
+  </p>
+</div>
+```
+
+So the presence of a span is the signal: marked means bound, unmarked means connective text a consumer does not own. A rule reaching the paragraph's own children uses `[recipe-grid-flow='leaf'] > p > *`, which selects the spans and nothing between them.
+
+---
+
+## Model data
+
+The values a consumer computes with, distinct from the markers a rule selects on. Each rides the element the value belongs to.
+
+| attribute                     | on                        | is                                                        |
+|-------------------------------|---------------------------|-----------------------------------------------------------|
+| `data-recipe-grid-value`      | `scaled-value`            | the authored number, serialised: a JS number, or `{numerator, denominator}` for a fraction |
+| `data-recipe-grid-uom-id`     | `ingredient`              | the canonical unit key a conversion works from            |
+| `data-recipe-grid-target-slug`| `recipe-reference`        | the recipe a cross-file link points at; the core emits no `href` |
+| `data-recipe-grid-scaling-type`, `-unit-system`, `-base` | `root` | the recipe's frontmatter, read before descending into the card |
+
+A scaled value carries both: the marker a rule selects on, and the base a scaler multiplies. Rewriting the span's text leaves the base intact, so rescaling is reversible and the authored amount survives.
 
 ---
 

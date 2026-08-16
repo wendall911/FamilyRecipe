@@ -70,21 +70,19 @@ Kraft Dinner
 
 ## Two packages, two apps, one monorepo
 
-The novel piece is the core: parser + framework-neutral grid (layout, base CSS, ARIA), publishable on its own. A separate Svelte binding wraps the core's structure for Svelte consumers; a future `-react` binding would do the same. Structure/a11y/layout live once in the core, so all bindings and both apps share one implementation.
+The novel piece is the core: parser + framework-neutral flexbox (layout, base CSS, data bindings), publishable on its own. A separate Svelte hedless component package wraps the core's structure for Svelte consumers; a future `-react` package would do the same. Structure/layout live once in the core, so all wrappers and both apps share one implementation.
 
 **Package naming:** local package names are `@wendall911/recipe-grid` and `@wendall911/recipe-grid-svelte`. Directory names match the package names (`packages/recipe-grid`, `packages/recipe-grid-svelte`). All four candidate npm names (scoped and unscoped) were verified available (registry 404) as of this writing. Scoped chosen to pair the two packages and match the account being secured; unscoped `recipe-grid` / `recipe-grid-svelte` remain the recorded alternative. `workspace:*` needs no npm account; publishing is a later, optional step.
 
-1. **`packages/recipe-grid`** = `@wendall911/recipe-grid` -- the framework-agnostic
-   **core**. Pure TypeScript, no framework binding. Ports the Recipe Grid 2 *input grammar* from recipe_grid (Python), AND owns everything framework-neutral about presenting a recipe: the grid **layout**, the structural
-   **base CSS** (the flex that makes the recipe grid resolve), and the **ARIA**/semantic structure. It exposes the renderable grid structure + stable `data-*` hooks; framework bindings render it, they do not re-implement it. This is the publishable, framework-neutral piece -- and the reason a `-react` sibling would be thin.
+1. **`packages/recipe-grid`** = `@wendall911/recipe-grid` -- the framework-agnostic **core**. Pure TypeScript, no framework binding. Ports the Recipe Grid 2 *input grammar* from recipe_grid (Python), AND owns everything framework-neutral about presenting a recipe: the grid **layout**, the structural **base CSS** (the flex that makes the recipe grid resolve), and the semantic structure. It exposes the renderable grid structure + stable `data-*` hooks; framework bindings render it, they do not re-implement it. This is the publishable, framework-neutral piece -- and the reason a `-react` sibling would be thin.
 
-2. **`packages/recipe-grid-svelte`** = `@wendall911/recipe-grid-svelte` -- the **Svelte binding**. Depends on the core via `workspace:*`. It is a thin adapter that renders the core's grid structure as Svelte components (bits-ui-style, `data-recipe-grid-*`) and exposes a Svelte-idiomatic API. It does **not** own layout, base CSS, or ARIA -- those live in the core so every binding (Svelte, a future React, etc.) shares one implementation instead of re-doing it. Ships unthemed; the app themes via the core's stable hooks.
+2. **`packages/recipe-grid-svelte`** = `@wendall911/recipe-grid-svelte` -- the **Svelte binding**. Depends on the core via `workspace:*`. It is a thin adapter that renders the core's grid structure as Svelte components (bits-ui-style, `data-recipe-grid-*`) and exposes a Svelte-idiomatic API. It does **not** own layout, base CSS, or data -- those live in the core so every binding (Svelte, a future React, etc.) shares one implementation instead of re-doing it. Ships unthemed; the app themes via the core's stable hooks.
 
 3. **`apps/site`** -- static consumer (adapter-static). Imports the parser + the Svelte renderer, renders committed `.md` files, adds theme CSS. During parser development this site *is* the visual feedback loop: edit parser -> HMR -> see rendered recipe in the browser. No separate throwaway harness.
 
 4. **`apps/editor`** -- later. Not static. Consumes the same parser + renderer (live preview reuses them). No formal architecture determined yet.
 
-Why two packages, not one: the core solves parsing AND structure + a11y + layout ONCE, in a framework-neutral form. A framework binding (`-svelte` now, a future `-react`) is then a thin adapter over that shared core -- so adding a framework does not re-implement layout, base CSS, or ARIA, and both apps share one implementation.
+Why two packages, not one: the core solves parsing AND structure + data + layout ONCE, in a framework-neutral form. A framework binding (`-svelte` now, a future `-react`) is then a thin adapter over that shared core -- so adding a framework does not re-implement layout or base CSS, and both apps share one implementation.
 
 ## Data model
 
@@ -95,7 +93,7 @@ Provenance is tagged per declaration in the model file:
 - **[G2]** -- faithful to Recipe Grid 2.
 - **[EXT]** -- FamilyRecipe divergence, not present in Recipe Grid 2.
 
-**Nothing is derived.** Every value in the model has a preimage in the markdown. Nothing is computed from something else's text, inferred from position, or normalised into a canonical form. An exact fraction stays exact; a decimal stays a decimal; the whitespace between a value and its unit survives, as does a trailing preposition. Where a canonical handle is useful it rides *alongside* the authored form and never replaces it. That is what lets the rendered DOM compile back to the markdown it came from.
+**Nothing is derived.** Every value in the model has a preimage in the markdown, which is a DAG. Nothing is computed from something else's text, inferred from position, or normalised into a canonical form. An exact fraction stays exact; a decimal stays a decimal; the whitespace between a value and its unit survives, as does a trailing preposition. Where a canonical handle is useful it rides *alongside* the authored form and never replaces it. That is what lets the rendered DOM compile back to the markdown it came from.
 
 Converting units, rescaling, reformatting -- a consumer does that with the handles the model provides. The core declines to, because those decisions are not recoverable once made.
 
