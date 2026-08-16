@@ -92,7 +92,7 @@ Renders the recipe description.
 
 | prop | type     | default | notes                                                             |
 |------|----------|---------|-------------------------------------------------------------------|
-| `as` | `string` | `p`     | element tag; pass `''` to render the raw description text, no element |
+| `as` | `string` | ``      | element tag; pass `'<element>'` to wrap the html chunk parsed from markdown |
 
 ### `Recipe.Scale`
 

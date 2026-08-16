@@ -8,19 +8,17 @@
      * places it wherever the layout wants the intro prose. Read from the Root's
      * context; this part requires a <Recipe.Root> ancestor.
      *
-     * `as` is the element tag, a string defaulting to `p` (the semantically
-     * correct element for intro prose). Passing an empty string `''` (a falsy
-     * string) opts out of the element entirely and renders the raw description
-     * text -- `undefined` would fall back to the `p` default. Matches Root's
-     * wrapper-or-nothing behavior and Title's.
+     * `as` is the element tag, a string defaulting to the authored <p>
+     * (the semantically correct element for intro prose).
+     * Passing a tag `'div'` allows the description to be wrapped as needed.
      */
-    let { as = 'p' }: { as?: string } = $props();
+    let { as = '' }: { as?: string } = $props();
 
     const recipe = getContext<RecipeContext>('recipe');
 </script>
 
 {#if as}
-    <svelte:element this={as}>{recipe.parsed.description}</svelte:element>
+    <svelte:element this={as}>{@html recipe.parsed.description}</svelte:element>
 {:else}
-    {recipe.parsed.description}
+    {@html recipe.parsed.description}
 {/if}

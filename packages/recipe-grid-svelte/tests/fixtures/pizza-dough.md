@@ -10,7 +10,7 @@ Dad's pizza dough recipe.
     2 cups '7-grain flour'
     1 cup white bread flour
     1/2 tsp salt
-    3 tsp instant yeast
+    3 tsp 'instant yeast'
     2 tbsp olive oil
     1 cup warm water
 
@@ -23,7 +23,7 @@ Dad's pizza dough recipe.
                     mix in a large bowl(
                         '7-grain flour',
                         white bread flour,
-                        yeast,
+                        'instant yeast',
                         salt,
                     ),
                 )
