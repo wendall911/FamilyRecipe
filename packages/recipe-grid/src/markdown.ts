@@ -71,7 +71,7 @@ function splitFrontmatter(md: string): { yaml: string | null; body: string } {
  * Build RecipeMeta from parsed frontmatter, applying defaults. An unknown
  * scalingType falls back to 'fixed'; a non-numeric base falls back to 1.
  * NB: a fractional base (e.g. "1/2") is read by YAML as a string, not a
- * RecipeNumber, and so currently falls back to 1 — fraction bases are a later
+ * RecipeNumber, and so currently falls back to 1, so fraction bases are a later
  * concern.
  */
 function toMeta(data: unknown, title: string): RecipeMeta {
@@ -103,26 +103,32 @@ export function extractRecipe(md: string): ExtractedRecipe {
     const { yaml, body } = splitFrontmatter(md);
     const tokens = marked.lexer(body);
     const blocks: string[] = [];
+    const prose: string[] = [];
 
     let title: string | null = null;
-    let description: string | null = null;
 
     for (const token of tokens) {
         if (title === null && token.type === 'heading' && token.depth === 1) {
             title = token.text;
         }
-        else if (description === null && token.type === 'paragraph') {
-            /*
-             * The recipe description: the header prose after the title. Like the
-             * title, captured once — the first paragraph, which sits between the
-             * title and the indented recipe body.
-             */
-            description = token.text;
-        }
         else if (isRecipeCode(token)) {
             blocks.push(token.text);
         }
+        else {
+            // Whatever is neither the title nor the recipe is the description.
+            prose.push(token.raw);
+        }
     }
+
+    /*
+     * The recipe description: everything the document holds that is not the
+     * title or the recipe, rendered as it was authored. `raw` carries each
+     * token's source, so the join reproduces that markdown and marked renders
+     * it whole.
+     */
+    const description = prose.length === 0
+        ? null
+        : marked.parse(prose.join('')) as string;
 
     /*
      * Metadata is resolved after the title is known: the slug default derives
