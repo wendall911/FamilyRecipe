@@ -6,8 +6,8 @@
     /*
      * The recipe card. recipe-grid walks a recipe to a fully self-describing
      * StructureNode tree: every node carries its tag, its data-recipe-grid-*
-     * marker, its data/aria attributes, its text, and its children. This
-     * component wraps that tree as DOM one node at a time
+     * marker, its data/structure/styling attributes, its text, and its children.
+     * This component wraps that tree as DOM one node at a time
      * 
      * A cross-file reference is the one node carrying a slug rather than a
      * destination: the core cannot know how an edge resolves, so it emits the

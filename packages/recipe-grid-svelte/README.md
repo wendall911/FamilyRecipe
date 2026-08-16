@@ -1,9 +1,10 @@
 # @wendall911/recipe-grid-svelte
 
-Headless Svelte 5 binding for [`@wendall911/recipe-grid`](https://www.npmjs.com/package/@wendall911/recipe-grid).
+Accessibility-first, mobile-first, headless Svelte 5 binding for [`@wendall911/recipe-grid`](https://www.npmjs.com/package/@wendall911/recipe-grid).
+
 It renders a recipe card from a recipe-grid markdown string as composable Svelte components. The core owns parsing, layout, and accessibility; this binding is a thin adapter that renders the core's structure as Svelte and exposes a `Recipe.*` component API.
 
-Unstyled and accessible primitives you compose into a card: it renders structure, ARIA, and stable `data-recipe-grid-*` hooks with no theme -- you own the styling. Composition is at the part level (title, description, card); the card itself stays faithful to recipe-grid's flexbox layout, so you customize with CSS through the hooks, not by rearranging the structure.
+Unstyled and accessible primitives you compose into a card: it renders structure and stable `data-recipe-grid-*` hooks with no theme, so you own the styling. Composition is at the part level (title, description, card); the card itself stays faithful to recipe-grid's flexbox layout, so you customize with CSS through the hooks, not by rearranging the structure.
 
 ## Install
 
