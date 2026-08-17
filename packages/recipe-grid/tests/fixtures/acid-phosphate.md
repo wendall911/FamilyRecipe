@@ -6,7 +6,9 @@ slug: acid-phosphate
 Acid Phosphate
 ==============
 
-Used as an ingredient for adding a dry acidity to some sodas. Used at ~0.5tsp per glass. When making, use basic acid-handling safety. Wear gloves and eye protection. Use glass/plastic containers and equipment. Mix in a beaker much larger than the liquid as it will fizz. Add the ingredients in the order stated. Only use food grade ingredients.
+Used as an ingredient for adding a dry acidity to some sodas. Used at ~0.5tsp per glass. When making, use basic acid-handling safety. Wear gloves and eye protection. Use glass/plastic containers and equipment. Mix in a beaker much larger than the liquid as it will fizz. Add the ingredients in the order stated.
+
+Only use food grade ingredients.
 
     9.2g Calcium Carbonate
     9.2g Magnesium Carbonate
