@@ -264,7 +264,8 @@ function quantityInto(into: Bag, quantity: Quantity): void {
 
         if (piece.isUnitName === true) {
             into.node(markedSpan(piece.text, 'uom-name'));
-        } else {
+        }
+        else {
             into.text(piece.text);
         }
     }
@@ -296,9 +297,11 @@ function inlineInto(
             if (next !== undefined && !isNumberPiece(next)) {
                 into.text(' ');
             }
-        } else if (name !== undefined) {
+        }
+        else if (name !== undefined) {
             into.node(markedSpan(piece, name));
-        } else {
+        }
+        else {
             into.text(piece);
         }
     });
@@ -497,9 +500,9 @@ function loneText(inline: StructureNode[]): string | undefined {
 
     return only !== undefined &&
         only.part === undefined &&
-        only.children.length === 0
-        ? only.text
-        : undefined;
+            only.children.length === 0
+                ? only.text
+                : undefined;
 }
 
 /**
@@ -540,12 +543,20 @@ function referenceNode(
     children: StructureNode[],
 ): StructureNode {
     const amount = node.amount;
-    const draw =
-        amount === undefined
-            ? []
-            : amount.kind === 'quantity'
-              ? contentChildren(undefined, amount)
-              : [remainderNode(amount)];
+
+    if (amount !== undefined && amount.kind === 'remainder') {
+        return partNode('reference', {
+            dataAttrs: structureAttrs(box),
+            children: [
+                remainderNode(
+                    amount,
+                    (node.resolvedNode as Ingredient).description,
+                ),
+            ],
+        });
+    }
+
+    const draw = amount === undefined ? [] : contentChildren(undefined, amount);
 
     return partNode('reference', {
         dataAttrs: structureAttrs(box),
@@ -554,20 +565,36 @@ function referenceNode(
 }
 
 /**
- * A "use the rest" note: the remainder wording, as authored.
+ * A "use the rest" note: the remainder wording and the name it drew from, as
+ * the one line the author wrote, in a content `<p>`.
  *
- * It carries no value: the ingredient list is the definitive amount, and what is
- * left after earlier draws is a validation question the compiler does not
- * answer. The wording is what the card reads; `preposition` survives as
- * authored, leading space and all.
+ * `Remaining distilled water` names the amount and the thing together, so the
+ * target is named here rather than transcluded beneath. Transcluding it would
+ * draw the ingredient's own quantity at a use site that stated none, and no
+ * value can be right there: the ingredient list is the definitive amount, and
+ * what is left after earlier draws would need arithmetic this pass does not do.
+ * That is a validation question, and the reference still carries the edge for
+ * one to ask it.
  *
- * Both are literal text, so neither is a `scaled-value` -- there is nothing here
- * that rescales. The two run together as one string, the way the line was
- * written.
+ * The wording and its preposition are the note's own text, so they sit in the
+ * paragraph the way a step's action text does -- literal, unmarked, and run
+ * together as authored, leading space and all. The name after them keeps the
+ * span that marks it, since that is the ingredient a consumer reaches. The run
+ * between the two is a space every time, the same seam
+ * {@link contentChildren} places between a quantity and the description after
+ * it, and it is placed here where they meet.
  */
-function remainderNode(amount: Remainder): StructureNode {
+function remainderNode(
+    amount: Remainder,
+    description: ScaledValueString,
+): StructureNode {
+    const into = bag();
+
+    into.text(`${amount.wording}${amount.preposition} `);
+    inlineInto(into, description, 'ingredient-description');
+
     return partNode('remainder', {
-        text: `${amount.wording}${amount.preposition}`,
+        children: [{ tag: 'p', dataAttrs: {}, children: into.done() }],
     });
 }
 
