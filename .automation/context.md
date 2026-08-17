@@ -12,7 +12,7 @@ Licensed AGPL-3.0-or-later. Copyleft protects users' freedom; AGPL extends it to
 FamilyRecipe/
 ├── pnpm-workspace.yaml
 ├── packages/
-│   ├── recipe-grid/          # acceccibilty-first, mobile-first, headless core. A compiler:
+│   ├── recipe-grid/          # accessibility-first, mobile-first, headless core. A compiler:
 │   │                         #   markdown -> AST (PEG/Peggy) -> DAG model -> render structure.
 │   │                         #   Format/DAG quick-ref: packages/recipe-grid/docs/RECIPE-FORMAT.md
 │   │                         #   Exports two things: the render structure (DOM chunk + metadata)
