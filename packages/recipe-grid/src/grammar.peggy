@@ -1,7 +1,8 @@
 /*
- * Recipe Grid grammar — Peggy port of recipe_grid's parser/grammar.peg.
+ * Recipe Grid grammar a partial Peggy port of recipe_grid's parser/grammar.peg.
+ * With multiple divergences to support recipe-grid.
  *
- * Structure and rule set follow the canonical grammar.peg (mossblaser's
+ * Structure and rule set mostly follow the canonical grammar.peg (mossblaser's
  * recipe_grid, consumed there by the `peggie` PEG engine). Peggy notation
  * differs from peggie: `=` instead of `<-`, character classes / regex literals
  * instead of peggie's `r"..."` regex terminals. The rule actions build the AST
@@ -23,8 +24,8 @@ Recipe
 
 /*
  * `:=` and `=` are distinct constructs, caught separately:
- *   `:=`  sub_recipe_heading — names a sub-recipe (one or more outputs).
- *   `=`   ingredient_label   — a single label on the statement's node.
+ *   `:=`  sub_recipe_heading - names a sub-recipe (one or more outputs).
+ *   `=`   ingredient_label   - a single label on the statement's node.
  * A statement is a `:=` heading, OR carries a `=` label, OR neither; the two
  * optionals are independent (never an alternation), so they cannot conflate.
  */
@@ -44,11 +45,11 @@ stmt
       };
     }
 
-// `:=` — a sub-recipe heading. One or more comma-separated output names.
+// `:=` - a sub-recipe heading. One or more comma-separated output names.
 sub_recipe_heading
   = outputs:output_list hsp? ":=" hsp? { return outputs; }
 
-// `=` — an ingredient label. A single name bound to the statement's node.
+// `=` - an ingredient label. A single name bound to the statement's node.
 ingredient_label
   = name:output hsp? "=" hsp? { return name; }
 
@@ -67,11 +68,11 @@ expr
   / "(" sp? inner:ltr_shorthand sp? ")" { return inner; }
 
 /*
- * A bare markdown link, e.g. "[Dough](pizza-dough)" — a cross-file reference to
+ * A bare markdown link, e.g. "[Dough](pizza-dough)" - a cross-file reference to
  * another recipe by identity. Tried before `step`/`reference` so a link is not
  * globbed as literal ingredient text. Self-naming: the link text is the local
  * name later lines resolve to; the href is the target recipe id. Both bodies
- * are captured raw — validation (is the slug real, does the target exist) is a
+ * are captured raw - validation (is the slug real, does the target exist) is a
  * separate concern against the full AST, not the parser's: garbage in, garbage
  * out. The sibling/alternative to `label`; like `label`, it may sit on an
  * ingredient or a step.
@@ -89,9 +90,9 @@ external_reference
     }
 
 /*
- * The optional markdown link title — the quoted third token in
+ * The optional markdown link title - the quoted third token in
  * "[text](slug \"title\")". Quotes matched outside $() so they are stripped;
- * the raw inner text is returned (a plain string, matching name/targetSlug —
+ * the raw inner text is returned (a plain string, matching name/targetSlug,
  * not a String node). CommonMark also permits a (…)-wrapped title; that form
  * is intentionally not supported here.
  */
@@ -177,7 +178,8 @@ implicit_quantity
 /*
  * Only the remainder form ("use the rest"). Grid 2's numeric proportions
  * (percentage / multiplier / fractional value) are dropped: the published Grid 2
- * recipe corpus never uses them, and real recipes only ever say "use the rest".
+ * recipe corpus only uses them for validation, and real recipes only ever say
+ * "use the rest".
  */
 proportion
   = wording:remainder prep:(psp:hsp p:preposition { return psp + p; })? {
@@ -243,7 +245,7 @@ naked_string
 
 /*
  * Quoted strings are a literal-name escape hatch: the content is not parsed for
- * quantity/units. The body is captured raw via $() — escapes are NOT resolved
+ * quantity/units. The body is captured raw via $() - escapes are NOT resolved
  * (a backslash stays a backslash). Bad input just breaks the recipe. The quotes
  * are matched outside the $() so they are stripped from the stored substring.
  */
@@ -262,7 +264,7 @@ s_quoted_string
  * embedded numbers as scalable interpolated values; the surrounding text is
  * literal. The braces are stripped. Peggy's repetition yields a flat array
  * mixing number nodes with per-character literals, so adjacent character runs
- * are coalesced back into a single substring here (raw-string discipline —
+ * are coalesced back into a single substring here (raw-string discipline and
  * never store per-char). Grid 2's ScaledValueExpression; the grammar only marks
  * what is scalable, the runtime does the scaling.
  *

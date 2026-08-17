@@ -87,9 +87,12 @@ function toMeta(data: unknown, title: string): RecipeMeta {
         typeof rawSystem === 'string' && UNIT_SYSTEMS.has(rawSystem)
             ? (rawSystem as 'us' | 'imperial' | 'metric')
             : 'us';
-    // slug is the recipe id: the authored frontmatter value if present, else a
-    // slug derived from the title. Always resolved to a concrete string here.
-    const slug = typeof record.slug === 'string' && record.slug !== '' ? record.slug : slugify(title);
+    /*
+     * slug is the recipe id: the authored frontmatter value if present, else a
+     * slug derived from the title. Always resolved to a concrete string here.
+     */
+    const slug = typeof record.slug === 'string'
+        && record.slug !== '' ? record.slug : slugify(title);
 
     return {
         scalingType,

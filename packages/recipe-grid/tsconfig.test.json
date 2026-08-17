@@ -5,5 +5,5 @@
     "types": ["node"],
     "strict": true
   },
-  "include": ["tests/**/*", "src/**/*"] 
+  "include": ["tests/**/*", "src/**/*", "scripts/*"] 
 }
