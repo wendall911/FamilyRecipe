@@ -320,13 +320,31 @@ function inlineInto(
  * them is a space every time and there is nothing else it could be. It is
  * placed here, where the two meet, rather than stored on every node. A line
  * with no quantity has no seam, and nothing is placed.
+ *
+ * A `draw` is the amount a use site asked for, handed down from the reference
+ * that made it. It leads the line, and ` / ` stands between it and the amount
+ * the node was declared with, so a partial use reads as what it is: this much,
+ * of that. Both amounts render and neither replaces the other -- what is left
+ * after earlier draws is arithmetic this pass does not do, and a validator's
+ * question.
+ *
+ * That separator is nomenclature rather than recovery: unlike the seam above,
+ * the author never wrote it. It is a bare run and not a word, so no locale is
+ * baked into the card -- a theme reads the two `scaled-value` spans it stands
+ * between and decorates them however its readers expect.
  */
 function contentChildren(
     text?: ScaledValueString,
     quantity?: Quantity,
     name?: RecipeGridPart,
+    draw?: Quantity,
 ): StructureNode[] {
     const into = bag();
+
+    if (draw !== undefined) {
+        quantityInto(into, draw);
+        into.text(' / ');
+    }
 
     if (quantity !== undefined) {
         quantityInto(into, quantity);
@@ -430,7 +448,11 @@ function edgeOf(box: Box): string | undefined {
  * a scaler rewrites, so a second copy here would be a value nothing reads and
  * nothing keeps in step.
  */
-function ingredientNode(box: Box, node: Ingredient): StructureNode {
+function ingredientNode(
+    box: Box,
+    node: Ingredient,
+    draw?: Quantity,
+): StructureNode {
     const dataAttrs: Record<string, string> = structureAttrs(box);
 
     if (node.quantity !== null && node.quantity.unitOfMeasureID !== null) {
@@ -443,6 +465,7 @@ function ingredientNode(box: Box, node: Ingredient): StructureNode {
             node.description,
             node.quantity ?? undefined,
             'ingredient-description',
+            draw,
         ),
     });
 }
@@ -532,10 +555,12 @@ function subRecipeHeaderNode(box: Box, node: SubRecipe): StructureNode {
  * line named the output with no amount at all.
  *
  * The amount rides the edge because a shared node is reached from more than one
- * place and each use draws its own, so it is emitted here rather than on the
- * target. It is emitted as authored -- the value in the form it was written, the
- * unit and preposition with their spacing -- because the DOM has to carry back
- * to the markdown it came from.
+ * place and each use draws its own. A {@link Quantity} draw is not emitted here:
+ * it is what the target is drawn *of*, so it is handed down and leads the
+ * target's own line, where the two amounts read together. A {@link Remainder}
+ * is drawn here, because it replaces that line rather than leading it -- a
+ * declared amount standing at a use site that named none would be read as the
+ * amount to use.
  */
 function referenceNode(
     box: Box,
@@ -556,11 +581,9 @@ function referenceNode(
         });
     }
 
-    const draw = amount === undefined ? [] : contentChildren(undefined, amount);
-
     return partNode('reference', {
         dataAttrs: structureAttrs(box),
-        children: [...draw, ...children],
+        children,
     });
 }
 
@@ -605,11 +628,21 @@ function remainderNode(
  * and its action leaf carry the same node, as do a sub-recipe's region box and
  * its header. Children are always the box's children -- the model is never
  * recursed into, because the shape pass already did that.
+ *
+ * `draw` is a quantity a reference above asked for, riding down to the node it
+ * draws from. An ingredient is sometimes bare beneath its reference and
+ * sometimes reached through what stands between, so the draw travels with the
+ * descent and lands where the amount belongs.
  */
-function nodeForBox(shape: CardShape, meta: RecipeMeta, id: BoxId): StructureNode {
+function nodeForBox(
+    shape: CardShape,
+    meta: RecipeMeta,
+    id: BoxId,
+    draw?: Quantity,
+): StructureNode {
     const box = shape.boxes[id];
     const children = (): StructureNode[] =>
-        box.children.map((child) => nodeForBox(shape, meta, child));
+        box.children.map((child) => nodeForBox(shape, meta, child, draw));
 
     /*
      * A grouping box the model has no node for. Which one it is comes from
@@ -646,7 +679,7 @@ function nodeForBox(shape: CardShape, meta: RecipeMeta, id: BoxId): StructureNod
 
     switch (box.node.kind) {
         case 'ingredient':
-            return ingredientNode(box, box.node);
+            return ingredientNode(box, box.node, draw);
         case 'recipeReference':
             return recipeReferenceNode(box, box.node);
         case 'step':
@@ -659,12 +692,28 @@ function nodeForBox(shape: CardShape, meta: RecipeMeta, id: BoxId): StructureNod
                 dataAttrs: structureAttrs(box),
                 children: children(),
             });
-        case 'reference':
+        case 'reference': {
             /*
-             * The reference's box wraps the target it transcludes: the draw the
-             * use site made, then the target's own structure beneath it.
+             * The reference's box wraps the target it transcludes. A quantity
+             * draw goes down with the descent rather than standing beside the
+             * target, so it reaches the node it is an amount of. A remainder
+             * does not descend: referenceNode draws it in the target's place.
              */
-            return referenceNode(box, box.node, children());
+            const amount = box.node.amount;
+
+            return referenceNode(
+                box,
+                box.node,
+                box.children.map((child) =>
+                    nodeForBox(
+                        shape,
+                        meta,
+                        child,
+                        amount?.kind === 'quantity' ? amount : undefined,
+                    ),
+                ),
+            );
+        }
     }
 }
 
