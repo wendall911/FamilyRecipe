@@ -208,7 +208,15 @@ export type Reference = {
      * sub-recipe has one output, so it is always 0.
      */
     outputIndex?: number;
-    // [G2] How much of the output to use; absent means all of it.
+    /**
+     * [EXT] How much of the target this use site draws: a {@link Quantity} when
+     * the line restated a measure, a {@link Remainder} when it asked for what is
+     * left, absent when it named the target and nothing more, which draws all of
+     * it.
+     *
+     * It rides the edge, not the node: a shared node is reached from more than
+     * one place and each use draws its own.
+     */
     amount?: Amount;
 };
 
@@ -276,20 +284,25 @@ export type Recipe = {
 export type RecipeReference = {
     kind: "recipeReference";
     /**
-     * [EXT] The link text: both the displayed name and the handle later lines
+     * The link text: both the displayed name and the handle later lines
      * resolve to. A bare markdown link is self-defining, so there is no separate
      * `label` (which exists elsewhere only to give a node an internal id distinct
      * from its display text, which a split this node does not have).
      */
     name: string;
-    // [EXT] Identity (slug) of the target recipe file — the link destination.
+    // Identity (slug) of the target recipe file — the link destination.
     targetSlug: string;
     /**
-     * [EXT] The markdown link title (the third `[text](slug "title")` token), when
+     * The markdown link title (the third `[text](slug "title")` token), when
      * authored. Carried through the DAG so the render side constructs the
      * `<a title="...">`. Optional: a bare link has none.
      */
     title?: string;
+    /*
+     * The authored number of the external recipe reference needed. This allows for
+     * correct scaling if the author needs fractional or number values here.
+     */
+    amount?: RecipeNumber;
 };
 
 /**
