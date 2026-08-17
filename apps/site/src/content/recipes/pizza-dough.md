@@ -7,10 +7,12 @@ Pizza Dough
 
 Dad's pizza dough recipe.
 
+Because he couldn't find good dough to buy pre-made and wanted something healthier for the kids.
+
     2 cups '7-grain flour'
     1 cup white bread flour
     1/2 tsp salt
-    3 tsp instant yeast
+    3 tsp 'instant yeast'
     2 tbsp olive oil
     1 cup warm water
 
@@ -18,14 +20,14 @@ Dad's pizza dough recipe.
         knock out and lightly coat with olive oil (
             knead on floured surface for 5-10 min until smooth and elastic(
                 mix(
-                    add("water a few drops at a time if too dry"),
-                    add(warm water, olive oil),
                     mix in a large bowl(
                         '7-grain flour',
                         white bread flour,
-                        yeast,
+                        'instant yeast',
                         salt,
                     ),
+                    add(warm water, olive oil),
+                    add("water a few drops at a time if too dry"),
                 )
             )
         )
