@@ -142,6 +142,22 @@ test('an ingredient line becomes an ingredient, a step, or a recipeReference', (
     assert.equal(roux.title, "Dad's basic roux");
 });
 
+test('A recipeReference with a quantity carries correctly', () => {
+    const recipe = compileFixture('kitchen-sink.md');
+
+    /*
+     * `1/1 [Yet Another Pizza Dough](pizza-dough-too '…')` - the authored
+     * fraction comes back as numerator/denominator.
+     */
+    const yapd = recipe.recipeTrees.find(
+        (n): n is RecipeReference => n.kind === 'recipeReference'
+            && n.name === 'Yet Another Pizza Dough',
+    );
+
+    assert.ok(yapd, 'expected a YAPD recipeReference');
+    assert.deepEqual(yapd.amount, { numerator: 1, denominator: 1 });
+});
+
 test('a label rides the step and does not displace the ingredient description', () => {
     const recipe = compileFixture('kitchen-sink.md');
 
