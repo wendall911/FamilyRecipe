@@ -209,6 +209,9 @@ class RecipeCompiler {
      * for the render side to emit as an `<a>`. Whether the slug resolves (a live
      * recipe or a 404) is a site/index concern, not the compiler's; a dangling
      * link is still a valid DAG.
+     * 
+     * The link can have an optional authored amount that is a RecipeNumber so
+     * there is a scalable value for the recipe here.
      */
     private compileExternalReference(ref: AstExternalReference): RecipeReference {
         const node: RecipeReference = {
@@ -219,6 +222,10 @@ class RecipeCompiler {
 
         if (ref.title !== undefined) {
             node.title = ref.title;
+        }
+
+        if (ref.amount !== undefined) {
+            node.amount = ref.amount;
         }
 
         return node;
