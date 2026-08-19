@@ -471,27 +471,64 @@ function ingredientNode(
 }
 
 /**
- * A cross-file link: a bare `<a>` carrying the link text directly.
+ * A cross-file link's line: the amount the author wrote, when they wrote one,
+ * then the link itself.
+ *
+ * The link is an element rather than a run, so it stands in the paragraph
+ * beside the value the way a unit name does. The run between them is a space
+ * every time, and it is placed here, where the two meet.
+ */
+function recipeReferenceChildren(
+    link: StructureNode,
+    amount?: RecipeNumber,
+): StructureNode[] {
+    const into = bag();
+
+    if (amount !== undefined) {
+        into.node(scaledValueSpan(amount));
+        into.text(' ');
+    }
+
+    into.node(link);
+
+    return into.done();
+}
+
+/**
+ * A cross-file link: an `<a>` carrying the link text, in a content `<p>`.
  *
  * `targetSlug` rides through as a data binding for the consumer to resolve into
  * whatever link they need -- an in-page jump, a route, an external URL, or
  * nothing at all. The core does not know which, so it emits no href. `title`,
  * when the author wrote one, is a real HTML attribute.
+ *
+ * The paragraph is where the pieces meet, the way an ingredient's do: an
+ * authored amount is a `scaled-value` span standing beside the link rather than
+ * inside it, since the number is not part of the link's text. A reference the
+ * author gave no amount holds the link alone.
  */
 function recipeReferenceNode(box: Box, node: RecipeReference): StructureNode {
-    const structureNode = partNode('recipe-reference', {
-        dataAttrs: {
-            ...structureAttrs(box),
-            [DATA_KEYS.targetSlug]: node.targetSlug,
-        },
+    const link: StructureNode = {
+        tag: 'a',
+        dataAttrs: { [DATA_KEYS.targetSlug]: node.targetSlug },
         text: node.name,
-    });
+        children: [],
+    };
 
     if (node.title !== undefined) {
-        structureNode.attrs = { title: node.title };
+        link.attrs = { title: node.title };
     }
 
-    return structureNode;
+    return partNode('recipe-reference', {
+        dataAttrs: structureAttrs(box),
+        children: [
+            {
+                tag: 'p',
+                dataAttrs: {},
+                children: recipeReferenceChildren(link, node.amount),
+            },
+        ],
+    });
 }
 
 /**

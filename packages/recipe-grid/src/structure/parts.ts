@@ -129,8 +129,10 @@ export const PART_COMPONENT_NAMES = Object.fromEntries(
 /**
  * The semantic HTML tag each part renders as. The element a part IS is a
  * semantic fact, not a layout choice: a title is a heading (`h1`), a sub-recipe
- * header a subheading (`h2`), a cross-file link an `a`. Everything structural is
- * a neutral `div`; inline text pieces are `span`s. Layout (flex, grid) is CSS,
+ * header a subheading (`h2`). Everything structural is a neutral `div`; inline
+ * text pieces are `span`s. An element a part contains rather than is -- the `a`
+ * inside a cross-file reference, the `p` a line sits in -- carries no marker and
+ * takes its tag where it is built. Layout (flex, grid) is CSS,
  * so it changes without touching these tags. Keyed by the marker attribute name
  * so a lookup is `tagForPart(node.part)`; this is the mapping a framework
  * binding consumes to render the structure without re-deciding element choice.
@@ -148,7 +150,7 @@ export const TAG_FOR_PART: { readonly [P in RecipeGridPart]: string } = {
     [part('sub-recipe-body')]: 'div',
     [part('reference')]: 'div',
     [part('remainder')]: 'div',
-    [part('recipe-reference')]: 'a',
+    [part('recipe-reference')]: 'div',
     [part('quantity')]: 'span',
     [part('ingredient-description')]: 'span',
     [part('scaled-value')]: 'span',
