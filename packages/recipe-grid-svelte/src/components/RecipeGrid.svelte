@@ -17,12 +17,9 @@
      */
     const recipe = getContext<RecipeContext>('recipe');
 
-    const REFERENCE_PART = 'data-recipe-grid-recipe-reference';
     const TARGET_SLUG = 'data-recipe-grid-target-slug';
 
     function href(n: StructureNode): Record<string, string> {
-        if (n.part !== REFERENCE_PART) return {};
-
         const slug = n.dataAttrs?.[TARGET_SLUG];
 
         if (slug === undefined) return {};

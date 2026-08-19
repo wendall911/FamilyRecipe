@@ -29,7 +29,7 @@ describe('Recipe.Grid faithful wrap', () => {
 
     it('wraps a cross-file reference as an anchor carrying its attrs and text', () => {
         const { container } = render(GridHarness, { md });
-        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference] a');
 
         expect(ref?.tagName).toBe('A');
         expect(ref?.getAttribute('data-recipe-grid-target-slug')).toBe('pizza-dough');
@@ -39,7 +39,7 @@ describe('Recipe.Grid faithful wrap', () => {
 
     it('resolves a cross-file reference href from the path the consumer supplied', () => {
         const { container } = render(GridHarness, { md, path: '/recipe/{slug}' });
-        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference] a');
 
         expect(ref?.getAttribute('href')).toBe('/recipe/pizza-dough');
         expect(ref?.getAttribute('data-recipe-grid-target-slug')).toBe('pizza-dough');
@@ -47,21 +47,21 @@ describe('Recipe.Grid faithful wrap', () => {
 
     it('substitutes the slug wherever it sits in the path', () => {
         const { container } = render(GridHarness, { md, path: '/recipe/{slug}/print' });
-        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference] a');
 
         expect(ref?.getAttribute('href')).toBe('/recipe/pizza-dough/print');
     });
 
     it('falls back to an inert but valid href when no path is supplied', () => {
         const { container } = render(GridHarness, { md });
-        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference] a');
 
         expect(ref?.getAttribute('href')).toBe('#pizza-dough');
     });
 
     it('hands a cross-file reference to the browser rather than a client router', () => {
         const { container } = render(GridHarness, { md, path: '/recipe/{slug}', rel: 'external' });
-        const ref = container.querySelector('[data-recipe-grid-recipe-reference]');
+        const ref = container.querySelector('[data-recipe-grid-recipe-reference] a');
 
         expect(ref?.getAttribute('rel')).toBe('external');
     });
