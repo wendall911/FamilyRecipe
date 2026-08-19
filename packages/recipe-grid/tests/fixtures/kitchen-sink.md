@@ -23,6 +23,7 @@ down how each is handled. Do not cook this.
     3 liters of cat memes
     red peppers = 150g roasted red peppers from jar, finely chopped
     [Pizza Dough](pizza-dough)
+    1/1 [Yet Another Pizza Dough](pizza-dough-too 'as a fractional representation')
     [Roux](roux "Dad's basic roux")
     [Stock](vegetable-stock 'homemade stock')
     [Pastry](sweet-pastry), rolled thin

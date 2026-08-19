@@ -224,6 +224,16 @@ test('an external reference with a trailing action is a step wrapping that refer
     assert.equal(pastry.targetSlug, 'sweet-pastry');
 });
 
+test('an external reference carries a leading amount as an authored RecipeNumber', () => {
+    /*
+     * `1/1 [Yet Another Pizza Dough](pizza-dough-too '…')` - the authored
+     * fraction comes back as numerator/denominator.
+     */
+    const dough = externalRef('Yet Another Pizza Dough', 'kitchen-sink.md');
+
+    assert.deepEqual(dough.amount, { numerator: 1, denominator: 1 });
+});
+
 /* --- SubRecipe ----------------------------------------------------------- */
 
 test('`:=` produces a single named output and marks the statement named', () => {
