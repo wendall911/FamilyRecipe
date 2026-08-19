@@ -78,7 +78,8 @@ expr
  * ingredient or a step.
  */
 external_reference
-  = "[" name:$([^\]\r\n]+) "]" hsp?
+  = amt:(n:number hsp { return n.value; })?
+    "[" name:$([^\]\r\n]+) "]" hsp?
     "(" target:$([^)"'\r\n \t]+) titlePart:(hsp? t:link_title { return t; })? ")" {
       return {
         kind: 'externalReference',
@@ -86,6 +87,7 @@ external_reference
         name,
         targetSlug: target,
         ...(titlePart !== null ? { title: titlePart } : {}),
+        ...(amt !== null ? { amount: amt } : {}),
       };
     }
 
