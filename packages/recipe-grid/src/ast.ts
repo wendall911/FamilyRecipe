@@ -49,7 +49,7 @@ export interface String {
  * A piece of an amount as authored, with the whitespace that preceded it.
  *
  * `leading` is what the grammar matched before this piece; empty when nothing
- * did. Nothing trailing — the next part carries its own.
+ * did. Nothing trailing -- the next part carries its own.
  */
 export interface QuantityPart {
     kind: 'quantityPart';
@@ -123,7 +123,7 @@ export interface Reference {
  * or `[Dough](pizza-dough "Dad's pizza dough")`. Points at another recipe by
  * slug. Its bodies are captured raw (plain strings, not {@link String} nodes),
  * matching the markdown-link surface: self-naming, so the link text is both the
- * display name and the reference handle. A pointer only — the target may not
+ * display name and the reference handle. A pointer only -- the target may not
  * exist; that (and slug validity) is a separate validation concern, not the
  * parser's.
  */
@@ -137,6 +137,8 @@ export interface ExternalReference {
     targetSlug: string;
     // The markdown link title (quotes stripped), when authored; else absent.
     title?: string;
+    // the amount as it relates to the external recipe.
+    amount?: RecipeNumber;
 }
 
 /**
