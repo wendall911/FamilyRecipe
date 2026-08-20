@@ -18,7 +18,7 @@ Thin, crisp Turkish flatbreads under a spiced red pepper and lamb topping.
     1/1 tsp red pepper flakes
     1/1 tsp sumac
     coriander = {1/1 handful} fresh coriander or parsley, roughly chopped
-    [Dough](pizza-dough "Dad's pizza dough.")
+    1/1 [Dough](pizza-dough "Dad's pizza dough.")
 
     Topping := mix(
         lamb mince,

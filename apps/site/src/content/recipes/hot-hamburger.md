@@ -9,16 +9,16 @@ Hot Hamburger Sandwich
 Traditional Canadian comfort food. It's a burger on top of a slice of bread covered in gravy. Much nicer than it deserves to be! Serve with garden peas and chips.
 
     500g minced beef
-    1tbsp worcestershire sauce
-    1tbsp garlic powder
-    1tbsp onion powder
+    1/1 tbsp worcestershire sauce
+    1/1 tbsp garlic powder
+    1/1 tbsp onion powder
     1 egg
     2 medium onions, dice
-    4cups mushrooms, slice
-    2tbsp butter
-    2tbsp flour
+    4 cups mushrooms, slice
+    2 tbsp butter
+    2 tbsp flour
     375ml beef broth
-    1tbsp marmite
+    1/1 tbsp marmite
     4 slices of white bread
 
     burgers := remove to plate(
@@ -31,8 +31,12 @@ Traditional Canadian comfort food. It's a burger on top of a slice of bread cove
                     salt,
                     pepper,
                     onion powder,
-                    egg)),
-            oil))
+                    egg
+                )
+            ),
+            oil
+        )
+    )
 
     top(
         cover and simmer until cooked through(
@@ -43,12 +47,21 @@ Traditional Canadian comfort food. It's a burger on top of a slice of bread cove
                             melt(
                                 fry until mushrooms golden(
                                     fry in burger pan until golden(
-                                        medium onions,
-                                        oil),
-                                    mushrooms),
-                                butter),
-                            flour),
+                                        onions,
+                                        oil
+                                    ),
+                                    mushrooms
+                                ),
+                                butter
+                            ),
+                            flour
+                        ),
                         beef broth,
-                        marmite)),
-                burgers)),
-        slices of white bread)
+                        marmite
+                    )
+                ),
+                burgers
+            )
+        ),
+        slices of white bread
+    )

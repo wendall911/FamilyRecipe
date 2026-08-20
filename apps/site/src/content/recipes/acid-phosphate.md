@@ -18,8 +18,8 @@ Only use food grade ingredients.
     Store in brown glass bottles(
         Filter(
             Add remaining distilled water and mix(
-                Add while stirring(
-                    Add while stirring(
+                When fizzing stops add while stirring(
+                    When fizzing stops add while stirring(
                         Add while stirring(
                             Add acid to water using a bump stick(
                                 210ml distilled water,
