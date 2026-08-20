@@ -1,40 +1,19 @@
 /*
  * Headless layout for a recipe grid card.
- *
- * Flow only: which way a box lays its children out, and how a box takes space
- * from its parent. No borders, no colours, no spacing, no type. Those are a
- * theme's, and the markers a theme selects on are their own layer.
- *
- * The card is flexbox, not a table. A table needs every cell placed in a
- * lattice; flexbox needs a direction and a rule for taking space, and the
- * browser resolves the rest. So there is nothing here to compute and nothing
- * to keep in sync with the model -- the part markers say what each box is, and
- * a part has exactly one flow.
- *
- * Two facts do all the work:
- *
- *   part marker  what the box is, and therefore which way it flows.
- *   side         what the box is to its parent, and therefore how it takes
- *                space -- an inputs column takes what its contents need, the
- *                action beside it takes what is left.
- *
- * Both are emitted by the extract passes. Nothing here reaches for structure
- * the DOM does not carry.
- *
- * Both are attributes, and the prefix tells them apart. A part marker is
- * `data-recipe-grid-<part>`: `data-` means a consumer reads it, and the
- * machine-readable bindings (a scaled value, a unit key, a target slug) use it
- * too. `recipe-grid-side` has no prefix, and neither does `recipe-grid-edge` --
- * a rule matches on those and takes nothing away.
- *
- * `recipe-grid-edge` is a theme's, not this file's: it says which of a box's
- * own edges are its container's rather than a line between it and a neighbour
- * -- `start`, `end`, `both`, or absent when the box has a neighbour on each
- * side. That is what a border bounds a group with instead of dividing two of
- * its members.
  */
 
-/* A step is a row: what feeds it on the left, its own action on the right. */
+/*
+ * Allows the card to layout correctly and flex internally so
+ * if a card horizontally scrolls, content is preserved and
+ * borders are drawn correctly.
+ */
+[data-recipe-grid-root] {
+    display: grid;
+}
+
+/*
+ * A step is a row: what feeds it on the left, its own action on the right.
+ */
 [data-recipe-grid-step] {
     display: flex;
     flex-direction: row;
@@ -61,54 +40,15 @@
 
 /*
  * How a box takes space from its parent.
- *
- * An inputs column asks for what its contents need; the action beside it takes
- * what is left. Both yield when the space is not there -- an inputs column
- * asks first and gives back last, which is what `flex-shrink: 1` against the
- * action's `1 1` amounts to.
- *
- * `min-width: 0` is the other half. A flex item's own minimum is `auto`, which
- * resolves to its min-content width -- for text, the longest word that cannot
- * break. A card is steps inside inputs columns inside steps, so each level's
- * floor is built from the level below and the whole chain refuses to narrow.
- *
- * Both together are what mobile-first means here: a box yields before the card
- * runs off the screen. A minimum width is a real decision about a particular
- * card at a particular size, and it is the consumer's -- one rule on the boxes
- * they choose. Shipping one here would be a floor they could not reach past.
+ */
+[recipe-grid-side='inputs'], [recipe-grid-side='action'] {
+    flex: 1 1 auto;
+}
+
+/*
+ * Minimize the collapse of inputs so card collapses in a way that makes
+ * recipes more readable.
  */
 [recipe-grid-side='inputs'] {
-    flex: 0 1 auto;
-    min-width: 0;
-}
-
-[recipe-grid-side='action'] {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-/*
- * The boxes that hold content rather than other boxes. Flex so the content
- * sits against the box's own edges.
- */
-[data-recipe-grid-ingredient],
-[data-recipe-grid-action],
-[data-recipe-grid-recipe-reference],
-[data-recipe-grid-sub-recipe-header] {
-    display: flex;
-    align-items: center;
-}
-
-/*
- * The content inside one of those boxes -- the paragraph a leaf carries.
- *
- * Flex, so the paragraph is a flex item and carries the same `min-width: auto`
- * a box does. Letting the box narrow is only half of it: the paragraph inside
- * it holds the same floor, and the text wraps only once both can yield.
- *
- * `flow=leaf` names exactly the boxes above: the ones whose children are
- * content rather than more boxes.
- */
-[recipe-grid-flow='leaf'] > * {
-    min-width: 0;
+    min-width: min-content;
 }
