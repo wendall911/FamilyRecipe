@@ -6,12 +6,6 @@ It renders a recipe card from a recipe-grid markdown string as composable Svelte
 
 Unstyled and accessible primitives you compose into a card: it renders structure and stable `data-recipe-grid-*` hooks with no theme, so you own the styling. Composition is at the part level (title, description, card); the card itself stays faithful to recipe-grid's flexbox layout, so you customize with CSS through the hooks, not by rearranging the structure.
 
-## Install
-
-```sh
-pnpm add @wendall911/recipe-grid-svelte @wendall911/recipe-grid
-```
-
 ## Usage
 
 `Recipe.Root` parses the markdown once and provides it to the parts you place inside it. Compose only the parts you want:

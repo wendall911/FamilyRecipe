@@ -2,7 +2,7 @@
 
 Write a recipe as markdown; get back a structured flexbox card and a headless stylesheet. Accessibility-first, mobile-first, headless, framework-agnostic. ESM, typed.
 
-A recipe card is the card you lay on the counter and cook from: one recipe, whole, readable at a glance. The markdown is that recipe, readable on its own and editable by hand, and the card is drawn from it.
+A recipe card you can lay on the counter and cook from: one recipe, whole, readable at a glance. The markdown is the complete recipe, readable on its own and editable by hand, and the card is drawn from it.
 
 Rendered card without title and description:
 
@@ -60,28 +60,42 @@ This recipe is best with a springform pan. Line bottom of springform pan with pa
 
 `parse` takes the markdown and returns the card in the forms a consumer needs:
 
-- **`structure`** -- the render structure a framework binding walks, one node at a time. Each node carries a part marker, the semantic tag it renders as, and the data a consumer computes with: a scalable value, a unit key, a target slug.
-- **`root`** -- that same structure as elements, a serialisable DOM chunk to mount directly.
-- **`meta`** -- the recipe's own metadata: its slug, and how it scales.
-- **`title`** and **`description`** -- the human-facing header.
+ - **`structure`** - the render structure a framework binding walks, one node at a time. Each node carries a part marker, the semantic tag it renders as, and the data a consumer computes with: a scalable value, a unit key, a target slug.
+ - **`root`** - that same structure as elements, a serialisable DOM chunk to mount directly.
+ - **`meta`** - the recipe's own metadata: its slug, and how it scales.
+ - **`title`** and **`description`** - the human-facing header.
 
-The data bindings are what a consumer computes with. A quantity carries its unit as a key from [`parse-ingredient`](https://www.npmjs.com/package/parse-ingredient) ([source](https://github.com/jakeboone02/parse-ingredient)), whose vocabulary is also the grammar's, so its `convertUnit` takes the key directly. A scalable value carries its base amount, and the recipe carries how it scales, when the author declared that it does. The card renders the same whether or not a consumer reaches for either.
+The data bindings are available on all mutable properties. A quantity with units uses grammar constants and types from [`parse-ingredient`](https://www.npmjs.com/package/parse-ingredient) ([source](https://github.com/jakeboone02/parse-ingredient)). A scalable value carries its base amount, and the recipe metadata carries how it scales.
 
-The headless stylesheet ships alongside. It is flow only -- which way a box lays its children out and how it takes space from its parent -- so the card lays out correctly on a phone before a theme touches it. Colors, borders, spacing, and type are yours.
+The headless stylesheet ships alongside. It is layout and flow only, which define the way a box lays its children out and how it takes space from its parent. The card is semantically correct and will work on a phone screen as well as a desktop browser. Colors, borders, spacing, and type are yours to style at will.
 
-Two properties hold across all of it.
+## How It Works
 
-**The grammar is the gate.** A body reads as a valid Directed Acyclic Graph or the document is broken: `parse` throws `RecipeParseError` and there is one place to catch it. Whether a well-formed recipe is a *sensible* recipe -- every ingredient reached, no hanging nodes -- is a separate question, asked off the render path.
+Every value the card produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote.
 
-**Nothing is discarded.** Each form adds; none rewrites. `1/2` stays an exact fraction and `0.5` stays a decimal though both are the same magnitude; a quantity keeps the whitespace between its value and its unit; a quoted description keeps its parens and commas verbatim. Where a canonical handle is useful -- a unit key, a target slug, a base value to scale from -- it rides alongside what the author wrote rather than replacing it. The card carries back to the markdown it came from, which is what makes the format archival.
+### Grammar Parser
 
-## Integration
+The `md` body reads as a valid Directed Acyclic Graph and leverages [Peggy](https://www.npmjs.com/package/peggy) for grammar to produce a full AST for compilation. `parse` throws `RecipeParseError` if the syntax is invalid.
 
-A framework binding is the usual entry. [`@wendall911/recipe-grid-svelte`](https://www.npmjs.com/package/@wendall911/recipe-grid-svelte) renders the card as Svelte components; this package is what it compiles with. A consumer without a framework mounts the DOM chunk this package returns.
+### DAG Compiler
+
+Compiles a DAG from the parsed AST. No validation or linting is done in the compiler, so a nonsensical recipe is an authoring issue, not enforced at the compiler level.
+
+### Extracted Flexbox DOM
+
+The extracted output is **archival quality**. `1/2` stays an exact fraction and `0.5` stays a decimal though both are the same magnitude; a quantity keeps the whitespace between its value and its unit; a quoted description keeps its parens and commas verbatim. Where a canonical handle is useful, like a unit key, a target slug, a base value to scale from, it rides alongside what the author wrote rather than replacing it. The card carries back to the markdown it came from, which is what makes the format archival.
+
+## Integrations
+
+ - [`@wendall911/recipe-grid-svelte`](https://www.npmjs.com/package/@wendall911/recipe-grid-svelte) renders a recipe card from a recipe-grid markdown string as composable Svelte components. The core owns parsing, layout, and accessibility; this binding is a thin adapter that renders the core's structure as Svelte and exposes a `Recipe.*` component API. Includes optional component for scaling, with documentation on full website integration.
 
 ## Documentation
 
 See: [`docs/`](./docs).
+
+## Credits
+
+A TypeScript re-implementation of [Grid 2](https://github.com/mossblaser/recipe_grid) parser with variant syntax. Not a faithful fork of Grid 2, but would not be possible without the amazing work of [mossblaser](https://github.com/mossblaser).
 
 ## License
 
