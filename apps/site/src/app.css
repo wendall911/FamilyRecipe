@@ -65,27 +65,27 @@
     [data-recipe-grid-card] {
         --recipe-grid-line: var(--color-zinc-700);
 
-        border: 2px solid var(--recipe-grid-line);
+        border: 3px solid var(--recipe-grid-line);
     }
 
     /*
      * Column flow: a line above every box that has one before it.
      */
     [recipe-grid-flow='column'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
-        border-top: 1px solid var(--recipe-grid-line);
+        border-top: 2px solid var(--recipe-grid-line);
     }
 
     /*
      * Row flow: a line left of every box that has one before it.
      */
     [recipe-grid-flow='row'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
-        border-left: 1px solid var(--recipe-grid-line);
+        border-left: 2px solid var(--recipe-grid-line);
     }
 
     /*
      * Content boxes get room to breathe; grouping boxes stay tight.
      */
     [recipe-grid-flow='leaf'] {
-        @apply pl-1 pt-1;
+        @apply px-1 pt-1;
     }
 }
