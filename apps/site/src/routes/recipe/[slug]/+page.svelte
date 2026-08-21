@@ -57,7 +57,7 @@
     });
 </script>
 
-<div bind:this={card}>
+<div bind:this={card} id="card">
     <Recipe.Root md={data.md} as="article" path={'/recipe/{slug}'} rel={'external'}>
         <Recipe.Title />
         <Recipe.Description />
