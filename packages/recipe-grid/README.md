@@ -6,7 +6,7 @@ A recipe card is the card you lay on the counter and cook from: one recipe, whol
 
 Rendered card without title and description:
 
-![Cheesecake Recipe](./docs/images/cheesecake.png)
+![Cheesecake Recipe](https://raw.githubusercontent.com/wendall911/FamilyRecipe/main/packages/recipe-grid/docs/images/cheesecake.png)
 
 ```
 ---
