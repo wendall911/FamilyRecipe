@@ -12,9 +12,9 @@ This recipe is best with a springform pan. Line bottom of springform pan with pa
     6 large egg whites
     6 large egg yolks
     2/3 cup sugar
-    2 tbsp vanilla extract
+    2 tsp vanilla extract
     2 '15oz whole milk ricotta cheese'
-    2 tbsp lemon zest
+    2 tsp lemon zest
 
     Egg White Foam := blend on high speed until stiff peaks form(
         egg whites

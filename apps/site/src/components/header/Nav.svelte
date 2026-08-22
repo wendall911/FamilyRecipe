@@ -9,7 +9,7 @@
         pathname === url || pathname.startsWith(url);
 </script>
 
-<header class="sticky top-0 z-50 w-full border-b backdrop-blur">
+<header class="top-0 z-50 w-full border-b backdrop-blur">
     <div class="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
         <a href="/" class="self-center">
