@@ -230,8 +230,9 @@ test('an external reference carries a leading amount as an authored RecipeNumber
      * fraction comes back as numerator/denominator.
      */
     const dough = externalRef('Yet Another Pizza Dough', 'kitchen-sink.md');
+    const amount = dough.amount as QuantityNode;
 
-    assert.deepEqual(dough.amount, { numerator: 1, denominator: 1 });
+    assert.deepEqual(amount.value, { numerator: 1, denominator: 1 });
 });
 
 /* --- SubRecipe ----------------------------------------------------------- */

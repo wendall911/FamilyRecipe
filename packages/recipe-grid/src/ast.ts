@@ -138,7 +138,7 @@ export interface ExternalReference {
     // The markdown link title (quotes stripped), when authored; else absent.
     title?: string;
     // the amount as it relates to the external recipe.
-    amount?: RecipeNumber;
+    amount: Quantity | Remainder | null;
 }
 
 /**

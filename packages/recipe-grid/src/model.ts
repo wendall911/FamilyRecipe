@@ -289,7 +289,7 @@ export type RecipeReference = {
      * The authored number of the external recipe reference needed. This allows for
      * correct scaling if the author needs fractional or number values here.
      */
-    amount?: RecipeNumber;
+    amount?: Amount;
 };
 
 /**

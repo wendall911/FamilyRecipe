@@ -225,7 +225,7 @@ class RecipeCompiler {
         }
 
         if (ref.amount !== undefined) {
-            node.amount = ref.amount;
+            node.amount = this.compileAmount(ref.amount);
         }
 
         return node;

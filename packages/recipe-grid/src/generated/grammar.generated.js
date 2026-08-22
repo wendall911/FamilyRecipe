@@ -579,7 +579,7 @@ function peg$parse(input, options) {
     return [first, ...rest];
   }
   function peg$f6(inner) {    return inner;  }
-  function peg$f7(n) {    return n.value;  }
+  function peg$f7(a) {    return a;  }
   function peg$f8(amt, name, target, t) {    return t;  }
   function peg$f9(amt, name, target, titlePart) {
     return {
@@ -588,7 +588,7 @@ function peg$parse(input, options) {
       name,
       targetSlug: target,
       ...(titlePart !== null ? { title: titlePart } : {}),
-      ...(amt !== null ? { amount: amt } : {}),
+      amount: amt,
     };
   }
   function peg$f10(t) {    return t;  }
@@ -1171,7 +1171,10 @@ function peg$parse(input, options) {
 
     s0 = peg$currPos;
     s1 = peg$currPos;
-    s2 = peg$parsenumber();
+    s2 = peg$parseproportion();
+    if (s2 === peg$FAILED) {
+      s2 = peg$parseimplicit_quantity();
+    }
     if (s2 !== peg$FAILED) {
       s3 = peg$parsehsp();
       if (s3 !== peg$FAILED) {

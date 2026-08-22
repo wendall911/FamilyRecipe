@@ -12,6 +12,7 @@ import {
     svsToString,
 } from '../src/recipe-model.ts';
 import type {
+    Amount,
     Fraction,
     Ingredient,
     Quantity,
@@ -155,7 +156,11 @@ test('A recipeReference with a quantity carries correctly', () => {
     );
 
     assert.ok(yapd, 'expected a YAPD recipeReference');
-    assert.deepEqual(yapd.amount, { numerator: 1, denominator: 1 });
+
+    const amount = yapd.amount as Quantity;
+
+    assert.ok(amount.kind, 'quantity');
+    assert.deepEqual(amount.value, { numerator: 1, denominator: 1 });
 });
 
 test('a label rides the step and does not displace the ingredient description', () => {

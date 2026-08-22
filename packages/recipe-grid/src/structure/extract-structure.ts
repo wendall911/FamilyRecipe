@@ -31,6 +31,7 @@
  * each one should be reached by a function in this file.
  */
 import type {
+    Amount,
     Ingredient,
     Quantity,
     RecipeMeta,
@@ -480,13 +481,18 @@ function ingredientNode(
  */
 function recipeReferenceChildren(
     link: StructureNode,
-    amount?: RecipeNumber,
+    amount?: Amount,
 ): StructureNode[] {
     const into = bag();
 
     if (amount !== undefined) {
-        into.node(scaledValueSpan(amount));
-        into.text(' ');
+        if (amount.kind === 'quantity') {
+            quantityInto(into, amount);
+            into.text(' ');
+        }
+        else {
+            into.text(`${amount.wording}${amount.preposition} `);
+        }
     }
 
     into.node(link);
@@ -519,13 +525,21 @@ function recipeReferenceNode(box: Box, node: RecipeReference): StructureNode {
         link.attrs = { title: node.title };
     }
 
+    const dataAttrs: Record<string, string> = structureAttrs(box);
+    const amount = node.amount;
+
+    if (amount !== undefined && amount.kind === 'quantity'
+        && amount.unitOfMeasureID !== null) {
+        dataAttrs[DATA_KEYS.uomID] = amount.unitOfMeasureID;
+    }
+
     return partNode('recipe-reference', {
-        dataAttrs: structureAttrs(box),
+        dataAttrs,
         children: [
             {
                 tag: 'p',
                 dataAttrs: {},
-                children: recipeReferenceChildren(link, node.amount),
+                children: recipeReferenceChildren(link, amount),
             },
         ],
     });

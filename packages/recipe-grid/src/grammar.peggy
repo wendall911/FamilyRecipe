@@ -77,8 +77,8 @@ expr
  * out. The sibling/alternative to `label`; like `label`, it may sit on an
  * ingredient or a step.
  */
-external_reference
-  = amt:(n:number hsp { return n.value; })?
+ external_reference
+  = amt:(a:(proportion / implicit_quantity) hsp { return a; })?
     "[" name:$([^\]\r\n]+) "]" hsp?
     "(" target:$([^)"'\r\n \t]+) titlePart:(hsp? t:link_title { return t; })? ")" {
       return {
@@ -87,7 +87,7 @@ external_reference
         name,
         targetSlug: target,
         ...(titlePart !== null ? { title: titlePart } : {}),
-        ...(amt !== null ? { amount: amt } : {}),
+        amount: amt,
       };
     }
 
