@@ -1,8 +1,8 @@
 # @wendall911/recipe-grid
 
-Write a recipe as markdown; get back a structured flexbox card and a headless stylesheet. Accessibility-first, mobile-first, headless, framework-agnostic. ESM, typed.
+Write a recipe as Markdown; get back a structured flexbox card and a headless stylesheet. Accessibility-first, mobile-first, headless, framework-agnostic. ESM, typed.
 
-A recipe card you can lay on the counter and cook from: one recipe, whole, readable at a glance. The markdown is the complete recipe, readable on its own and editable by hand, and the card is drawn from it.
+A recipe card you can lay on the counter and cook from: one recipe, whole, readable at a glance. The Markdown is the complete recipe, readable on its own and editable by hand, and the card is drawn from it.
 
 Rendered card without title and description:
 
@@ -58,20 +58,20 @@ This recipe is best with a springform pan. Line bottom of springform pan with pa
 
 ## API
 
-`parse` takes the markdown and returns the card in the forms a consumer needs:
+`parse` takes the markdown and returns the card in the form a consumer needs:
 
- - **`structure`** - the render structure a framework binding walks, one node at a time. Each node carries a part marker, the semantic tag it renders as, and the data a consumer computes with: a scalable value, a unit key, a target slug.
- - **`root`** - that same structure as elements, a serialisable DOM chunk to mount directly.
+ - **`structure`** - the render structure a framework binding walks, one node at a time. Each node carries a part marker, the semantic tag it renders as and the data a consumer computes with: a scalable value, a unit key and a target slug.
+ - **`root`** - the same structure as elements, a serializable DOM chunk to mount directly.
  - **`meta`** - the recipe's own metadata: its slug, and how it scales.
  - **`title`** and **`description`** - the human-facing header.
 
-The data bindings are available on all mutable properties. A quantity with units uses grammar constants and types from [`parse-ingredient`](https://www.npmjs.com/package/parse-ingredient) ([source](https://github.com/jakeboone02/parse-ingredient)). A scalable value carries its base amount, and the recipe metadata carries how it scales.
+The data bindings are available on all mutable properties. A quantity with units uses grammar constants and types from [`parse-ingredient`](https://www.npmjs.com/package/parse-ingredient) ([source](https://github.com/jakeboone02/parse-ingredient)). A scalable value carries its base amount, and the recipe metadata carries its scaling.
 
-The headless stylesheet ships alongside. It is layout and flow only, which define the way a box lays its children out and how it takes space from its parent. The card is semantically correct and will work on a phone screen as well as a desktop browser. Colors, borders, spacing, and type are yours to style at will.
+The headless stylesheet ships alongside. It provides layout and flow only, defining how a box lays out its children and how it takes up space from its parent. The card is semantically correct and will work on a phone screen and a desktop browser. You can style colors, borders, spacing, and type as you like.
 
 ## How It Works
 
-Every value the card produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote.
+Every value the card produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as written.
 
 ### Grammar Parser
 
@@ -79,7 +79,7 @@ The `md` body reads as a valid Directed Acyclic Graph and leverages [Peggy](http
 
 ### DAG Compiler
 
-Compiles a DAG from the parsed AST. No validation or linting is done in the compiler, so a nonsensical recipe is an authoring issue, not enforced at the compiler level.
+Compiles a DAG from the parsed AST. The compiler does no validation or linting, so a nonsensical recipe is an authoring issue, not enforced at the compiler level.
 
 ### Extracted Flexbox DOM
 
@@ -87,7 +87,7 @@ The extracted output is **archival quality**. `1/2` stays an exact fraction and 
 
 ## Integrations
 
- - [`@wendall911/recipe-grid-svelte`](https://www.npmjs.com/package/@wendall911/recipe-grid-svelte) renders a recipe card from a recipe-grid markdown string as composable Svelte components. The core owns parsing, layout, and accessibility; this binding is a thin adapter that renders the core's structure as Svelte and exposes a `Recipe.*` component API. Includes optional component for scaling, with documentation on full website integration.
+ - [`@wendall911/recipe-grid-svelte`](https://www.npmjs.com/package/@wendall911/recipe-grid-svelte) renders a recipe card from a recipe-grid markdown string as composable Svelte components. The core owns parsing, layout, and accessibility; this binding is a thin adapter that renders the core's structure as Svelte and exposes a `Recipe.*` component API. Includes an optional scaling component, with documentation for full website integration.
 
 ## Documentation
 
