@@ -16,9 +16,9 @@ slug: cheesecake
 Classic Ricotta Cheesecake
 ====
 
-Classic cheesecake recipe shared from a friend who worked in NYC as a head chef.
+A classic cheesecake recipe shared by a friend who worked in NYC as a head chef.
 
-This recipe is best with a springform pan. Line bottom of springform pan with parchment paper. Whites and yolks need separated ahead of time. If using a blender to mix main ingredients, just drop separated yolks into the blender.
+This recipe is best with a springform pan. Line the bottom of the springform pan with parchment paper. Separate the whites and yolks ahead of time. If you're using a blender to mix the main ingredients, put the separated yolks into the blender.
 
     6 large egg whites
     6 large egg yolks
