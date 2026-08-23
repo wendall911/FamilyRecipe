@@ -9,6 +9,8 @@ Classic cheesecake recipe shared from a friend who worked in NYC as a head chef.
 
 This recipe is best with a springform pan. Line bottom of springform pan with parchment paper. Whites and yolks need separated ahead of time. If using a blender to mix main ingredients, just drop separated yolks into the blender.
 
+.
+
     6 large egg whites
     6 large egg yolks
     2/3 cup sugar
