@@ -50,7 +50,7 @@
 </script>
 
 {#if recipe.parsed.meta.scalingType === 'servings'}
-    <fieldset>
+    <fieldset data-recipe-grid-scaling>
         <legend>{recipeScale.title}</legend>{#each recipeScale.options as { value, label } (value)}
             <label>
                 <input
