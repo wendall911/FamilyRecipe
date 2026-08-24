@@ -16,7 +16,7 @@ Because he couldn't find good dough to buy pre-made and wanted something healthi
     2 tbsp olive oil
     1 cup warm water
 
-    Dough := cover in bowl and rise for 30 minutes in warm place (
+    cover in bowl and rise for 30 minutes in warm place (
         knock out and lightly coat with olive oil (
             knead on floured surface for 5-10 min until smooth and elastic(
                 mix(

@@ -34,7 +34,7 @@ Thin, crisp Turkish flatbreads under a spiced red pepper and lamb topping.
     )
 
     bake for 7 minutes (
-        preheat pizza stone to 550*f in oven,
+        preheat pizza stone to 550°F in oven,
         spread thinly (
             place on baking paper (
                 roll into thin ovals (
