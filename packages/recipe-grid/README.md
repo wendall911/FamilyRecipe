@@ -43,7 +43,7 @@ This recipe is best with a springform pan. Line the bottom of the springform pan
 
     Chill for 6 hours or overnight (
         Bake for 80 minutes (
-            Preheat oven to 325*f,
+            Preheat oven to 325°F,
             Smooth top(
                 Scrape into prepped springform pan(
                     Fold foam into ricotta base(

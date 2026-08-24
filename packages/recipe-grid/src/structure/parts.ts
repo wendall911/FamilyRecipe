@@ -6,12 +6,12 @@
  * layers of attribute:
  *
  *   {@link PART_ATTRS}     what a node is. One per element, empty value.
- *   {@link DATA_KEYS}      a value a consumer reads.
+ *   {@link DATA_KEYS}      a data attribute that holds authored values.
  *   {@link STRUCTURE_KEYS} markers for layout.
  *   {@link STYLE_KEYS}     markers for styling.
  */
 
-const COMPONENT = 'recipe-grid';
+const COMPONENT = 'data-recipe-grid';
 
 /**
  * The parts of a rendered recipe grid. Each maps to a `data-recipe-grid-<part>`
@@ -73,8 +73,8 @@ export type RecipeGridPart = (typeof RECIPE_GRID_PARTS)[number];
 /**
  * The marker attribute name for a part.
  */
-export function part(name: RecipeGridPart): `data-${typeof COMPONENT}-${RecipeGridPart}` {
-    return `data-${COMPONENT}-${name}`;
+export function part(name: RecipeGridPart): `${typeof COMPONENT}-${RecipeGridPart}` {
+    return `${COMPONENT}-${name}`;
 }
 
 /**
@@ -82,7 +82,7 @@ export function part(name: RecipeGridPart): `data-${typeof COMPONENT}-${RecipeGr
  */
 export const PART_ATTRS = Object.fromEntries(
     RECIPE_GRID_PARTS.map((p) => [p, part(p)]),
-) as { readonly [P in RecipeGridPart]: `data-${typeof COMPONENT}-${P}` };
+) as { readonly [P in RecipeGridPart]: `${typeof COMPONENT}-${P}` };
 
 
 /**
@@ -132,12 +132,12 @@ export function tagForPart(partAttr: string): string {
  *
  */
 export const DATA_KEYS = {
-    value: `data-${COMPONENT}-value`,
-    uomID: `data-${COMPONENT}-uom-id`,
-    scalingType: `data-${COMPONENT}-scaling-type`,
-    base: `data-${COMPONENT}-base`,
-    unitSystem: `data-${COMPONENT}-unit-system`,
-    targetSlug: `data-${COMPONENT}-target-slug`,
+    value: `${COMPONENT}-value`,
+    uomID: `${COMPONENT}-uom-id`,
+    scalingType: `${COMPONENT}-scaling-type`,
+    base: `${COMPONENT}-base`,
+    unitSystem: `${COMPONENT}-unit-system`,
+    targetSlug: `${COMPONENT}-target-slug`,
 } as const;
 
 export type DataKey = keyof typeof DATA_KEYS;
@@ -162,7 +162,7 @@ export const STRUCTURE_KEYS = {
 export type StructureKey = keyof typeof STRUCTURE_KEYS;
 
 /**
- * The styling marker. The surfaces a theme decorates.
+ * The styling markers. The surfaces a theme decorates.
  *
  * - `edge`  which of a box's edges are its container's rather than a division
  *           with a neighbour: `start`, `end`, `both`, absent when it has a

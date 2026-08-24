@@ -8,7 +8,7 @@ Cards outlast the people who wrote them because they are paper -- no format, no 
 
 A recipe is not a list of ingredients followed by a list of steps. Ingredients combine, and what they combine into gets combined again; an ingredient made once can be used in two places later.
 
-For the writing to survive, the graph has to survive with it. An ingredient name declared once and used again is one ingredient used twice, and a format that copies it into two places has already lost what the author said. So the `.md` holds the graph literally: it does not describe one, it is one, written so a person can read it. That is the sense in which archival is a requirement rather than an aspiration -- it is measured on whether the graph and the words come back exactly.
+The `.md` holds the graph literally: it does not describe one, it is one, written so a person can read it.
 
 Every value the card produces has a preimage in the markdown. What the author wrote is what the model carries, and what the model carries is what the card draws, so a recipe someone wrote down survives as what they wrote.
 
@@ -16,7 +16,7 @@ Every value the card produces has a preimage in the markdown. What the author wr
 
 Fidelity is kept at the value: what the author wrote is what renders, down to the character.
 
-A number keeps the kind it was written in. `1/2` stays an exact fraction and `0.5` stays a decimal, though both are the same magnitude -- the two are distinguishable in the model, and a comparison on magnitude alone cannot tell them apart. A quantity keeps the whitespace between its value and its unit, and the preposition that trailed it, leading space and all. A quoted description keeps its parens, commas, and `%` verbatim.
+A number keeps the kind it was written in. `1/2` stays an exact fraction and `0.5` stays a decimal. A quantity keeps the whitespace between its value and its unit, and the preposition that trailed it, leading space and all. A quoted description keeps its parens, commas, and `%` verbatim.
 
 Where a canonical handle is useful it rides alongside the authored form:
 
@@ -32,7 +32,7 @@ Both are carried and neither replaces the other: one is what renders, the other 
 
 At generate time the names become an ordered choice in the grammar: canonical key, short form, plural, and every alternate, longest first so a name matches maximally. A unit is a unit because the vocabulary knows the name.
 
-At compile time the authored name maps back to its canonical key. Both ride the quantity -- `cloves` as written, `clove` as the key -- so a consumer converts with the same vocabulary the grammar was built from.
+At compile time the authored name maps back to its canonical key. Both ride the quantity `cloves` as written, with `clove` as the key, so a consumer converts with the same vocabulary the grammar was built from.
 
 Names are read, never transcribed: the grammar is regenerated from whatever the package currently defines.
 
@@ -84,20 +84,21 @@ What comes out is every element the DOM needs, not a sketch of it -- including t
 
 ## DOM
 
-The DOM stands on its own. Before any styling, it is plain `<div>`s that read as a recipe and are walkable by a screen reader -- semantic structure first, with markers and bindings riding along as attributes for a later CSS pass and a runtime binding.
+DOM is built with semantic structure. Markers and bindings are added for:
 
-Two prefixes, and the prefix says who reads it:
+ - `data-recipe-grid-<part>` - The semantic HTML tag each part renders as.
+ - `data-recipe-grid-<data_key>` - A data attribute that holds authored values. Scalable values, unit keys, target slugs, etc.
+ - `data-recipe-grid-<layout>` - Markers for layout.
+ - `data-recipe-grid-<styling>` - Markers for styling.
 
-- `data-recipe-grid-<part>` -- a part marker, and the same prefix carries the machine-readable bindings: a scalable value, a unit key, a target slug. A consumer reads these.
-- `recipe-grid-side`, `recipe-grid-flow`, `recipe-grid-edge` -- unprefixed. A rule matches on these and takes nothing away.
+`data-recipe-grid-<layout>` - The structure attributes. Resolved by the shape pass, written onto the element so a rule matches on position instead of rebuilding it.
+  - `side`   what the box is to its parent: `inputs`, `action`, `header`, `body`, `root`. The inputs column and a region's body have no part marker, so a rule reaches them by this.
+  - `flow`   how the box lays its children out: `row`, `column`, `leaf` when its children are text. Pairs with a child's `edge`: flow gives the axis, edge gives the end.
 
-`side` and `flow` are what a rule targets a box by when the part marker is not enough: the inputs column and a region's body have no part of their own. A rule needing both which axis a line lies on and which end of it reads `flow` from the parent and `edge` from the child, so neither has to be recovered from the marker.
+ `data-recipe-grid-<styling>`The styling markers. The surfaces a theme decorates.
+  - `edge`  which of a box's edges are its container's rather than a division with a neighbour: `start`, `end`, `both`, absent when it has a neighbour on each side. Along the parent's flow: row is left/right, column is top/bottom. A border on a container's edge bounds the group instead of dividing two members.
 
-`edge` says which of a box's own edges are its container's rather than a line between it and a neighbour -- `start`, `end`, `both`, or absent when the box has a neighbour on each side. It is what a border bounds a group with instead of dividing two of its members.
-
-The headless stylesheet is flow only: which way a box lays its children out, and how it takes space from its parent. An inputs column asks for what its contents need and gives back last; the action beside it takes what is left. Both carry `min-width: 0`, and so does the content inside a leaf box -- a flex item's own minimum is its longest unbreakable word, and a card is steps inside inputs columns inside steps, so each level's floor is built from the level below. Both must yield for the text to wrap.
-
-A minimum width is a real decision about a particular card at a particular size, and it is the consumer's -- one rule on the boxes they choose. Colors, borders, spacing, and type are a theme's.
+The headless stylesheet is flow only: which way a box lays its children out, and how it takes space from its parent.
 
 ## API
 

@@ -41,7 +41,7 @@
 /*
  * How a box takes space from its parent.
  */
-[recipe-grid-side='inputs'], [recipe-grid-side='action'] {
+[data-recipe-grid-side='inputs'], [data-recipe-grid-side='action'] {
     flex: 1 1 auto;
 }
 
@@ -49,6 +49,6 @@
  * Minimize the collapse of inputs so card collapses in a way that makes
  * recipes more readable.
  */
-[recipe-grid-side='inputs'] {
+[data-recipe-grid-side='inputs'] {
     min-width: min-content;
 }

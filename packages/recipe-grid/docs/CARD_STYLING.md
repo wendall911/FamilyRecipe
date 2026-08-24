@@ -30,11 +30,11 @@ Every element the core emits carries exactly one part marker, on every instance,
 
 Two attributes, both resolved by the shape pass, both with closed value sets. They reach a box by its position in the layout rather than by which part it is, so one rule matches at any depth.
 
-**`recipe-grid-flow`** -- which way a box lays its children out: `row`, `column`, or `leaf` when its children are text.
+**`data-recipe-grid-flow`** -- which way a box lays its children out: `row`, `column`, or `leaf` when its children are text.
 
-**`recipe-grid-side`** -- what a box is to its parent: `inputs`, `action`, `header`, `body`, or `root`. The inputs column and a region's body carry no part marker of their own, so this is what reaches them.
+**`data-recipe-grid-side`** -- what a box is to its parent: `inputs`, `action`, `header`, `body`, or `root`. The inputs column and a region's body carry no part marker of their own, so this is what reaches them.
 
-Selecting on flow is what keeps a rule flat. `[recipe-grid-flow='column'] > …` applies to every column in the card; the alternative is enumerating which parts are columns in every rule and revising that list whenever a part is added.
+Selecting on flow is what keeps a rule flat. `[data-recipe-grid-flow='column'] > …` applies to every column in the card; the alternative is enumerating which parts are columns in every rule and revising that list whenever a part is added.
 
 ## Combining identity and position
 
@@ -45,14 +45,14 @@ A part marker is uniform, the context it appears in is not. An ingredient appear
 [data-recipe-grid-ingredient] { }
 
 /* only the ones sitting directly in a column */
-[recipe-grid-flow='column'] > [data-recipe-grid-ingredient] { }
+[data-recipe-grid-flow='column'] > [data-data-recipe-grid-ingredient] { }
 ```
 
 ## Boundaries
 
-**`recipe-grid-edge`** -- which of a box's own edges are its container's rather than a line between it and a neighbor: `start`, `end`, `both`, or absent when the box has a neighbor on each side.
+**`data-recipe-grid-edge`** -- which of a box's own edges are its container's rather than a line between it and a neighbor: `start`, `end`, `both`, or absent when the box has a neighbor on each side.
 
-The edges named are along the parent's flow. In a row, `start` is left and `end` is right; in a column, `start` is top and `end` is bottom. The parent carries its own flow, so a rule pairs the two: the parent's `recipe-grid-flow` says which axis, the child's `recipe-grid-edge` says which end of it.
+The edges named are along the parent's flow. In a row, `start` is left and `end` is right; in a column, `start` is top and `end` is bottom. The parent carries its own flow, so a rule pairs the two: the parent's `data-recipe-grid-flow` says which axis, the child's `data-recipe-grid-edge` says which end of it.
 
 | the child carries | with a `row` parent      | with a `column` parent  |
 |-------------------|--------------------------|-------------------------|
@@ -92,12 +92,12 @@ A line drawn between two boxes rather than around each one: one line per divisio
 }
 
 /* column flow: a line above every box that has one before it */
-[recipe-grid-flow='column'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+[data-recipe-grid-flow='column'] > :not([data-recipe-grid-edge='start']):not([data-recipe-grid-edge='both']) {
     border-top: 1px solid #3f3f46;
 }
 
 /* row flow: a line left of every box that has one before it */
-[recipe-grid-flow='row'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+[data-recipe-grid-flow='row'] > :not([data-recipe-grid-edge='start']):not([data-recipe-grid-edge='both']) {
     border-left: 1px solid #3f3f46;
 }
 ```
@@ -117,7 +117,7 @@ A box carrying `start` or `both` has nothing before it along its parent's flow, 
 The boxes whose children are text, rather than the boxes that group them:
 
 ```css
-[recipe-grid-flow='leaf'] {
+[data-recipe-grid-flow='leaf'] {
     padding: 0.25rem 0.5rem;
 }
 ```
