@@ -19,6 +19,7 @@
         "fraction.js": "^5.3.4"
     },
     "devDependencies": {
+        "@radix-ui/colors": "^3.0.0",
         "@sveltejs/kit": "^2.70.2",
         "@sveltejs/vite-plugin-svelte": "^7.3.0",
         "@tailwindcss/postcss": "^4.3.3",

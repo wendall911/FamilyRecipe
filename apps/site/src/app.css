@@ -1,16 +1,33 @@
 @import 'tailwindcss';
+@import '@radix-ui/colors/gold.css';
+@import '@radix-ui/colors/gold-alpha.css';
+@import '@radix-ui/colors/slate.css';
 @import '@wendall911/recipe-grid-svelte/styles.css';
 
 @custom-variant light (&:where(.light, .light *));
 
+/*
+ * Colors from https://www.radix-ui.com/colors
+ */
+
 @theme {
     --breakpoint-sm: 37.5rem;
     --breakpoint-lg: 80rem;
+    --color-gold-6: var(--gold-6);
+    --color-gold-11: var(--gold-11);
+    --color-gold-a3: var(--gold-a3);
+    --color-gold-a5: var(--gold-a5);
+    --color-slate-*: initial;
+    --color-slate-1: var(--slate-1);
+    --color-slate-2: var(--slate-2);
+    --color-slate-8: var(--slate-8);
+    --color-slate-11: var(--slate-11);
+    --color-slate-12: var(--slate-12);
 }
 
 @layer base {
     body {
-        @apply light:bg-white light:text-zinc-900 bg-zinc-900 text-zinc-100;
+        @apply light:bg-slate-1 light:text-slate-12 bg-slate-12 text-slate-1;
     }
     h1 {
         @apply pb-1 text-3xl sm:pb-2 sm:text-5xl;
@@ -53,17 +70,24 @@
  */
 @layer components {
     #card {
-        margin: 1rem;
+        @apply m-2 sm:m-4;
+    }
+    #card h2, #card p {
+        @apply p-1 pt-0;
     }
     #card h1 {
-        @apply pb-1 text-xl sm:pb-2 sm:text-3xl;
+        @apply text-xl sm:text-3xl;
     }
     #card h2 {
-        @apply pb-1 text-lg sm:pb-2 sm:text-2xl;
+        @apply text-lg sm:text-2xl;
+    }
+
+    [data-recipe-grid-root] {
+        @apply mt-2;
     }
 
     [data-recipe-grid-card] {
-        --recipe-grid-line: var(--color-zinc-700);
+        --recipe-grid-line: var(--slate-11);
 
         border: 3px solid var(--recipe-grid-line);
     }
@@ -71,21 +95,61 @@
     /*
      * Column flow: a line above every box that has one before it.
      */
-    [recipe-grid-flow='column'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+    [data-recipe-grid-flow='column'] > :not([data-recipe-grid-edge='start']):not([data-recipe-grid-edge='both']) {
         border-top: 2px solid var(--recipe-grid-line);
     }
 
     /*
      * Row flow: a line left of every box that has one before it.
      */
-    [recipe-grid-flow='row'] > :not([recipe-grid-edge='start']):not([recipe-grid-edge='both']) {
+    [data-recipe-grid-flow='row'] > :not([data-recipe-grid-edge='start']):not([data-recipe-grid-edge='both']) {
         border-left: 2px solid var(--recipe-grid-line);
     }
 
-    /*
-     * Content boxes get room to breathe; grouping boxes stay tight.
-     */
-    [recipe-grid-flow='leaf'] {
-        @apply px-1 pt-1;
+    [data-recipe-grid-scaled-value], [data-recipe-grid-uom-name] {
+        @apply light:text-gold-11 text-gold-6;
     }
+
+    [data-recipe-grid-sub-recipe-header] {
+        @apply bg-gold-a5;
+    }
+
+    [data-recipe-grid-action] {
+        @apply bg-gold-a3;
+    }
+
+    [data-recipe-grid-scaling] {
+        @apply flex w-48 bg-gold-a3 rounded p-1 gap-0.5 border-0 ml-auto;
+    }
+
+    [data-recipe-grid-scaling] > legend {
+        @apply absolute -ml-26;
+    }
+
+    [data-recipe-grid-scaling] > label {
+        @apply flex m-0 cursor-pointer flex-1 items-center justify-center;
+        @apply gap-0.5 p-4 text-2xl rounded min-block-2.5;
+        @apply min-block-6 p-1 text-shadow-xs text-xs;
+    }
+
+    [data-recipe-grid-scaling] > label > input[type="radio"] {
+        @apply absolute opacity-0 w-0 h-0 m-0;
+    }
+
+    [data-recipe-grid-scaling] > label:hover {
+        @apply bg-gold-a5;
+    }
+
+    [data-recipe-grid-scaling] > label:has(input:checked) {
+        @apply bg-gold-a5 shadow;
+    }
+
+    [data-recipe-grid-scaling] > label:has(input:focus-visible) {
+        @apply outline-blue-500 outline-offset-1 outline-2;
+    }
+
+    [data-recipe-grid-scaling] > label:has(input:disabled) {
+        @apply opacity-50 cursor-none;
+    }
+
 }
