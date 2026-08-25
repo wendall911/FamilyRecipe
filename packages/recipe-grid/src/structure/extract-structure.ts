@@ -26,6 +26,8 @@
  * move, and the core does not make it for them.
  */
 
+import Fraction from 'fraction.js';
+
 /*
  * The pieces of the model this pass renders. The import list is the checklist:
  * each one should be reached by a function in this file.
@@ -155,9 +157,7 @@ function numberText(value: RecipeNumber): string {
         return String(value);
     }
 
-    return value.denominator === 1
-        ? String(value.numerator)
-        : `${value.numerator}/${value.denominator}`;
+    return new Fraction(value.numerator, value.denominator).toFraction(true);
 }
 
 /**
