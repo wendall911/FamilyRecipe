@@ -2,7 +2,7 @@
 
 What the Peggy grammar emits. The stage between the recipe `.md` and the DAG: `markdown -> AST -> DAG model`.
 
-This document describes what each AST node is: its fields and what they hold. It does not describe what markdown produces a given node. The grammar (`src/grammar.peggy`) states that directly and is the only source for it.
+This document describes each AST node: its fields and what they hold. It does not describe what markdown produces a given node. The grammar (`src/grammar.peggy`) states this directly and is the only source.
 
 Audience: tooling and downstream implementors.
 
@@ -10,13 +10,13 @@ Audience: tooling and downstream implementors.
 
 ### Ingredients
 
-Three node kinds appear as ingredient entries. They read alike on a card and are different in the AST.
+Three node kinds appear as ingredient entries. They look the same on a card but differ in the AST.
 
 **An ingredient** is a `reference`. Its `name` is a `string`; its `amount` is a `quantity`, a `remainder`, or `null`.
 
-**An ingredient with an action** is a `step`. The step's `name` is the action text and the ingredient is its single input. A `label` sits on the step; the `amount` stays on the input.
+**An ingredient with an action** is a `step`. The step's `name` is the action text, and the ingredient is its single input. A `label` sits on the step; the `amount` stays on the input.
 
-**A link to another recipe** is an `externalReference`. Its `name`, `targetSlug`, and `title` are plain strings rather than `string` nodes. It has no `label`, since the link text is the name. `title` is absent when the link has none.
+**A link to another recipe** is an `externalReference`. Its `name`, `targetSlug`, and `title` are plain strings, not `string` nodes. It has no `label`, since the link text is the name. `title` is absent when the link has none.
 
 An `externalReference` can be a step's input, the same way a `reference` can.
 
@@ -26,9 +26,7 @@ A `quantity` carries `value` and `parts`. `value` holds what was authored: a who
 
 ### SubRecipe
 
-`:=` marks a statement named: `named` is true and `outputs` holds the declared name. The statement's `expr` is the `step` it wraps, and the arguments in that step's parens are its `inputs`, in the order authored.
-
-A step's input may itself be a step, so steps nest recursively.
+`:=` declares a SubRecipe block with `heading` declared.
 
 ### Recipe
 
