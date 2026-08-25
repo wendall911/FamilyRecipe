@@ -9,7 +9,7 @@ Bread Maker Multigrain Bread
 
     1 5/8 cup water
     2 tsp salt
-    4 2/3 cups '7-grain bread flour'
+    flour = 4 2/3 cups '7-grain bread flour'
     1/3 cup brown sugar, packed
     3 tsp active dry yeast
 
@@ -21,7 +21,7 @@ Bread Maker Multigrain Bread
                 salt
             ),
             Float over top of liquid(
-                '7-grain bread flour',
+                flour,
                 Create small well in flour and add(
                     active dry yeast
                 )
