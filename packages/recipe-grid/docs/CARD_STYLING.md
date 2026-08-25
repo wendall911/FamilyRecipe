@@ -4,7 +4,7 @@ A rendered recipe card is a flexbox with data, structure and styling attributes.
 
 ## Parts
 
-Every element the core emits carries exactly one part marker, on every instance, with an empty value. A flat attribute selector is therefore exhaustive: `[data-recipe-grid-ingredient-description]` reaches every ingredient description in the card, at any depth, inside references and sub-recipes alike.
+Every element the core emits carries exactly one part marker on every instance, with an empty value. A flat attribute selector is therefore exhaustive: `[data-recipe-grid-ingredient-description]` reaches every ingredient description in the card, at any depth, inside references and sub-recipes alike.
 
 | marker                                    | is                                                       | tag    |
 |-------------------------------------------|----------------------------------------------------------|--------|
@@ -38,7 +38,7 @@ Selecting on flow is what keeps a rule flat. `[data-recipe-grid-flow='column'] >
 
 ## Combining identity and position
 
-A part marker is uniform, the context it appears in is not. An ingredient appears as a bare leaf, inside a reference, and inside a step's inputs.
+A part marker is uniform; the context it appears in is not. An ingredient appears as a bare leaf, inside a reference, and inside a step's inputs.
 
 ```css
 /* every ingredient */
@@ -52,7 +52,7 @@ A part marker is uniform, the context it appears in is not. An ingredient appear
 
 **`data-recipe-grid-edge`** -- which of a box's own edges are its container's rather than a line between it and a neighbor: `start`, `end`, `both`, or absent when the box has a neighbor on each side.
 
-The edges named are along the parent's flow. In a row, `start` is left and `end` is right; in a column, `start` is top and `end` is bottom. The parent carries its own flow, so a rule pairs the two: the parent's `data-recipe-grid-flow` says which axis, the child's `data-recipe-grid-edge` says which end of it.
+The named edges follow the parent's flow. In a row, `start` is left and `end` is right; in a column, `start` is top and `end` is bottom. The parent carries its own flow, so a rule pairs the two: the parent's `data-recipe-grid-flow` says which axis, and the child's `data-recipe-grid-edge` says which end.
 
 | the child carries | with a `row` parent      | with a `column` parent  |
 |-------------------|--------------------------|-------------------------|
@@ -69,7 +69,7 @@ Values a consumer computes with. These are not styling hooks.
 
 | attribute                                                | on                                | is                                                                     |
 |----------------------------------------------------------|-----------------------------------|------------------------------------------------------------------------|
-| `data-recipe-grid-value`                                 | `scaled-value`                    | the authored number, serialised: a JS number, or `{numerator, denominator}` for a fraction |
+| `data-recipe-grid-value`                                 | `scaled-value`                    | the authored number, serialized: a JS number, or `{numerator, denominator}` for a fraction |
 | `data-recipe-grid-uom-id`                                | `ingredient`                      | the key into parse-ingredient's `unitsOfMeasure`. The authored text is the `uom-name` span inside |
 | `data-recipe-grid-target-slug`                           | the `a` inside `recipe-reference` | the recipe a cross-file link points at; the core emits no `href`        |
 | `data-recipe-grid-scaling-type`, `-base`, `-unit-system` | `root`                            | the recipe's scaling metadata                                           |
@@ -80,7 +80,7 @@ The text inside `scaled-value` and `uom-name` is rewritten at runtime when a rec
 
 ## Styling the Card
 
-Examples. A card takes whatever styling a consumer wants; these show how the attributes above are reached.
+Examples. A card takes whatever styling a consumer wants; these show how to reach the attributes above.
 
 ### Table-looking borders
 
