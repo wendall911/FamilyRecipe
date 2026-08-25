@@ -1,6 +1,6 @@
 # Recipe Markdown Format - Quick Reference
 
-A recipe `.md` in this project is a **human-readable file that also encodes a Directed Acyclic Graph (DAG)**. It reads as a plain recipe and is also source the `recipe-grid` parser reads. The readable form and the DAG are the same thing: the `.md` does not describe a graph, it is one, written so a person can read it.
+A recipe `.md` in this project is a **human-readable file that also encodes a Directed Acyclic Graph (DAG)**. It reads as a plain recipe and is also the source that the `recipe-grid` parser reads. The readable form and the DAG are the same thing: the `.md` does not describe a graph; it is one, written so a person can read it.
 
 The one property that makes it a DAG (not a tree): a name declared once can be **referenced** by later lines, so a single node has more than one parent. That shared-node back-edge is the whole distinction.
 
@@ -62,7 +62,7 @@ A description can be naked or quoted. Quoting is a literal escape hatch:
 This is what keeps a value bound as a `Quantity` separate from literal text on
 the same line: in `200g "plain flour (12% protein)"`, the `200g` binds as the
 `Quantity` (value 200, unit `g`) and the quoted string is the raw `description`,
-so `12%` stays description; it is never read as a value.
+so `12%` stays in the description; it is never read as a value.
 
 ---
 
@@ -78,8 +78,8 @@ The same graph, in several forms. Each step **adds**; none rewrites or discards,
 | `structure`       | the graph, bound          | data / structure / styling targets (+ headless CSS)                    |
 | `root`            | `structure`, mountable    | nothing; a DOM chunk derived from `structure`                          |
 
-`structure` is the one API surface -- what a framework binding renders against.  `root` comes off it directly, a mountable DOM chunk for consumers without a framework; there is no second surface to drift from the first.
+`structure` is the one API surface that a framework binding renders against. `root` comes off it directly: a mountable DOM chunk for consumers without a framework; there is no second surface to drift from the first.
 
-There is no tree at any point, and no stage where the graph is built -- it is present from the `.md` on.
+There is no tree at any point; the DAG is present from the `.md` on.
 
-Validation is a separate pass, off the render path. It asks whether a *recipe* is sensible -- not whether the graph is well-formed, which the grammar already settled.
+Validation is a separate pass, off the render path. It asks whether a *recipe* is sensible -- not whether the graph is well-formed, which the grammar has already settled.
