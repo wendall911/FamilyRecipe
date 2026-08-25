@@ -83,7 +83,7 @@ Compiles a DAG from the parsed AST. The compiler does no validation or linting, 
 
 ### Extracted Flexbox DOM
 
-The extracted output is **archival quality**. `1/2` stays an exact fraction and `0.5` stays a decimal though both are the same magnitude; a quantity keeps the whitespace between its value and its unit; a quoted description keeps its parens and commas verbatim. Where a canonical handle is useful, like a unit key, a target slug, a base value to scale from, it rides alongside what the author wrote rather than replacing it. The card carries back to the markdown it came from, which is what makes the format archival.
+The extracted output is **archival quality**. `1/2` stays an exact fraction and `0.5` stays a decimal though both are the same magnitude; a quantity keeps the whitespace between its value and its unit; a quoted description keeps its parens and commas verbatim. Where a canonical handle is useful, like a unit key, a target slug or a base value to scale from, it rides alongside what the author wrote rather than replacing it. The card carries back to the markdown it came from, which is what makes the format archival.
 
 ## Integrations
 
