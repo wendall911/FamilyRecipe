@@ -1,37 +1,20 @@
 /**
- * Fill the card's shape with content.
+ * Extract the full structure from the compiled DAG.
  *
- * The second extract pass. `extract-shape.ts` decided what nests inside what
- * and on which side; this pass never asks a structural question. It walks the
- * finished box tree and gives each box what it renders as: a tag, a part
+ * `extract-shape.ts` provides the nesting and sides. This extract pass walks
+ * the finished box tree and gives each box what it renders as: a tag, a part
  * marker, the machine-readable `data-*` bindings, the semantic HTML attributes
  * the node sets, and the literal text of a leaf.
  *
- * What comes out is a complete element tree, not a sketch of one. Every element
- * the DOM needs is a real {@link StructureNode} here -- the inline pieces a box
- * expands into as much as the boxes themselves: a `quantity` span, a
- * `scaled-value` span for each number that rescales, the literal text around
- * them. A downstream renderer (the built element tree, or a framework binding)
- * turns this into elements and makes no structural decision of its own.
+ * This provides the complete element tree. Every element the DOM needs is a
+ * real {@link StructureNode}. A downstream renderer * turns this into elements
+ * and makes no structural decision of its own.
  *
- * A box carries its model node by reference. Content is read straight off it:
- * a Step's description, an Ingredient's description and quantity, a
- * SubRecipe's output names, a RecipeReference's name and target slug, a
- * Remainder's wording. The node is never copied and never rewritten -- whatever
- * the DAG holds is what gets rendered.
- *
- * No arithmetic, no resolution, no validation. A scalable number is emitted
- * with its authored value for a consumer to multiply; a cross-file link is
- * emitted with its slug for a consumer to resolve. Both are the consumer's
- * move, and the core does not make it for them.
+ * No arithmetic, no resolution, no validation.
  */
 
 import Fraction from 'fraction.js';
 
-/*
- * The pieces of the model this pass renders. The import list is the checklist:
- * each one should be reached by a function in this file.
- */
 import type {
     Amount,
     Ingredient,
@@ -62,27 +45,15 @@ import {
 } from './parts.ts';
 
 /**
- * A node's render structure: the element to emit and its subtree.
- *
+ * The render structure: part-tagged nodes for a binding to render as
+ * components.
+ * 
  * A node is one of three things. A part node carries a
  * `data-recipe-grid-<part>` marker and renders as the semantic tag for that
  * part. A plain element node is a bare `<p>` with no marker. A text node has no
- * `tag` at all: it is a run of literal text, emitted as text and nothing more.
- *
- * A text node is what a run nothing names amounts to. Wrapping it in a span
- * would mark nothing a rule can reach, and would put the run's characters
- * inside an element a consumer has to look past -- the whitespace beside a unit
- * name belongs to the paragraph, not to the unit. So an element's children are
- * text nodes and marked spans interleaved, in the order the author wrote them.
- *
- * The render structure: part-tagged nodes for a binding to render as
- * components.
+ * `tag` at all.
  */
 export interface StructureNode {
-    /*
-     * The HTML tag to emit, e.g. 'div', 'p', 'h1', 'span', 'a'; absent on a
-     * text node, which is a run of text with no element around it.
-     */
     tag?: string;
     /*
      * The part marker attribute name (e.g. `data-recipe-grid-step`), when the
@@ -131,15 +102,16 @@ function textNode(text: string): StructureNode {
 }
 
 /**
- * A marked span: a run the caller knows the part of -- an ingredient's
- * description, a quantity's unit name.
- *
- * The span exists to carry the marker, and holds the run and nothing else.
- * What led the run is the paragraph's, so a consumer replacing the run's text
- * -- swapping a unit for another -- touches only what it named.
+ * Sibling elements that have a `RecipeGridPart`. For example, a
+ * scaled value, description, or quantity's unit name.
  */
-function markedSpan(text: string, name: RecipeGridPart): StructureNode {
-    return partNode(name, { text });
+function markedElement(text: string, name: RecipeGridPart): StructureNode {
+    return partNode(
+        name,
+        {
+            text
+        }
+    );
 }
 
 /**
@@ -161,15 +133,17 @@ function numberText(value: RecipeNumber): string {
 }
 
 /**
- * A `scaled-value` span: a marked span carrying a scalable number's base value
+ * A `scaled-value`: a marked element carrying a scalable number's base value
  * (so a runtime scaler can rescale it) plus the number as its text.
  *
  * The base value is the `RecipeNumber` itself, serialised whole. A fraction is
  * not flattened to a decimal, so an exact amount survives rescaling.
  */
-function scaledValueSpan(value: RecipeNumber): StructureNode {
+function scaledValue(value: RecipeNumber): StructureNode {
     return partNode('scaled-value', {
-        dataAttrs: { [DATA_KEYS.value]: JSON.stringify(value) },
+        dataAttrs: {
+            [DATA_KEYS.value]: JSON.stringify(value)
+        },
         text: numberText(value),
     });
 }
@@ -183,25 +157,6 @@ function isNumberPiece(
     return typeof piece !== 'string';
 }
 
-/**
- * The inline children of a scale-aware string: each literal run becomes a plain
- * `<span>` text leaf, each scalable number a marked `scaled-value` span.
- *
- * The sub-recipe header's own path. A header's whole content is one output
- * name, so it has no run of unnamed text to place and needs no accumulator.
- */
-function inlineContent(
-    text: ScaledValueString,
-    name?: RecipeGridPart,
-): StructureNode[] {
-    return text.map((piece) =>
-        isNumberPiece(piece)
-            ? scaledValueSpan(piece)
-            : name === undefined
-              ? textNode(piece)
-              : markedSpan(piece, name),
-    );
-}
 
 /**
  * The children of an element, gathered in the order the author wrote them.
@@ -258,13 +213,13 @@ function bag(): Bag {
  * the ingredient finds it.
  */
 function quantityInto(into: Bag, quantity: Quantity): void {
-    into.node(scaledValueSpan(quantity.value));
+    into.node(scaledValue(quantity.value));
 
     for (const piece of quantity.parts) {
         into.text(piece.leading);
 
         if (piece.isUnitName === true) {
-            into.node(markedSpan(piece.text, 'uom-name'));
+            into.node(markedElement(piece.text, 'uom-name'));
         }
         else {
             into.text(piece.text);
@@ -291,7 +246,7 @@ function inlineInto(
 ): void {
     text.forEach((piece, i) => {
         if (isNumberPiece(piece)) {
-            into.node(scaledValueSpan(piece));
+            into.node(scaledValue(piece));
 
             const next = text[i + 1];
 
@@ -300,7 +255,7 @@ function inlineInto(
             }
         }
         else if (name !== undefined) {
-            into.node(markedSpan(piece, name));
+            into.node(markedElement(piece, name));
         }
         else {
             into.text(piece);
@@ -562,37 +517,12 @@ function actionNode(box: Box, node: Step): StructureNode {
 }
 
 /**
- * The lone literal run a header's output name amounts to, when it is nothing
- * else.
- *
- * A single run needs no node of its own: the heading is already the element it
- * sits in. Anything else -- a marked span, a run beside a scalable number --
- * stands as it is.
- */
-function loneText(inline: StructureNode[]): string | undefined {
-    const only = inline.length === 1 ? inline[0] : undefined;
-
-    return only !== undefined &&
-        only.part === undefined &&
-            only.children.length === 0
-                ? only.text
-                : undefined;
-}
-
-/**
- * A sub-recipe's header band: the declared output name, inline on the `<h2>`.
- *
- * The heading carries its text directly, with no wrapping `<p>`. A name that is
- * one literal run sits on the heading itself; a name with a scalable number in
- * it keeps the inline nodes that mark it.
+ * A sub-recipe's header.
  */
 function subRecipeHeaderNode(box: Box, node: SubRecipe): StructureNode {
-    const inline = inlineContent(node.outputNames[0]);
-    const lone = loneText(inline);
-
     return partNode('sub-recipe-header', {
         dataAttrs: structureAttrs(box),
-        ...(lone !== undefined ? { text: lone } : { children: inline }),
+        ...({ text: node.heading }),
     });
 }
 

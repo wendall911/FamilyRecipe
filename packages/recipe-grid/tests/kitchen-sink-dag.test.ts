@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { compileFixture } from './libs/dag-harness.ts';
 import { isReference, isStep } from './libs/dag-helpers.ts';
 import {
-    normaliseOutputName,
+    normalizeOutputName,
     numberValue,
     recipeNumbersEqual,
     svsEqual,
@@ -270,13 +270,10 @@ test('a := heading compiles to a subRecipe wrapping the step it names', () => {
     const dough = recipe.recipeTrees.find(
         (node): node is SubRecipe =>
             node.kind === 'subRecipe'
-            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+            && node.heading === 'Dough',
     );
 
     assert.ok(dough, 'expected a Dough subRecipe');
-
-    // One declared output: `Dough :=` names a single result.
-    assert.equal(dough.outputNames.length, 1);
 
     /*
      * The `:=` wraps exactly one child tree - here the `knead` step whose
@@ -301,7 +298,7 @@ test('a later line reaching a := output resolves to that node, not a copy', () =
     const dough = recipe.recipeTrees.find(
         (node): node is SubRecipe =>
             node.kind === 'subRecipe'
-            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+            && node.heading === 'Dough',
     );
 
     assert.ok(dough, 'expected a Dough subRecipe');
@@ -341,7 +338,7 @@ test('a reference carries an amount only when the line draws a measured portion'
     const dough = recipe.recipeTrees.find(
         (node): node is SubRecipe =>
             node.kind === 'subRecipe'
-            && node.outputNames.some((output) => normaliseOutputName(output) === 'dough'),
+            && node.heading === 'Dough',
     );
 
     assert.ok(dough, 'expected a Dough subRecipe');
@@ -397,7 +394,7 @@ test('a reference resolves to a labelled step, not only a := output', () => {
     const filling = recipe.recipeTrees.find(
         (node): node is SubRecipe =>
             node.kind === 'subRecipe'
-            && node.outputNames.some((output) => normaliseOutputName(output) === 'filling'),
+            && node.heading === 'Filling',
     );
 
     assert.ok(filling, 'expected a Filling subRecipe');

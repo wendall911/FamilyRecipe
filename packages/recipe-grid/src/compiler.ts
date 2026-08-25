@@ -1,15 +1,9 @@
 /**
- * Compiler - transcribes a parsed recipe (the grammar AST, `ast.ts`) into the
- * `model.ts` `Recipe` DAG the renderer consumes. One file is one recipe:
+ * The compiler transcribes a parsed recipe (the grammar AST, `ast.ts`) into the
+ * `model.ts` `Recipe` DAG.
+ * 
  * `compile(ast)` returns a single `Recipe` whose `recipeTrees` are the roots of
  * its one connected graph.
- *
- * Structure comes straight across: every structural value is already present in
- * the AST. Two things are resolved here, not transcribed:
- *   - per named reference, whether it points at an earlier sub-recipe output
- *     (a Reference) or is a plain Ingredient;
- *   - per quantity part, the canonical unit key its authored text resolves to
- *     (`unitOfMeasureID`, via `recipe-model.ts`).
  */
 
 import type {
@@ -38,7 +32,7 @@ import type {
 
 import {
     compileString,
-    normaliseOutputName,
+    normalizeOutputName,
     svsNormalize,
     svsToString,
     unitOfMeasureID,
@@ -73,7 +67,8 @@ function innermostIngredient(node: RecipeTreeNode): Ingredient | null {
 
 class RecipeCompiler {
     /**
-     * Known names (`:=` outputs and `=` labels) mapped to their node, keyed by normalised name.
+     * Known names (`:=` outputs and `=` labels) mapped to their node,
+     * keyed by normalised name.
      */
     private namedNodes = new Map<string, NamedNode>();
 
@@ -85,8 +80,7 @@ class RecipeCompiler {
             /*
              * Recipe-level metadata (from the YAML frontmatter, resolved by
              * markdown.ts) is recipe data and belongs on the Recipe; the compiler
-             * stamps whatever RecipeMeta it is handed. Resolving default vs.
-             * configured values is the extraction layer's job, not the compiler's.
+             * stamps whatever RecipeMeta it is handed.
              */
             slug: meta.slug,
             scalingType: meta.scalingType,
@@ -104,89 +98,44 @@ class RecipeCompiler {
      */
     private compileStmt(stmt: AstStmt): RecipeTreeNode {
         const tree = this.compileExpr(stmt.expr);
+        let subRecipe: SubRecipe | undefined;
+        let normalizedName;
 
-        /*
-         * A recipeReference is a self-contained outward link: it renders as its
-         * own <a> and is never a name target or a back-edge, so it skips the
-         * name-registration ladder below and returns as its own root.
-         *
-         * The guard tests `stmt.expr.kind`, not `tree.kind`, to narrow `stmt.expr`:
-         * that is what lets the `stmt.expr.label` access below type-check, since an
-         * `externalReference` has no `label`.
-         */
-        if (stmt.expr.kind === 'externalReference') {
-            return tree;
-        }
-        else if (stmt.named) {
-            const outputNames = (stmt.outputs ?? []).map((o) => compileString(o));
+        if (stmt.expr.kind !== 'externalReference') {
+            if (stmt.heading) {
+                subRecipe = {
+                    kind: 'subRecipe',
+                    subTree: tree,
+                    heading: svsToString(compileString(stmt.heading)),
+                };
 
-            const subRecipe: SubRecipe = {
-                kind: 'subRecipe',
-                subTree: tree,
-                outputNames,
-            };
+                normalizedName = normalizeOutputName(compileString(stmt.heading));
+            }
+            else if (stmt.expr.label !== undefined) {
+                normalizedName = normalizeOutputName(compileString(stmt.expr.label));
+            }
+            else if (tree.kind === 'ingredient') {
+                normalizedName = normalizeOutputName(tree.description);
+            }
+            else if (tree.kind === 'step') {
+                const inner = innermostIngredient(tree);
 
-            outputNames.forEach((outputName, outputIndex) => {
+                if (inner !== null) {
+                    normalizedName = normalizeOutputName(inner.description);
+                }
+            }
+
+            if (normalizedName) {
                 this.namedNodes.set(
-                    normaliseOutputName(outputName),
+                    normalizedName,
                     {
-                        resolvedNode: subRecipe,
-                        outputIndex,
-                    },
-                );
-            });
-
-            return subRecipe;
-        }
-
-        /*
-         * `=` label (if any) was threaded onto the node by compileExpr; register
-         * it as a resolvable target pointing at the node itself.
-         */
-        if (stmt.expr.label !== undefined) {
-            this.namedNodes.set(
-                normaliseOutputName(compileString(stmt.expr.label)),
-                {
-                    resolvedNode: tree,
-                },
-            );
-        }
-        else if (tree.kind === 'ingredient') {
-            /*
-             * A bare ingredient declaration (`2 tsp honey`) registers by its
-             * description, so a later reference to `honey` resolves to this node
-             * and picks up its quantity. An unreferenced declaration just stays a
-             * root of its own.
-             */
-            this.namedNodes.set(
-                normaliseOutputName(tree.description),
-                {
-                    resolvedNode: tree,
-                },
-            );
-        }
-        else if (tree.kind === 'step') {
-            /*
-             * A bare `ingredient, action` line (e.g. `2 cloves garlic, crushed`)
-             * has no `=` label, but a later line still references it by the
-             * ingredient's name (`garlic`). Register the innermost ingredient's
-             * description against the whole step chain so the reference resolves to
-             * the full body. Only a single-input chain ending in one ingredient has
-             * an unambiguous name; anything else registers nothing.
-             */
-            const inner = innermostIngredient(tree);
-
-            if (inner !== null) {
-                this.namedNodes.set(
-                    normaliseOutputName(inner.description),
-                    {
-                        resolvedNode: tree,
+                        resolvedNode: subRecipe ? subRecipe : tree,
                     },
                 );
             }
         }
 
-        return tree;
+        return subRecipe ? subRecipe : tree;
     }
 
     /**
@@ -210,8 +159,8 @@ class RecipeCompiler {
      * recipe or a 404) is a site/index concern, not the compiler's; a dangling
      * link is still a valid DAG.
      * 
-     * The link can have an optional authored amount that is a RecipeNumber so
-     * there is a scalable value for the recipe here.
+     * The link can have an optional authored `Amount` so there is a scalable
+     * value for the external recipe.
      */
     private compileExternalReference(ref: AstExternalReference): RecipeReference {
         const node: RecipeReference = {
@@ -251,7 +200,7 @@ class RecipeCompiler {
      */
     private compileReference(ref: AstReference): Reference | Ingredient {
         const name = compileString(ref.name);
-        const named = this.namedNodes.get(normaliseOutputName(name));
+        const named = this.namedNodes.get(normalizeOutputName(name));
 
         if (named !== undefined) {
             const reference: Reference = {
@@ -313,12 +262,7 @@ class RecipeCompiler {
     }
 
     /**
-     * A quantity's parts come straight across, each flattened to its authored
-     * text. Every part is asked whether the vocabulary claims it, which is the
-     * only thing known about a part here; the canonical key rides on the
-     * quantity. A quantity whose author wrote more than one unit carries the
-     * last -- what they wrote, not a choice made here.
-     *
+     * A quantity's and it's authored parts.
      */
     private compileQuantity(quantity: AstQuantity): Quantity {
         let uomID: string | null = null;
@@ -326,6 +270,7 @@ class RecipeCompiler {
             const text = svsToString(compileString(part.text));
             const partUomID = unitOfMeasureID(text);
 
+            // If the part is an identifiable uom, set the part uom id
             if (partUomID !== null) {
                 uomID = partUomID;
             }

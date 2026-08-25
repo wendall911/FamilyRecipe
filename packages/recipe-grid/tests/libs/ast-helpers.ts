@@ -92,7 +92,7 @@ export function externalRef(name: string, fixtureName: string): ExternalReferenc
 
 /**
  * Fetch the statement in a fixture whose expression is a step with the given
- * name. For statements with no declared output, where `outputStmt` cannot
+ * name. For statements with no declared output, where `subRecipeStmt` cannot
  * reach.
  */
 export function stepStmt(name: string, fixtureName: string): Stmt {
@@ -109,9 +109,9 @@ export function stepStmt(name: string, fixtureName: string): Stmt {
  * Fetch the statement in a fixture whose declared output (`:=`) matches the
  * given text.
  */
-export function outputStmt(name: string, fixtureName: string): Stmt {
+export function subRecipeStmt(name: string, fixtureName: string): Stmt {
     const stmt = parseFixture(fixtureName).stmts.find(
-        (s) => s.outputs?.some((o) => substringsText(o.substrings) === name),
+        (s) => s.heading && substringsText(s.heading.substrings) === name,
     );
 
     assert.ok(stmt, `expected a statement with output "${name}"`);

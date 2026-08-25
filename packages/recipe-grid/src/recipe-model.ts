@@ -116,7 +116,7 @@ export function svsToString(svs: ScaledValueString): string {
  * output-name matching. Operates on the string form (output names are matched as 
  * text in the name table).
  */
-export function normaliseOutputName(svs: ScaledValueString): string {
+export function normalizeOutputName(svs: ScaledValueString): string {
     return svsToString(svs).trim().toLowerCase();
 }
 

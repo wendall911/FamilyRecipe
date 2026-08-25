@@ -164,11 +164,7 @@ export type SubRecipe = {
     kind: "subRecipe";
     // [G2] The steps describing this sub-recipe.
     subTree: RecipeTreeNode;
-    /**
-     * [G2] The output name (scale-aware) later lines resolve against. Always
-     * [0]; the array shape is Grid 2's, and nothing writes past it.
-     */
-    outputNames: ScaledValueString[];
+    heading: string;
 };
 
 /**

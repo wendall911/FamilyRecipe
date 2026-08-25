@@ -10,22 +10,15 @@ import { build, type ElementNode } from './structure/build.ts';
 
 /*
  * Re-export the public vocabulary so a binding author (or any consumer) has the
- * whole surface from one entry point, without spelunking the internals:
- *   - RecipeMeta     recipe-level metadata (slug, scaling).
- *   - StructureNode  the render structure: a complete element tree a framework
- *                    binding renders one node at a time.
- *   - ElementNode    the built element tree: a frameworkless DOM chunk.
+ * whole surface from one entry point.
  */
 export type { RecipeMeta } from './markdown.ts';
 export type { StructureNode } from './structure/extract-structure.ts';
 export type { ElementNode } from './structure/build.ts';
 
 /**
- * Thrown when a recipe `.md` does not compile to a card. The grammar is the
- * gate: a body either reads as a valid DAG or the document is broken, so there
- * is one failure to report and one place to report it. The originating error
- * rides on `cause` for anyone debugging; the parser it came from is not part of
- * this surface.
+ * Thrown when a recipe `.md` does not compile to a card. The originating error
+ * rides on `cause` for debugging.
  */
 export class RecipeParseError extends Error {
     constructor(message: string, options?: { cause?: unknown }) {
@@ -42,22 +35,15 @@ export class RecipeParseError extends Error {
  * from one pass, so exposing both is cheap; a consumer takes whichever it needs.
  */
 export interface RecipeModel {
-    // The recipe title (the `# ...` heading), or '' when the source has none.
     title: string;
-    // The recipe description (the header prose after the title), or ''
     description: string;
-    // Recipe-level metadata: slug, scaling, and anything the model adds later.
     meta: RecipeMeta;
-    // The render structure: part-tagged nodes for a binding to render as components.
     structure: StructureNode;
-    // The built element tree: a serialisable DOM chunk the consumer mounts directly.
     root: ElementNode;
 }
 
 /**
- * Parse a recipe `.md` source into the public {@link RecipeModel}: extract the
- * frontmatter + body, compile the body to the DAG, extract its shape and fill
- * that to render structure, then transport the structure to the element tree.
+ * Parse a recipe `.md` source into the public {@link RecipeModel}
  */
 export function parse(md: string): RecipeModel {
     try {

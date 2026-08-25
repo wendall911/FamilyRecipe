@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
     externalRef,
     nameText,
-    outputStmt,
+    subRecipeStmt,
     referencesOf,
     remainderRef,
     stepStmt,
@@ -237,13 +237,13 @@ test('an external reference carries a leading amount as an authored RecipeNumber
 
 /* --- SubRecipe ----------------------------------------------------------- */
 
-test('`:=` produces a single named output and marks the statement named', () => {
-    const stmt = outputStmt('Dough', 'kitchen-sink.md');
-    assert.equal(stmt.named, true);
+test('`:=` produces a heading', () => {
+    const stmt = subRecipeStmt('Dough', 'kitchen-sink.md');
+    assert.equal(stmt.heading?.kind, 'string');
 });
 
 test('a subrecipe wraps a step, and the arguments in its parens are the step inputs', () => {
-    const stmt = outputStmt('Dough', 'kitchen-sink.md');
+    const stmt = subRecipeStmt('Dough', 'kitchen-sink.md');
     const step = stmt.expr as StepNode;
 
     // `Dough := knead(...)` - the subrecipe's expression is the step it wraps.
@@ -258,7 +258,7 @@ test('a subrecipe wraps a step, and the arguments in its parens are the step inp
 });
 
 test('a step input may itself be a step (steps nest recursively)', () => {
-    const fold = outputStmt('Filling', 'kitchen-sink.md').expr as StepNode;
+    const fold = subRecipeStmt('Filling', 'kitchen-sink.md').expr as StepNode;
 
     assert.equal(nameText(fold), 'fold');
 

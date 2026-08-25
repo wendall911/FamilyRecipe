@@ -155,10 +155,8 @@ export interface Stmt {
     offset: number;
     // The expression contained in this statement.
     expr: Expr;
-    // Explicitly named outputs produced by this statement, or null.
-    outputs: String[] | null;
-    // True if `:=` was used (the sub-recipe is explicitly named).
-    named: boolean;
+    // Explicitly named heading
+    heading?: String;
 }
 
 /**

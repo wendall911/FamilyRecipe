@@ -1,12 +1,12 @@
 /**
  * Known unit names, derived from parse-ingredient's unit-of-measure definitions.
  *
- * Only the unit *names* are used here -- enough for the grammar to recognise a
- * unit. Conversion and value handling stay in parse-ingredient; this module
- * exists solely to hand Peggy a set of names to match.
+ * Only the unit *names* are used here so the grammar to recognise a unit.
+ * At the time of authoring parse-ingredient had the most complete grammar for
+ * units. This design allows for it to be safely changed or extended if the
+ * package ever gets stale or is abandoned. No parsing capabilities are used,
+ * only units and their corresponding types.
  *
- * Names are not transcribed. parse-ingredient owns the vocabulary; a change
- * there flows through on the next generate.
  */
 
 import { unitsOfMeasure } from 'parse-ingredient';
@@ -15,6 +15,9 @@ import { unitsOfMeasure } from 'parse-ingredient';
  * Every name a unit may be written as: the canonical key, its short form, its
  * plural, and every known alternate. Deduped so the same string can appear in
  * more than one of those roles.
+ * 
+ * Currently no expaneded alternatives, but stubbing so expansion can happen if
+ * needed in the future.
  */
 const UNIT_NAMES: readonly string[] = [
     ...new Set(

@@ -24,30 +24,29 @@ Recipe
 
 /*
  * `:=` and `=` are distinct constructs, caught separately:
- *   `:=`  sub_recipe_heading - names a sub-recipe (one or more outputs).
+ *   `:=`  sub_recipe_heading - names a sub-recipe.
  *   `=`   ingredient_label   - a single label on the statement's node.
  * A statement is a `:=` heading, OR carries a `=` label, OR neither; the two
  * optionals are independent (never an alternation), so they cannot conflate.
  */
 stmt
-  = heading:sub_recipe_heading?
+  = recipe_heading:sub_recipe_heading?
     label:ingredient_label?
     expr:ltr_shorthand eol {
       const labelledExpr = label !== null ? { ...expr, label } : expr;
       return {
         kind: 'stmt',
-        offset: heading !== null ? heading[0].offset
+        offset: recipe_heading !== null ? recipe_heading.offset
               : label !== null ? label.offset
               : expr.offset,
         expr: labelledExpr,
-        outputs: heading,
-        named: heading !== null,
+        heading: recipe_heading,
       };
     }
 
 // `:=` - a sub-recipe heading. One or more comma-separated output names.
 sub_recipe_heading
-  = outputs:output_list hsp? ":=" hsp? { return outputs; }
+  = name:output hsp? ":=" hsp? { return name; }
 
 // `=` - an ingredient label. A single name bound to the statement's node.
 ingredient_label
