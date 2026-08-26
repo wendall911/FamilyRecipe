@@ -219,8 +219,7 @@ class RecipeCompiler {
 
         /*
          * A bare ingredient (no matching name). A `remainder` ("use the rest")
-         * carries no numeric amount, so its wording folds into the description and
-         * the ingredient stays quantity-less.
+         * carries no numeric amount.
          */
         const description =
             ref.amount?.kind === 'remainder'
@@ -293,8 +292,7 @@ class RecipeCompiler {
 }
 
 /**
- * Compile one parsed recipe (a grammar AST `Recipe`) into a `model.ts` `Recipe`.
- * One file is one recipe; parsing is the caller's concern, this consumes AST.
+ * Compile parsed recipe (a grammar AST `Recipe`) into a `model.ts` `Recipe`.
  */
 export function compile(ast: AstRecipe, meta: RecipeMeta): Recipe {
     return new RecipeCompiler().compile(ast, meta);

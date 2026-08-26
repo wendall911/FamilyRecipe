@@ -1,19 +1,11 @@
 /**
  * Recipe Grid model - the object model / data structure for a parsed recipe.
  *
- * A divergent port of the Recipe Grid 2 semantic model: faithful where the two
- * agree, deliberately different where this project's goals differ.
+ * A divergent fork of the Recipe Grid 2 semantic model.
  *
  * Provenance is tagged per declaration:
  *   [G2] - faithful to Recipe Grid 2.
  *   [EXT] - a recipe-grid extension, not present in Recipe Grid 2.
- *
- * NOTE ON TYPES: types are erased at compile time and check nothing at
- * runtime. An invalid recipe breaks; validation is a validation compiler's job.
- *
- * NOTE ON REFERENCES: a reference is a pointer, not a guarantee; a reference
- * to a non-existent target is still valid (like a hyperlink to a 404).
- * Resolution/validation happens elsewhere, not here.
  */
 
 /**
@@ -240,7 +232,6 @@ export type RecipeMeta = RecipeScaling & {
  * earlier tress resulting in a Directed Acrylic Graph (DAG) structure that
  * describes the recipe.
 */
-
 export type Recipe = {
     // [G2] The recipe tree roots.
     recipeTrees: RecipeTreeNode[];
