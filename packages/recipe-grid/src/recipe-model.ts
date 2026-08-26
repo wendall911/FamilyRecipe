@@ -52,7 +52,7 @@ export function numberValue(n: RecipeNumber): number {
 /**
  * [G2] Structural equality of two RecipeNumbers (exact for fractions).
  */
-export function recipeNumbersEqual(a: RecipeNumber, b: RecipeNumber): boolean {
+function recipeNumbersEqual(a: RecipeNumber, b: RecipeNumber): boolean {
     if (isFraction(a) && isFraction(b)) {
         return a.numerator === b.numerator && a.denominator === b.denominator;
     }
