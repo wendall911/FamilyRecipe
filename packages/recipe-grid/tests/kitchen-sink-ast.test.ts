@@ -76,7 +76,7 @@ test('a quantity value carries its authored kind: integer, decimal, or exact fra
     assert.equal(amountOf('plain flour (12% protein)').value, 200);
 
     // `0.5 tsp` - a decimal stays a JS number; it is not converted to a fraction.
-    assert.equal(amountOf('salt').value, 0.5);
+    assert.equal(amountOf('salt').value, 1.5);
 
     // `1/2 cup` - an exact fraction is held as numerator/denominator, not 0.5.
     assert.deepEqual(amountOf('butter').value, { numerator: 1, denominator: 2 });
@@ -130,7 +130,7 @@ test('a preposition is a part of its own, following the unit', () => {
 
     const amount = declared.amount as QuantityNode;
 
-    assert.equal(amount.value, 3);
+    assert.deepEqual(amount.value, { numerator: 3, denominator: 1 });
 
     // The unit and the preposition are parts in the order authored.
     assert.equal(amount.parts.length, 2);

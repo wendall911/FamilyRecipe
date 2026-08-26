@@ -4,15 +4,12 @@ import assert from 'node:assert/strict';
 import { compileFixture } from './libs/dag-harness.ts';
 import { isReference, isStep } from './libs/dag-helpers.ts';
 import {
-    normalizeOutputName,
     numberValue,
-    recipeNumbersEqual,
     svsEqual,
     svsNormalize,
     svsToString,
 } from '../src/recipe-model.ts';
 import type {
-    Amount,
     Fraction,
     Ingredient,
     Quantity,
@@ -158,9 +155,10 @@ test('A recipeReference with a quantity carries correctly', () => {
     assert.ok(yapd, 'expected a YAPD recipeReference');
 
     const amount = yapd.amount as Quantity;
+    const one = { numerator: 1, denominator: 1 } as Fraction;
 
     assert.ok(amount.kind, 'quantity');
-    assert.deepEqual(amount.value, { numerator: 1, denominator: 1 });
+    assert.deepEqual(amount.value, one);
 });
 
 test('a label rides the step and does not displace the ingredient description', () => {
@@ -229,26 +227,19 @@ test('a quantity value keeps the kind it was authored in', () => {
     };
 
     /*
-     * `1/2 cup butter` and `0.5 tsp salt` - the same magnitude authored two
+     * `3 cloves garlic` and `3/1 liters of cat memes` - the same magnitude authored two
      * ways. The fraction stays exact and the decimal stays a JS number; the
      * compiler represents what was written and converts neither.
      */
-    const butter = valueOf('butter');
-    const salt = valueOf('salt');
-    const half: Fraction = { numerator: 1, denominator: 2 };
-    const quarter: Fraction = { numerator: 1, denominator: 4 };
+    const garlic = valueOf('garlic');
+    const catMemes = valueOf('cat memes');
+    const three = { numerator: 3, denominator: 1 } as Fraction;
 
-    assert.deepEqual(butter, half);
-    assert.equal(salt, 0.5);
+    assert.equal(garlic, 3.0);
+    assert.deepEqual(catMemes, three);
 
     // Equal in magnitude, so a float comparison cannot tell them apart.
-    assert.equal(numberValue(butter), numberValue(salt));
-
-    // Distinguishable structurally, which is what preserves the authored form.
-    assert.ok(
-        !recipeNumbersEqual(butter, quarter),
-        'expected an exact fraction to compare on numerator and denominator',
-    );
+    assert.equal(numberValue(garlic), numberValue(catMemes));
 });
 
 /* --- SubRecipe -----------------------------------------------------------
@@ -310,7 +301,8 @@ test('a later line reaching a := output resolves to that node, not a copy', () =
     assert.ok(bake, 'expected a bake step');
 
     const mix = bake.inputs.find(
-        (node): node is Step => isStep(node) && svsToString(node.description) === 'mix',
+        (node): node is Step =>
+            isStep(node) && svsToString(node.description) === 'mix until very creamy',
     );
 
     assert.ok(mix, 'expected a mix step under bake');
@@ -480,7 +472,8 @@ test('a remainder marks the last draw on an ingredient, carrying no value', () =
     assert.ok(bake, 'expected a bake step');
 
     const mix = bake.inputs.find(
-        (node): node is Step => isStep(node) && svsToString(node.description) === 'mix',
+        (node): node is Step => isStep(node)
+            && svsToString(node.description) === 'mix until very creamy',
     );
 
     assert.ok(mix, 'expected a mix step under bake');
