@@ -27,30 +27,33 @@ down how each is handled. Do not cook this.
     [Roux](roux "Dad's basic roux")
     [Stock](vegetable-stock 'homemade stock')
     [Pastry](sweet-pastry), rolled thin
+    1/2 cup [Chili powder](chili-powder), mixed well
 
     Dough := knead(
-      200g "plain flour (12% protein)",
-      1/2 cup butter,
-      milk
+        200g "plain flour (12% protein)",
+        1/2 cup butter,
+        milk
     )
 
     bake(
-      mix(
-        dough,
-        cat memes,
-        {1 handful} fresh parsley,
-        Remaining milk
-      ),
-      0.5 tsp of the salt
+        mix(
+            dough,
+            cat memes,
+            {1 handful} fresh parsley,
+            Remaining milk
+        ),
+        chili powder,
+        filling,
+        0.5 tsp of the salt
     )
 
     Filling := fold(
-      whip(
-        cream,
-        2 tbsp sugar
-      ),
-      mix(
-        red peppers,
-        Remaining butter
-      )
+        whip(
+            cream,
+            2 tbsp sugar
+        ),
+        mix(
+            red peppers,
+            Remaining butter
+        )
     )

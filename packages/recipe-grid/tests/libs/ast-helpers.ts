@@ -25,10 +25,17 @@ export function findAll(
     const walk = (n: unknown): void => {
         if (Array.isArray(n)) {
             for (const c of n) walk(c);
-        } else if (n !== null && typeof n === 'object') {
+        }
+        else if (n !== null && typeof n === 'object') {
             const obj = n as Record<string, unknown>;
-            if (pred(obj)) out.push(obj);
-            for (const k of Object.keys(obj)) walk(obj[k]);
+
+            if (pred(obj)) {
+                out.push(obj);
+            }
+
+            for (const k of Object.keys(obj)) {
+                walk(obj[k]);
+            }
         }
     };
 
