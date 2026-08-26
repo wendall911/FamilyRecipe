@@ -1,5 +1,5 @@
 /**
- * Build an element tree from a walked recipe structure.
+ * Build an element tree from a extracted recipe structure.
  *
  * A pure transport over the render structure: each {@link StructureNode} from
  * `extract-structure.ts` becomes an {@link ElementNode}.
@@ -39,11 +39,6 @@ function markerAttrs(node: StructureNode): Record<string, string> {
     };
 }
 
-/**
- * Build the element for one structure node: its tag, its attributes, its leaf
- * text, and its built children. A pure copy — the structure already describes
- * the full element tree.
- */
 export function build(node: StructureNode): ElementNode {
     const element: ElementNode = {
         attrs: markerAttrs(node),

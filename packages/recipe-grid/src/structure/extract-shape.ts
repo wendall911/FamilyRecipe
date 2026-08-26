@@ -1,44 +1,17 @@
 /**
- * Extract the card's shape from a compiled recipe DAG.
+ * Extract the card's shape from a compiled recipe DAG, *what nests inside
+ * what, and on which side*.
  *
- * This pass answers *what nests inside what, and on which side*. It emits no
- * tags, no `data-*` bindings, no part markers, no text: only the box tree the
- * card is built from. The second pass consumes this and fills in content.
+ * Extent (rows and columns a subtree would occupy if it were a table)
  *
- * The split exists because a single bottom-up recursion cannot express
- * card-level facts. A node visited on the way up knows its own subtree and
- * nothing else -- not which column it shares with its siblings, not what sits to
- * its right, not where a region begins. Those are facts about the whole card,
- * so they need a stage where the whole card is in hand.
- *
- * 
- * The card is flexbox, not a table. A table needs every cell's row, column and
- * span computed up front, because the grid is a fixed lattice and every cell
- * must be placed in it. Flexbox needs none of that: a box is as wide as its
- * contents and the space its parent gives it, and the browser resolves the rest.
- *
- * So this pass does no arithmetic. A step is a row holding its inputs on the
- * left and its own action on the right; the inputs are a column of boxes. That
- * nesting *is* the layout. Asking "how many columns does this span" is a table
- * question, and answering it here would bake a lattice into a structure that
- * does not have one.
- *
- * Extent (rows and columns a subtree would occupy if it were a table) is still
- * computed, but only as a description of the card for reading a dump by eye. It
- * is not part of the layout and no box carries it.
- *
- * Three steps, only two of which walk the DAG:
+ * Three steps:
  *
  *   1. COLLECT  - which trees are card roots (the rest are transcluded at their
  *                 use site). A small traversal.
  *   2. BUILD    - top-down, one box per node plus the grouping boxes the layout
  *                 needs. The substantive traversal.
- *   3. RELATE   - what each box touches, by walking the finished tree. Not a
- *                 traversal of the DAG: the boxes are already built, so this is
- *                 sibling and parent order.
- *
- * Nothing here transforms or validates. Whatever the DAG holds is what gets
- * built.
+ *   3. RELATE   - what each box touches, by walking the finished tree to
+ *                 establish the sibling and parent order.
  */
 
 import type {
@@ -71,8 +44,7 @@ export type RegionId = number;
 export type Flow = 'row' | 'column' | 'leaf';
 
 /**
- * What a box is to its parent. This is the whole of "where it sits" -- there are
- * no coordinates, because the nesting already places it.
+ * What a box is to its parent, or "where it sits".
  *
  * - `inputs` the column of things feeding a step, on the step's left.
  * - `action` the step itself, to the right of what feeds it.
@@ -113,7 +85,7 @@ export interface Box {
 }
 
 /**
- * What lies against a box's edges -- the adjacency a border rule needs, so a
+ * What lies against a box's edges. The adjacency a border rule needs, so a
  * consumer is not left deriving it from the DOM.
  *
  * `null` means nothing is there: the box's edge is its container's edge. In a
@@ -136,21 +108,18 @@ export interface Touches {
 export interface Region {
     id: RegionId;
     subRecipe: SubRecipe;
-    /** The box holding the whole region: header and body together. */
+    // The box holding the whole region: header and body together.
     box: BoxId;
-    /** The header band. */
+    // The header band.
     header: BoxId;
-    /** Everything below the header. */
+    // Everything below the header.
     body: BoxId;
-    /** The regions containing this one, outermost first; empty at top level. */
+    // The regions containing this one, outermost first; empty at top level.
     within: RegionId[];
 }
 
 /**
- * How much of a table this subtree would occupy. Not layout -- the card does not
- * have a lattice -- but a useful description when reading a dump: it says how
- * tall and how deep the card is, which a box tree alone does not show at a
- * glance.
+ * How much of a table this subtree would occupy. 
  */
 export interface Extent {
     rows: number;
@@ -162,7 +131,7 @@ export interface Extent {
  * and the card's overall extent for reading.
  */
 export interface CardShape {
-    //The card's outermost box.
+    // The card's outermost box.
     root: BoxId;
     boxes: Box[];
     regions: Region[];
@@ -223,9 +192,8 @@ function linksByName(trees: RecipeTreeNode[]): Map<string, RecipeReference> {
  * The node a use site resolves to: the declared link when its text names one,
  * otherwise the node itself.
  *
- * This is what stops a linked ingredient being drawn twice — once as a stray
+ * This is what stops a linked ingredient being drawn twice. Once as a stray
  * root at the top of the card and once as a plain text box where it is used.
- * There is one ingredient; the link is it.
  */
 function resolveLink(
     node: RecipeTreeNode,
@@ -271,10 +239,6 @@ function collectLinked(
 
 /**
  * The trees no other tree draws on: the independent roots of the card.
- *
- * A tree is not a root when something else uses it -- through a `reference`
- * edge, or by naming a declared cross-file link. Either way it is laid out at
- * its use site, not repeated at the top of the card.
  */
 function cardRoots(recipe: Recipe): RecipeTreeNode[] {
     const referenced = new Set<RecipeTreeNode>();
@@ -398,10 +362,6 @@ function build(
              * on the right. The things feeding it are a column -- they stack,
              * and the step sits beside the whole stack rather than beside any
              * one of them.
-             *
-             * That is the bracket the card draws, and it needs no widths: the
-             * inputs column is as wide as its deepest member, the action sits
-             * after it, and flex resolves the rest.
              */
             const box = addBox(state, {
                 node,
@@ -439,17 +399,9 @@ function build(
 
         case 'reference': {
             /*
-             * A reference transcludes its target: the target's structure is
-             * built here, in this position, and what the reader sees is the
-             * target.
-             *
-             * The reference still gets a box of its own, wrapping that. It is
-             * where the draw the use site made lives -- a quantity when the line
-             * restated a measure, a remainder when it asked for the rest. The
-             * amount rides the edge, not the node, because a shared node is
-             * reached from more than one place and each use draws its own. A box
-             * for the target alone has nowhere to carry it, and the draw would
-             * not survive into the DOM.
+             * The reference still gets a box of its own. A box for the target
+             * alone has nowhere to carry it, and the draw would not survive
+             * into the DOM.
              */
             const box = addBox(state, {
                 node,
@@ -520,16 +472,11 @@ function build(
 // Step 3 -- RELATE: what each box touches, from the finished tree
 
 /**
- * Fill in what lies against each box's edges.
- *
- * In a nested layout adjacency is sibling order: the box before you and the box
- * after you, within your parent. A box at either end of its parent's children
- * touches nothing on that side -- its edge is the parent's edge, which is what
- * makes a border there the boundary of the group rather than a line between two
- * members of it.
- *
- * This runs after the tree is built because a box's siblings do not exist while
- * it is being built. That is why it is its own step.
+ * In a nested layout adjacency is sibling order: the box before and the box
+ * after, within a parent. A box at either end of its parent's children
+ * touches nothing on that side since its edge is the parent's edge, defining
+ * what makes a border there the boundary of the group rather than a line
+ * between two members of it.
  */
 function relate(boxes: Box[]): void {
     for (const box of boxes) {
@@ -541,8 +488,6 @@ function relate(boxes: Box[]): void {
         });
     }
 }
-
-// Extract shape pass
 
 /**
  * The card's shape: every box built, every adjacency resolved, every sub-recipe
@@ -558,7 +503,7 @@ export function extractShape(recipe: Recipe): CardShape {
 
     /*
      * The card is a column: its trees stack, each a row of its own. A card with
-     * one tree is still a column of one -- the shape does not special-case it.
+     * one tree is still a column of one.
      */
     const card = addBox(state, {
         node: null,

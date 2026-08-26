@@ -2,29 +2,25 @@
  * Recipe model behaviour. The free-function layer bridging the decorative
  * types in `model.ts` to real operations.
  *
- * `model.ts` declares plain-object shapes; TypeScript there enforces nothing at
- * runtime. Free functions over the plain objects so `model.ts` stays a pure type 
- * module.
- *
  * Provenance:
  *   [EXT] - compatible with [G2] but adopts a real units library, not a hand 
  *   authored list.
  *
+ */
+
+/**
  * -----------------------------------------------------------------------------
  * UNITS
  * -----------------------------------------------------------------------------
- * parse-ingredient is a dependency of this package and rides along to
- * consumers. Its `unitsOfMeasure` feeds the grammar's unit alternation
- * (`units.ts`) and the identity lookup below, so every unit the parser matches
- * is one the converter knows.
+ * parse-ingredient is used for units vocabulary. Its `unitsOfMeasure` feeds
+ * the grammar's units (`units.ts`) and the identity lookup below.
  *
  * This layer binds a quantity's authored unit name to its canonical key
  * (`unitOfMeasureID`), and carries both. Values stay as authored; the key is
- * the handle. A consumer holds the same library and can convert, scale, or
- * format from those bindings -- a locale display, a unit selector, scaling at
- * render. Those are consumer decisions, not shapes the DAG carries.
+ * the handle. A consumer with the same library and can convert, scale, or
+ * format from the bindings for a locale display, a unit selector, scaling at
+ * render, etc.
  */
-
 import { unitsOfMeasure } from 'parse-ingredient';
 
 import type {
