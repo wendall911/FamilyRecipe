@@ -24,8 +24,8 @@ Recipe
 
 /*
  * `:=` and `=` are distinct constructs, caught separately:
- *   `:=`- sub_recipe_heading - names a sub-recipe.
- *   `=` - ingredient_label - a single label on the statement's node.
+ *   `:=`  sub_recipe_heading - names a sub-recipe.
+ *   `=`   ingredient_label   - a single label on the statement's node.
  * A statement is a `:=` heading, OR carries a `=` label, OR neither; the two
  * optionals are independent (never an alternation), so they cannot conflate.
  */
@@ -70,12 +70,14 @@ expr
  * A bare markdown link, e.g. "[Dough](pizza-dough)" - a cross-file reference to
  * another recipe by identity. Tried before `step`/`reference` so a link is not
  * globbed as literal ingredient text. Self-naming: the link text is the local
- * name later lines resolve to; the href is the target recipe id. The
- * sibling/alternative to `label`; like `label`, it may sit on an ingredient
- * or a step.
+ * name later lines resolve to; the href is the target recipe id. Both bodies
+ * are captured raw - validation (is the slug real, does the target exist) is a
+ * separate concern against the full AST, not the parser's: garbage in, garbage
+ * out. The sibling/alternative to `label`; like `label`, it may sit on an
+ * ingredient or a step.
  */
  external_reference
-  = amt:(a:(remainder_string / implicit_quantity) hsp { return a; })?
+  = amt:(a:(proportion / implicit_quantity) hsp { return a; })?
     "[" name:$([^\]\r\n]+) "]" hsp?
     "(" target:$([^)"'\r\n \t]+) titlePart:(hsp? t:link_title { return t; })? ")" {
       return {
@@ -89,10 +91,10 @@ expr
     }
 
 /*
- * The optional markdown link title, the quoted third token in
+ * The optional markdown link title - the quoted third token in
  * "[text](slug \"title\")". Quotes matched outside $() so they are stripped;
  * the raw inner text is returned (a plain string, matching name/targetSlug,
- * not a String node). CommonMark also permits a multiline title and that form
+ * not a String node). CommonMark also permits a (…)-wrapped title; that form
  * is intentionally not supported here.
  */
 link_title
@@ -126,7 +128,7 @@ action
  * name is the reference's own and lives in one place.
  */
 reference
-  = amt:(a:(remainder / implicit_quantity) gap:hsp? {
+  = amt:(a:(proportion / implicit_quantity) gap:hsp? {
         return { amount: a, gap: gap !== null ? gap : '' };
     })? name:ingredient {
       const amount = amt !== null ? amt.amount : null;
@@ -175,16 +177,12 @@ implicit_quantity
     }
 
 /*
- * Only the remainder form ("use the rest").
+ * Only the remainder form ("use the rest"). Grid 2's numeric proportions
+ * (percentage / multiplier / fractional value) are dropped: the published Grid 2
+ * recipe corpus only uses them for validation, and real recipes only ever say
+ * "use the rest".
  */
-remainder
-  = $(( [rR][eE][mM][aA][iI][nN][iI][nN][gG]
-      / [rR][eE][mM][aA][iI][nN][dD][eE][rR]
-      / [rR][eE][sS][tT]
-      / [lL][eE][fF][tT] [ \t]* [oO][vV][eE][rR]
-      ) ![A-Za-z0-9])
-
-remainder_string
+proportion
   = wording:remainder prep:(psp:hsp p:preposition { return psp + p; })? {
       return {
         kind: 'remainder',
@@ -193,6 +191,13 @@ remainder_string
         preposition: prep !== null ? prep : '',
       };
     }
+
+remainder
+  = $(( [rR][eE][mM][aA][iI][nN][iI][nN][gG]
+      / [rR][eE][mM][aA][iI][nN][dD][eE][rR]
+      / [rR][eE][sS][tT]
+      / [lL][eE][fF][tT] [ \t]* [oO][vV][eE][rR]
+      ) ![A-Za-z0-9])
 
 preposition
   = $([oO][fF] ([ \t]+ [tT][hH][eE])? ![A-Za-z0-9])
