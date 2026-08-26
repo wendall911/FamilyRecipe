@@ -2,11 +2,7 @@
  * Recipe Grid grammar a partial Peggy port of recipe_grid's parser/grammar.peg.
  * With multiple divergences to support recipe-grid.
  *
- * Structure and rule set mostly follow the canonical grammar.peg (mossblaser's
- * recipe_grid, consumed there by the `peggie` PEG engine). Peggy notation
- * differs from peggie: `=` instead of `<-`, character classes / regex literals
- * instead of peggie's `r"..."` regex terminals. The rule actions build the AST
- * directly; `compiler.ts` compiles that AST to the DAG model.
+ * The rule actions build the AST directly.
  *
  * @KNOWN_UNITS@ is substituted at generate time with an ordered choice of every
  * known unit name, built by `units.ts` from parse-ingredient's vocabulary,
@@ -44,18 +40,13 @@ stmt
       };
     }
 
-// `:=` - a sub-recipe heading. One or more comma-separated output names.
+// `:=` - a sub-recipe heading.
 sub_recipe_heading
   = name:output hsp? ":=" hsp? { return name; }
 
 // `=` - an ingredient label. A single name bound to the statement's node.
 ingredient_label
   = name:output hsp? "=" hsp? { return name; }
-
-output_list
-  = first:output rest:(hsp? "," hsp? o:output { return o; })* {
-      return [first, ...rest];
-    }
 
 output
   = string
@@ -68,13 +59,8 @@ expr
 
 /*
  * A bare markdown link, e.g. "[Dough](pizza-dough)" - a cross-file reference to
- * another recipe by identity. Tried before `step`/`reference` so a link is not
- * globbed as literal ingredient text. Self-naming: the link text is the local
- * name later lines resolve to; the href is the target recipe id. Both bodies
- * are captured raw - validation (is the slug real, does the target exist) is a
- * separate concern against the full AST, not the parser's: garbage in, garbage
- * out. The sibling/alternative to `label`; like `label`, it may sit on an
- * ingredient or a step.
+ * another recipe by identity. Before `step`/`reference` so a link is not
+ * globbed as literal ingredient text.
  */
  external_reference
   = amt:(a:(proportion / implicit_quantity) hsp { return a; })?
@@ -94,7 +80,7 @@ expr
  * The optional markdown link title - the quoted third token in
  * "[text](slug \"title\")". Quotes matched outside $() so they are stripped;
  * the raw inner text is returned (a plain string, matching name/targetSlug,
- * not a String node). CommonMark also permits a (…)-wrapped title; that form
+ * not a String node). CommonMark also permits a multi-line title but
  * is intentionally not supported here.
  */
 link_title
@@ -177,10 +163,7 @@ implicit_quantity
     }
 
 /*
- * Only the remainder form ("use the rest"). Grid 2's numeric proportions
- * (percentage / multiplier / fractional value) are dropped: the published Grid 2
- * recipe corpus only uses them for validation, and real recipes only ever say
- * "use the rest".
+ * Only the remainder form ("use the rest").
  */
 proportion
   = wording:remainder prep:(psp:hsp p:preposition { return psp + p; })? {
@@ -193,14 +176,14 @@ proportion
     }
 
 remainder
-  = $(( [rR][eE][mM][aA][iI][nN][iI][nN][gG]
-      / [rR][eE][mM][aA][iI][nN][dD][eE][rR]
-      / [rR][eE][sS][tT]
-      / [lL][eE][fF][tT] [ \t]* [oO][vV][eE][rR]
+  = $(( "remaining"i
+      / "remainder"i
+      / "rest"i
+      / "left"i [ \t]* "over"i 
       ) ![A-Za-z0-9])
 
 preposition
-  = $([oO][fF] ([ \t]+ [tT][hH][eE])? ![A-Za-z0-9])
+  = $("of"i ([ \t]+ "the"i)? ![A-Za-z0-9])
 
 preposition_string
   = p:preposition {
@@ -234,9 +217,6 @@ string
     }
 
 /*
- * Canonical grammar.peg writes this as `x (y* z)?` so an interior space may be
- * part of a naked string. In Peggy that structure yields per-character results;
- * a single `$([class]+)` captures the whole run and is the idiomatic equivalent.
  * Interior spaces are handled at `string`, which joins runs with their `hsp`.
  */
 naked_string
@@ -263,11 +243,7 @@ s_quoted_string
 /*
  * A brace-wrapped scale-aware string, e.g. "{1 handful}". The braces mark
  * embedded numbers as scalable interpolated values; the surrounding text is
- * literal. The braces are stripped. Peggy's repetition yields a flat array
- * mixing number nodes with per-character literals, so adjacent character runs
- * are coalesced back into a single substring here (raw-string discipline and
- * never store per-char). Grid 2's ScaledValueExpression; the grammar only marks
- * what is scalable, the runtime does the scaling.
+ * literal. The braces are stripped.
  *
  * The gap after an interpolated number is a separator, not content: the braces
  * are how an author declares a unit the vocabulary has no name for, and the
