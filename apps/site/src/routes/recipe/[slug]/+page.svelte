@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Recipe } from '@wendall911/recipe-grid-svelte';
     import Fraction from 'fraction.js';
+    import { page } from '$app/state';
 
     let {
         data
@@ -57,8 +58,12 @@
     });
 </script>
 
+<svelte:head>
+    <title>{page.data.recipes[data.slug]?.title ?? 'Not found'}</title>
+</svelte:head>
+
 <div bind:this={card} id="card">
-    <Recipe.Root md={data.md} as="article" path={'/recipe/{slug}'} rel={'external'}>
+    <Recipe.Root md={page.data.recipes[data.slug].md} as="article" path={'/recipe/{slug}'} rel={'external'}>
         <Recipe.Title />
         <Recipe.Description />
         <Recipe.Scale {title} {options} onValueChange={(value) => (scale = value)} />
