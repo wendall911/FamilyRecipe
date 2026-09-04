@@ -16,13 +16,29 @@ export class RecipeContext {
      * Where a cross-file recipe reference points, `{slug}` substituted for the
      * target.
      */
-    path: string;
-    rel?: string;
+    private _path: string;
+    private _rel?: string;
 
     constructor(md: string, path = '#{slug}', rel?: string) {
         this.parsed = this.parse(md);
-        this.path = path;
-        this.rel = rel;
+        this._path = path;
+        this._rel = rel;
+    }
+
+    get path(): string {
+        return this._path;
+    }
+
+    set path(path: string) {
+        this._path = path;
+    }
+
+    get rel(): string | undefined {
+        return this._rel;
+    }
+
+    set rel(rel: string) {
+        this._rel = rel;
     }
 
     parse(md: string): RecipeModel {

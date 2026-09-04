@@ -28,7 +28,7 @@
      * marginally faster.
      */
     let { md, as, path = '#{slug}', rel = '', children, ...rest }: {
-        md: string;
+        md: string | RecipeContext;
         as?: string;
         path?: string;
         rel?: string;
@@ -36,8 +36,19 @@
     } & Record<string, unknown> = $props();
 
     // svelte-ignore state_referenced_locally
-    const recipe = new RecipeContext(md, path, rel);
-    setContext('recipe', recipe);
+    if (md instanceof RecipeContext) {
+        if (path) {
+            md.path = path;
+        }
+        if (rel) {
+            md.rel = rel;
+        }
+
+        setContext('recipe', md);
+    }
+    else {
+        setContext('recipe', new RecipeContext(md, path, rel));
+    }
 
     const mergedProps = $derived({ ...rest });
 </script>

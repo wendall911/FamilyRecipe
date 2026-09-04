@@ -56,14 +56,14 @@ A recipe whose body the grammar cannot read has no card to draw: `Recipe.Root` t
 
 Parses `md` and provides the parsed model to descendant parts. Renders its children; optionally wraps them in an element.
 
-| prop       | type              | default | notes                                                                 |
-|------------|-------------------|---------|-----------------------------------------------------------------------|
-| `md`       | `string`          | -       | required; the recipe-grid markdown                                    |
-| `as`       | `string`          | -       | wrapper element tag; omitted -> no wrapper, children render directly  |
-| `path`     | `string`          | `#{slug}` | where a cross-file recipe reference points; `{slug}` is replaced with the target |
-| `rel`      | `string`          | -       | optional; `rel` for a cross-file recipe reference                     |
-| `children` | `Snippet`         | -       | the parts to render inside                                            |
-| ...rest    | `Record<string, unknown>` | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `path` / `children` are not forwarded) |
+| prop | type | default | notes |
+|-|-|-|-|
+| `md` | `string` / `RecipeContext` | - | required; the recipe-grid markdown |
+| `as` | `string` | - | wrapper element tag; omitted -> no wrapper, children render directly |
+| `path` | `string` | `#{slug}` | where a cross-file recipe reference points; `{slug}` is replaced with the target |
+| `rel` | `string` | - | optional; `rel` for a cross-file recipe reference |
+| `children` | `Snippet` | - | the parts to render inside |
+| ...rest | `Record<string, unknown>`  | - | forwarded to the wrapper element **when `as` is set** (`md` / `as` / `path` / `children` are not forwarded) |
 
 A recipe references another recipe by slug; `path` is where that resolves for your app. `{slug}` is substituted wherever it appears:
 
